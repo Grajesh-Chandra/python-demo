@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/bootstrap.min.css') }}"
+    />
+    <title>Demo App</title>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Welcome to Demo App</h1>
+      <p>This is a simple Flask application using Bootstrap for styling.</p>
+    </div>
+
+    <div class="card-body">
+      <h2 class="h4 mb-1">Explore More</h2>
+      <hr class="mt-2" />
+      <div>
+        <a href="/cis"> Affinidi Credential Issuance </a>
+        <br />
+        <a href="/iota"> Affinidi Iota Framework </a>
+        <br />
+        <a href="/report"> Generate Final Report </a>
+        <br />
+        <a href="/verify"> Verify Final Report </a>
+      </div>
+    </div>
+    <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+  </body>
+</html>

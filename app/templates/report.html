@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Report</title>
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+    />
+  </head>
+  <body>
+    <div class="container mt-5">
+      <h1 class="text-center">Generate Your Final Report</h1>
+      <div class="text-center mt-4">
+        <a href="/">Home</a>
+      </div>
+
+      <div class="text-center mt-4" id="generateReportBtn">
+        <button class="btn btn-primary generateReportBtn" data-type="report">
+          Generate Final Report PDF
+        </button>
+      </div>
+    </div>
+    <script>
+      document.querySelector('.generateReportBtn').addEventListener('click', function() {
+        fetch('/api/generate-report', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ reportType: 'finalReport' })
+        })
+        .then(response => response.blob())
+        .then(blob => {
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.style.display = 'none';
+          a.href = url;
+          a.download = 'report.pdf';
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+        })
+        .catch(error => {
+          console.error('Error:', error);
+        });
+      });
+    </script>
+  </body>
+</html>

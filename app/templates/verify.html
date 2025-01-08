@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report Verification</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        table {
+            width: 100%;
+            table-layout: fixed; /* Important for consistent column widths */
+        }
+
+        th,
+        td {
+            flex: 1;
+            white-space: nowrap;
+            overflow-x: auto;
+            border: 1px solid #dee2e6; /* Add borders for better visibility */
+            padding: .75rem;
+            text-align: left;
+            vertical-align: top;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+
+        /* Optional: Style the scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center">Verify Your Final Report</h1>
+        <div class="text-center mt-4">
+            <a href="/">Home</a>
+        </div>
+        <div class="mt-4">
+            <form id="uploadForm">
+                <div class="custom-file">
+                    <input type="file" class="custom-file-input" id="report_pdf" name="report_pdf" required>
+                    <label class="custom-file-label" for="report_pdf">Choose your final report (PDF)</label>
+                </div>
+
+                <div class="mt-3">
+                    <button type="button" class="btn btn-primary mr-2" id="verifyButton">Verify Report</button>
+                    <a id="backLink" href="/verify" class="btn btn-primary">Return Back</a>
+                </div>
+            </form>
+        </div>
+        <div id="responseArea" class="mt-4"></div>
+    </div>
+
+    <script>
+        const verifyButton = document.getElementById('verifyButton');
+        const responseArea = document.getElementById('responseArea');
+        const uploadForm = document.getElementById('uploadForm');
+        const fileInput = document.getElementById('report_pdf');
+        const fileLabel = document.querySelector('.custom-file-label');
+
+        fileInput.addEventListener('change', function (e) {
+            if (e.target.files.length > 0) {
+                fileLabel.textContent = e.target.files[0].name;
+            } else {
+                fileLabel.textContent = "Choose a PDF file";
+            }
+        });
+
+        verifyButton.addEventListener('click', async () => {
+            const formData = new FormData(uploadForm);
+
+            try {
+                const response = await fetch('/api/verify_pdf', { // Replace with your API endpoint
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Network response was not ok');
+                }
+
+                const data = await response.json();
+
+                const table = document.createElement('table');
+                table.classList.add('table', 'table-bordered', 'mt-4');
+
+                const thead = document.createElement('thead');
+                const headerRow = document.createElement('tr');
+                const keyHeader = document.createElement('th');
+                keyHeader.textContent = 'Key';
+                const valueHeader = document.createElement('th');
+                valueHeader.textContent = 'Value';
+                const verificationHeader = document.createElement('th');
+                verificationHeader.textContent = 'Verification Result';
+
+                headerRow.appendChild(keyHeader);
+                headerRow.appendChild(valueHeader);
+                headerRow.appendChild(verificationHeader);
+                thead.appendChild(headerRow);
+                table.appendChild(thead);
+
+                const tbody = document.createElement('tbody');
+                for (const [key, value] of Object.entries(data)) {
+                    const row = document.createElement('tr');
+                    const keyCell = document.createElement('td');
+                    keyCell.textContent = key;
+                    const valueCell = document.createElement('td');
+                    if (typeof value === 'object') {
+                        valueCell.innerHTML = '<pre>' + JSON.stringify(value, null, 2) + '</pre>';
+                    } else {
+                        valueCell.textContent = value;
+                    }
+                    const verificationCell = document.createElement('td');
+                    verificationCell.textContent = 'Verified'; // Placeholder
+                    row.appendChild(keyCell);
+                    row.appendChild(valueCell);
+                    row.appendChild(verificationCell);
+                    tbody.appendChild(row);
+                }
+                table.appendChild(tbody);
+
+                responseArea.innerHTML = '';
+                responseArea.appendChild(table);
+
+            } catch (error) {
+                console.error('Error:', error);
+                responseArea.textContent = 'Error: ' + error.message;
+            }
+        });
+    </script>
+</body>
+</html>

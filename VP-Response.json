@@ -1,0 +1,263 @@
+
+{
+  "@context": [
+    "https://www.w3.org/2018/credentials/v1"
+  ],
+  "type": [
+    "VerifiablePresentation"
+  ],
+  "verifiableCredential": [
+    {
+      "credentialSchema": {
+        "type": "TAddressVerificationV1R0",
+        "id": "https://schema.affinidi.io/TAddressVerificationV1R0.json"
+      },
+      "credentialSubject": {
+        "address": {
+          "addressCountry": "India",
+          "addressLine1": "Varthur, Gunjur",
+          "addressLine2": "B305, Candeur Landmark, Tower Eiffel",
+          "addressRegion": "Karnataka",
+          "postalCode": "560087"
+        },
+        "ownerDetails": {
+          "ownerName": "TestOwner",
+          "ownerContactDetails1": "+912325435634"
+        },
+        "verificationStatus": "Completed",
+        "verificationEvidence": {
+          "evidenceName1": "Letter",
+          "evidenceURL1": "http://localhost"
+        },
+        "stayDetails": {
+          "fromDate": "01-01-2000",
+          "toDate": "01-01-2020"
+        },
+        "verificationRemarks": "done",
+        "neighbourDetails": {
+          "neighbourName": "Test Neighbour",
+          "neighbourContactDetails1": "+912325435634"
+        }
+      },
+      "issuanceDate": "2024-12-02T16:53:40.405Z",
+      "holder": {
+        "id": "did:key:zQ3shs2AM1EMpfDthXaZJmBnjvGbuzMPB94uFAeUkvGe5sM15"
+      },
+      "id": "claimId:97c5117320016ec0",
+      "type": [
+        "VerifiableCredential",
+        "TAddressVerificationV1R0"
+      ],
+      "@context": [
+        "https://www.w3.org/2018/credentials/v1",
+        "https://schema.affinidi.io/TAddressVerificationV1R0.jsonld"
+      ],
+      "issuer": "did:key:zQ3shNyLdzYDbwZibk5hinAm5ChzxMinywBJz98fbFcQbn6Xf",
+      "proof": {
+        "type": "EcdsaSecp256k1Signature2019",
+        "created": "2024-12-02T16:53:50Z",
+        "verificationMethod": "did:key:zQ3shNyLdzYDbwZibk5hinAm5ChzxMinywBJz98fbFcQbn6Xf#zQ3shNyLdzYDbwZibk5hinAm5ChzxMinywBJz98fbFcQbn6Xf",
+        "proofPurpose": "assertionMethod",
+        "jws": "eyJhbGciOiJFUzI1NksiLCJiNjQiOmZhbHNlLCJjcml0IjpbImI2NCJdfQ..Jiq6yE6BTq9wXI2QT8-174_BAA-W2fdEF1d5DaUXEC1gMr62zSw2pGL_fl_eIBUPwKsOgc6TA0E1_rMmD8BOKA"
+      }
+    },
+    {
+      "credentialSchema": {
+        "type": "TPersonalInformationVerificationV1R0",
+        "id": "https://schema.affinidi.io/TPersonalInformationVerificationV1R0.json"
+      },
+      "credentialSubject": {
+        "birthdate": "01-01-1990",
+        "phoneNumber": "7666009585",
+        "gender": "male",
+        "verificationStatus": "Completed",
+        "citizenship": "Indian",
+        "verificationEvidence": {
+          "evidenceName1": "letter",
+          "evidenceURL1": "http://localhost"
+        },
+        "name": {
+          "nickname": "Grajesh Testing",
+          "givenName": "Grajesh",
+          "familyName": "Chandra"
+        },
+        "birthCountry": "India",
+        "nationalIdentification": {
+          "idNumber1": "pan",
+          "idType1": "askjd13212432d"
+        },
+        "verificationRemarks": "Done",
+        "email": "grajesh.c@affinidi.com",
+        "maritalStatus": "married"
+      },
+      "issuanceDate": "2024-12-02T16:53:21.252Z",
+      "holder": {
+        "id": "did:key:zQ3shs2AM1EMpfDthXaZJmBnjvGbuzMPB94uFAeUkvGe5sM15"
+      },
+      "id": "claimId:34c64b3d62bedfbd",
+      "type": [
+        "VerifiableCredential",
+        "TPersonalInformationVerificationV1R0"
+      ],
+      "@context": [
+        "https://www.w3.org/2018/credentials/v1",
+        "https://schema.affinidi.io/TPersonalInformationVerificationV1R0.jsonld"
+      ],
+      "issuer": "did:key:zQ3shNyLdzYDbwZibk5hinAm5ChzxMinywBJz98fbFcQbn6Xf",
+      "proof": {
+        "type": "EcdsaSecp256k1Signature2019",
+        "created": "2024-12-02T16:53:34Z",
+        "verificationMethod": "did:key:zQ3shNyLdzYDbwZibk5hinAm5ChzxMinywBJz98fbFcQbn6Xf#zQ3shNyLdzYDbwZibk5hinAm5ChzxMinywBJz98fbFcQbn6Xf",
+        "proofPurpose": "assertionMethod",
+        "jws": "eyJhbGciOiJFUzI1NksiLCJiNjQiOmZhbHNlLCJjcml0IjpbImI2NCJdfQ.._3MuNw77JKwaLlaLuPdDmSBQdvdRYntumuvWYgJPNXsIDZjvrB4IEGJX3y3EtcHsleDKK65EXjyD0kUfknPWOg"
+      }
+    },
+    {
+      "credentialSchema": {
+        "type": "TEducationVerificationV1R0",
+        "id": "https://schema.affinidi.io/TEducationVerificationV1R0.json"
+      },
+      "credentialSubject": {
+        "educationDetails": {
+          "educationRegistrationID": "admins1223454356",
+          "qualification": "Graduation",
+          "course": "MBA",
+          "graduationDate": "12-08-2013",
+          "dateAttendedFrom": "12-08-2011",
+          "dateAttendedTo": "12-07-2013"
+        },
+        "verificationRemarks": "completed",
+        "verificationStatus": "Verified",
+        "institutionDetails": {
+          "institutionEmail": "test@affinidi.com",
+          "institutionContact1": "+91 1234567890",
+          "institutionContact2": "+91 1234567890",
+          "institutionName": "Affinidi",
+          "institutionAddress": {
+            "addressCountry": "India",
+            "addressLine1": "Varthur, Gunjur",
+            "addressLine2": "B305, Candeur Landmark, Tower Eiffel",
+            "addressRegion": "Karnataka",
+            "postalCode": "560087"
+          },
+          "institutionWebsiteURL": "affinidi.com"
+        },
+        "candidateDetails": {
+          "name": "Grajesh Chandra",
+          "phoneNumber": "7666009585",
+          "gender": "male",
+          "email": "grajesh.c@affinidi.com"
+        },
+        "verificationEvidence": {
+          "evidenceName1": "Degree",
+          "evidenceURL1": "http://localhost"
+        }
+      },
+      "issuanceDate": "2024-12-02T16:53:59.689Z",
+      "holder": {
+        "id": "did:key:zQ3shs2AM1EMpfDthXaZJmBnjvGbuzMPB94uFAeUkvGe5sM15"
+      },
+      "id": "claimId:b92044d269deaafb",
+      "type": [
+        "VerifiableCredential",
+        "TEducationVerificationV1R0"
+      ],
+      "@context": [
+        "https://www.w3.org/2018/credentials/v1",
+        "https://schema.affinidi.io/TEducationVerificationV1R0.jsonld"
+      ],
+      "issuer": "did:key:zQ3shNyLdzYDbwZibk5hinAm5ChzxMinywBJz98fbFcQbn6Xf",
+      "proof": {
+        "type": "EcdsaSecp256k1Signature2019",
+        "created": "2024-12-02T16:54:07Z",
+        "verificationMethod": "did:key:zQ3shNyLdzYDbwZibk5hinAm5ChzxMinywBJz98fbFcQbn6Xf#zQ3shNyLdzYDbwZibk5hinAm5ChzxMinywBJz98fbFcQbn6Xf",
+        "proofPurpose": "assertionMethod",
+        "jws": "eyJhbGciOiJFUzI1NksiLCJiNjQiOmZhbHNlLCJjcml0IjpbImI2NCJdfQ..MTr4jleSgTx5WuDHd6QQz6VqeNs-LI1bAgvvADE30DkXYXHk1xUF4fgLgKkcyPprMsQNJ6Rd3gSoKfXVAyUxow"
+      }
+    },
+    {
+      "credentialSchema": {
+        "type": "TEmploymentVerificationV1R1",
+        "id": "https://schema.affinidi.io/TEmploymentVerificationV1R1.json"
+      },
+      "credentialSubject": {
+        "verificationRemarks": "Done",
+        "employerDetails": {
+          "companyName": "Affinidi",
+          "companyAddress": {
+            "addressCountry": "India",
+            "addressLine1": "Varthur, Gunjur",
+            "addressLine2": "B305, Candeur Landmark, Tower Eiffel",
+            "addressRegion": "Karnataka",
+            "postalCode": "560087"
+          },
+          "hRDetails": {
+            "hRfirstName": "Testing",
+            "hRContactNumber1": "+911234567789",
+            "whenToContact": "9:00-6:00 PM",
+            "hRDesignation": "Lead HR",
+            "hREmail": "hr@affinidi.com",
+            "hRLastName": "HR"
+          }
+        },
+        "verificationStatus": "Completed",
+        "candidateDetails": {
+          "name": "Grajesh Chandra",
+          "phoneNumber": "7666009585",
+          "gender": "male",
+          "email": "grajesh.c@affinidi.com"
+        },
+        "employmentDetails": {
+          "eligibleForRehire": "Yes",
+          "reasonForLeaving": "Resignation",
+          "annualisedSalary": "10000",
+          "currency": "INR",
+          "designation": "Testing",
+          "employmentStatus": "Fulltime",
+          "tenure": {
+            "fromDate": "05-2022",
+            "toDate": "06-2050"
+          }
+        },
+        "verificationEvidence": {
+          "evidenceName1": "letter",
+          "evidenceURL1": "http://localhost"
+        }
+      },
+      "issuanceDate": "2024-12-02T16:54:12.767Z",
+      "holder": {
+        "id": "did:key:zQ3shs2AM1EMpfDthXaZJmBnjvGbuzMPB94uFAeUkvGe5sM15"
+      },
+      "id": "claimId:8076e3f05e734b4a",
+      "type": [
+        "VerifiableCredential",
+        "TEmploymentVerificationV1R1"
+      ],
+      "@context": [
+        "https://www.w3.org/2018/credentials/v1",
+        "https://schema.affinidi.io/TEmploymentVerificationV1R1.jsonld"
+      ],
+      "issuer": "did:key:zQ3shNyLdzYDbwZibk5hinAm5ChzxMinywBJz98fbFcQbn6Xf",
+      "proof": {
+        "type": "EcdsaSecp256k1Signature2019",
+        "created": "2024-12-02T16:54:21Z",
+        "verificationMethod": "did:key:zQ3shNyLdzYDbwZibk5hinAm5ChzxMinywBJz98fbFcQbn6Xf#zQ3shNyLdzYDbwZibk5hinAm5ChzxMinywBJz98fbFcQbn6Xf",
+        "proofPurpose": "assertionMethod",
+        "jws": "eyJhbGciOiJFUzI1NksiLCJiNjQiOmZhbHNlLCJjcml0IjpbImI2NCJdfQ..wsOTPlB_E21Av4JORHBBF-RL5XK6CSvQR9KNvFi8yDBzfRY8JgFsSLRmd9kiiHkk6rYsJeHhWBmL-iY-LG5nlQ"
+      }
+    }
+  ],
+  "holder": {
+    "id": "did:key:zQ3shs2AM1EMpfDthXaZJmBnjvGbuzMPB94uFAeUkvGe5sM15"
+  },
+  "id": "claimId:NlzA8JYPXqlBXXB53LNI5",
+  "proof": {
+    "type": "EcdsaSecp256k1Signature2019",
+    "created": "2025-01-06T12:10:01Z",
+    "verificationMethod": "did:key:zQ3shs2AM1EMpfDthXaZJmBnjvGbuzMPB94uFAeUkvGe5sM15#zQ3shs2AM1EMpfDthXaZJmBnjvGbuzMPB94uFAeUkvGe5sM15",
+    "proofPurpose": "authentication",
+    "challenge": "f9cfe8e9-9",
+    "domain": "did:key:zQ3shNyLdzYDbwZibk5hinAm5ChzxMinywBJz98fbFcQbn6Xf",
+    "jws": "eyJhbGciOiJFUzI1NksiLCJiNjQiOmZhbHNlLCJjcml0IjpbImI2NCJdfQ..Ibx5vK2ooR1Taqb1tfj93ZGpJXfZBNwg0jE91GARWMhk5OGCVNgbMuxRrkjiEvSwiD0dKu6ig33cyoTQ9fTU4g"
+  }
+}
