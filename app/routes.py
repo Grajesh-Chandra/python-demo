@@ -375,7 +375,7 @@ def generate_report():
 
         c.showPage()  # End the first page
 
-        url = "https://verification.avvanz.com"
+        url = "http://localhost:5000/verify"
 
         c.drawString(100, 750, f"Click here ({url}) for Verification")
         # Add clickable URL link
