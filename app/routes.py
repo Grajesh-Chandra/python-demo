@@ -21,26 +21,10 @@ import os
 import hashlib
 import qrcode
 
-# api_gateway_url = app.config["api_gateway_url"]
-# token_endpoint = app.config["token_endpoint"]
-# project_id = app.config["project_id"]
-# private_key = app.config["private_key"]
-# token_id = app.config["token_id"]
-# passphrase = app.config["passphrase"]
-# key_id = app.config["key_id"]
-# vault_url = app.config["vault_url"]
-# course_credential_type_id = app.config["course_credential_type_id"]
-# personal_information_credential_type_id = app.config[
-#     "personal_information_credential_type_id"
-# ]
-# employment_credential_type_id = app.config["employment_credential_type_id"]
-# education_credential_type_id = app.config["education_credential_type_id"]
-# address_credential_type_id = app.config["address_credential_type_id"]
-
 api_gateway_url = os.environ.get("API_GATEWAY_URL")
 token_endpoint = os.environ.get("TOKEN_ENDPOINT")
 project_id = os.environ.get("PROJECT_ID")
-private_key = os.environ.get("PRIVATE_KEY")
+private_key = os.environ.get("PRIVATE_KEY").replace("\\n", "\n")
 token_id = os.environ.get("TOKEN_ID")
 passphrase = os.environ.get("PASSPHRASE")
 key_id = os.environ.get("KEY_ID")
@@ -275,9 +259,8 @@ def issue_credentials():
                 api_client
             )
 
-            projectId = "97dde52f-e99c-420e-885a-3cc3032e73d9"
-            request_json = {"data": credentials_request,
-                            "claimMode": "TX_CODE"}
+            projectId = project_id
+            request_json = {"data": credentials_request, "claimMode": "TX_CODE"}
             print("request_json", request_json)
 
             start_issuance_input = (
@@ -305,8 +288,7 @@ def issue_credentials():
 
 def get_file_content_buffer(credential):
     json_buffer = BytesIO()
-    json_buffer.write(json.dumps(
-        credential).encode("utf-8"))
+    json_buffer.write(json.dumps(credential).encode("utf-8"))
     json_buffer.seek(0)
     return json_buffer
 
@@ -322,35 +304,45 @@ def generate_qr_code(url):
     qr_buffer.seek(0)
     return qr_buffer
 
-def create_table(canvas,):
+
+def create_table(
+    canvas,
+):
     data = [
-        ["Candidate/Employee Full Name", "Paramesh K", "Order ID", "241004.1021"],
+        ["Candidate/Employee Full Name", "Grajesh Chandra", "Order ID", "241004.1021"],
         ["Company Name", "Affinidi", "Branch Name", ""],
         ["Date of Report", "14-01-2025", "Cost Centre", "-"],
         ["Package Code/Level (if any)", "", "Case Reference No.", "AV041024MTIxNDU0"],
-        ["Result", "Completed", "Result", "GREEN"]
+        ["Result", "Completed", "Result", "GREEN"],
     ]
     table = Table(data, colWidths=[150, 100, 150, 150])
 
     # (attribute, (start_column, start_row), (end_column, end_row), value)
-    style = TableStyle([
-        ('BACKGROUND', (0, 0), (0, -1), colors.yellow), # First column
-        ('BACKGROUND', (2, 0), (2, -1), colors.yellow), # 3rd column
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),   # Text color for the header row
-        ('GRID', (0, 0), (-1, -1), 1, colors.black),    # Add grid lines
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),          # Center-align all text
-    ])
+    style = TableStyle(
+        [
+            ("BACKGROUND", (0, 0), (0, -1), colors.yellow),  # First column
+            ("BACKGROUND", (2, 0), (2, -1), colors.yellow),  # 3rd column
+            (
+                "TEXTCOLOR",
+                (0, 0),
+                (-1, 0),
+                colors.black,
+            ),  # Text color for the header row
+            ("GRID", (0, 0), (-1, -1), 1, colors.black),  # Add grid lines
+            ("ALIGN", (0, 0), (-1, -1), "CENTER"),  # Center-align all text
+        ]
+    )
     table.setStyle(style)
 
     # Calculate table position (x, y coordinates on the page)
     table_width, table_height = table.wrap(0, 0)  # Get table dimensions
-    page_width, page_height = A4  
+    page_width, page_height = A4
 
     # Set margins (e.g., 50 points on left and right)
     margin = 30
 
-    x = (page_width - table_width + margin) / 2                 # Center the table horizontally
-    y = page_height - 200                        # Position the table below the header text
+    x = (page_width - table_width + margin) / 2  # Center the table horizontally
+    y = page_height - 200  # Position the table below the header text
 
     # Draw the table on the canvas
     table.drawOn(canvas, x, y)
@@ -375,7 +367,7 @@ def generate_report():
 
         c.showPage()  # End the first page
 
-        url = "http://localhost:5000/verify"
+        url = "http://127.0.0.1:5000/verify"
 
         c.drawString(100, 750, f"Click here ({url}) for Verification")
         # Add clickable URL link
@@ -451,8 +443,7 @@ def generate_report():
         json_buffer = get_file_content_buffer(AddressVerification_credentials)
 
         # Attach JSON to PDF
-        pdf_writer.add_attachment(
-            "AddressVerification.json", json_buffer.getbuffer())
+        pdf_writer.add_attachment("AddressVerification.json", json_buffer.getbuffer())
 
         # Create JSON data
         PersonalInformationVerification_credentials = {
@@ -505,7 +496,8 @@ def generate_report():
         }
 
         json_buffer = get_file_content_buffer(
-            PersonalInformationVerification_credentials)
+            PersonalInformationVerification_credentials
+        )
 
         # Attach JSON to PDF
         pdf_writer.add_attachment(
@@ -576,12 +568,10 @@ def generate_report():
             },
         )
 
-        json_buffer = get_file_content_buffer(
-            EducationVerification_credentials)
+        json_buffer = get_file_content_buffer(EducationVerification_credentials)
 
         # Attach JSON to PDF
-        pdf_writer.add_attachment(
-            "EducationVerification.json", json_buffer.getbuffer())
+        pdf_writer.add_attachment("EducationVerification.json", json_buffer.getbuffer())
 
         # Create JSON data
         EmploymentVerification_credentials = {
@@ -649,8 +639,7 @@ def generate_report():
                 "jws": "eyJhbGciOiJFUzI1NksiLCJiNjQiOmZhbHNlLCJjcml0IjpbImI2NCJdfQ..wsOTPlB_E21Av4JORHBBF-RL5XK6CSvQR9KNvFi8yDBzfRY8JgFsSLRmd9kiiHkk6rYsJeHhWBmL-iY-LG5nlQ",
             },
         }
-        json_buffer = get_file_content_buffer(
-            EmploymentVerification_credentials)
+        json_buffer = get_file_content_buffer(EmploymentVerification_credentials)
 
         # Attach JSON to PDF
         pdf_writer.add_attachment(
@@ -659,7 +648,8 @@ def generate_report():
 
         # Create Signature
         pdf_hash_excluding_attachments = hash_pdf_content_excluding_attachments(
-            pdf_reader)
+            pdf_reader
+        )
         print(pdf_hash_excluding_attachments)
 
         pdf_signature = {
@@ -692,9 +682,7 @@ def generate_report():
 
         json_buffer = get_file_content_buffer(pdf_signature)
         # Attach Signature JSON to PDF
-        pdf_writer.add_attachment(
-            "PDFSignature.json", json_buffer.getbuffer()
-        )
+        pdf_writer.add_attachment("PDFSignature.json", json_buffer.getbuffer())
 
         # Write the final PDF to a buffer
         final_pdf_buffer = BytesIO()
@@ -726,7 +714,8 @@ def verify_pdf():
 
         # Hash the PDF content
         pdf_hash_excluding_attachments = hash_pdf_content_excluding_attachments(
-            pdf_reader)
+            pdf_reader
+        )
 
         attachments = {}
 
@@ -741,7 +730,7 @@ def verify_pdf():
                 data = b"".join(data)
 
             try:
-                if (filename != 'PDFSignature.json'):
+                if filename != "PDFSignature.json":
                     continue
 
                 # Attempt to decode as JSON
@@ -773,10 +762,9 @@ def pst():
         "projectId": project_id,
         "privateKey": private_key,
         "tokenId": token_id,
-        "passphrase": passphrase,
-        "keyId": key_id,
         "vaultUrl": vault_url,
     }
+    print("stats", stats)
     authProvider = affinidi_tdk_auth_provider.AuthProvider(stats)
     projectScopedToken = authProvider.fetch_project_scoped_token()
     print("projectScopedToken", projectScopedToken)
@@ -799,8 +787,11 @@ def verification(request):
     #     api_instance = affinidi_tdk_credential_verification_client.DefaultApi(api_client)
 
     url = api_gateway_url + f"/ver/v1/verifier/verify-vcs"
-    headers = {"Authorization": f"Bearer {
-        pst()}", "Content-Type": "application/json"}
+    headers = {
+        "Authorization": f"Bearer {
+        pst()}",
+        "Content-Type": "application/json",
+    }
 
     body = {
         "verifiableCredentials": [
