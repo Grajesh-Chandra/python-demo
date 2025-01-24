@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Background Checks</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+    />
+    <style>
+      body {
+        font-family: "Open Sans", sans-serif;
+        background-color: #f8f9fa;
+        margin: 20px;
+      }
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        background-color: #fff;
+        padding: 30px;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      }
+      h2 {
+        color: #333;
+        text-align: center;
+        margin-bottom: 30px;
+      }
+      .alert {
+        margin-bottom: 20px;
+        padding: 15px;
+        border-radius: 5px;
+      }
+      .form-group {
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+      }
+      label {
+        flex: 0 0 150px;
+        font-weight: bold;
+        margin-right: 10px;
+        color: #555;
+      }
+      input[type="text"],
+      select,
+      input[type="checkbox"] {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #ddd;
+        border-radius: 3px;
+        box-sizing: border-box;
+        font-size: 14px;
+      }
+      input[type="checkbox"] {
+        width: auto;
+        margin-left: 10px;
+      }
+      .phone-inputs {
+        display: flex;
+      }
+      .phone-inputs input {
+        width: 30%;
+        margin-right: 5px;
+      }
+      button {
+        background-color: #4caf50;
+        color: white;
+        padding: 12px 20px;
+        border: none;
+        border-radius: 3px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+      }
+      button:hover {
+        background-color: #45a049;
+      }
+      #orderConfirmation {
+        display: none;
+        margin-top: 20px;
+        padding: 20px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        text-align: center;
+      }
+      #orderIdDisplay {
+        font-size: 1.5em;
+        font-weight: bold;
+        color: #007bff;
+        margin-top: 10px;
+      }
+      #homeButtonContainer {
+        text-align: center;
+        margin-top: 20px;
+        display: none;
+      }
+      /* Consent checkbox styling */
+      .consent-container {
+        display: flex;
+        align-items: flex-start; /* Align items to the top */
+      }
+      #consent {
+        margin-top: 4px; /* Adjust vertical alignment of the checkbox */
+        transform: scale(1.3);
+        cursor: pointer;
+      }
+      #consentLabel {
+        margin-left: 5px;
+        font-weight: bold;
+        color: #428bca; /* Blue color for consent label */
+        cursor: pointer;
+        word-break: break-word; /* Allow long text to wrap */
+        flex-grow: 1; /* Allow the label to take up available space */
+      }
+      #consent:checked + #consentLabel {
+        color: #28a745; /* Green color for checked consent label */
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>Background Checks</h2>
+
+      <form id="backgroundCheckForm">
+        <div class="form-group">
+          <label for="personalInfo">Personal Information Checks</label>
+          <input
+            type="checkbox"
+            id="personalInfo"
+            name="personalInfo"
+            checked
+          />
+        </div>
+        <div class="form-group">
+          <label for="address">Address Checks</label>
+          <input type="checkbox" id="address" name="address" checked />
+        </div>
+        <div class="form-group">
+          <label for="education">Education Checks</label>
+          <input type="checkbox" id="education" name="education" checked />
+        </div>
+        <div class="form-group">
+          <label for="employment">Employment Checks</label>
+          <input type="checkbox" id="employment" name="employment" checked />
+        </div>
+        <div class="form-group">
+          <label for="criminality">Civil Litigation Checks</label>
+          <input type="checkbox" id="criminality" name="criminality" checked />
+        </div>
+
+        <div class="form-group consent-container">
+          <input type="checkbox" id="consent" name="consent" required />
+          <label for="consent" id="consentLabel"
+            >I give my consent for the background checks</label
+          >
+        </div>
+        <div style="text-align: center; margin-top: 20px">
+          <button type="submit" class="btn btn-success" id="submitChecks">
+            Create Order
+          </button>
+          <button type="button" class="btn btn-warning" id="goBackButton">
+            Go Back
+          </button>
+        </div>
+      </form>
+
+      <div id="orderConfirmation">
+        <h3>Thank you!</h3>
+        <p>Your Order with select background checks have been submitted.</p>
+        <p>Your Order ID is:</p>
+        <div id="orderIdDisplay"></div>
+      </div>
+
+      <div id="homeButtonContainer">
+        <button type="button" class="btn btn-info" id="homeButton">Home</button>
+      </div>
+    </div>
+
+    <script>
+      document
+        .getElementById("goBackButton")
+        .addEventListener("click", function () {
+          window.history.back();
+        });
+
+      document
+        .getElementById("submitChecks")
+        .addEventListener("click", function (event) {
+          event.preventDefault();
+
+          const consentCheckbox = document.getElementById("consent");
+          if (!consentCheckbox.checked) {
+            alert("Please provide your consent to proceed.");
+            return; // Stop form submission
+          }
+
+          const orderId = generateOrderId();
+          document.getElementById("orderIdDisplay").textContent = orderId;
+
+          const formData = {
+            orderId: orderId,
+            checks: {
+              personalInfo: document.getElementById("personalInfo").checked,
+              address: document.getElementById("address").checked,
+              education: document.getElementById("education").checked,
+              employment: document.getElementById("employment").checked,
+              criminality: document.getElementById("criminality").checked,
+            },
+            consent: document.getElementById("consent").checked,
+          };
+
+          fetch("/save-order", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(formData),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.success) {
+                document.getElementById("backgroundCheckForm").style.display =
+                  "none";
+                document.getElementById("orderConfirmation").style.display =
+                  "block";
+                document.getElementById("homeButtonContainer").style.display =
+                  "block";
+              } else {
+                alert("Failed to save order. Please try again.");
+              }
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+              alert("An error occurred. Please try again.");
+            });
+        });
+
+      document
+        .getElementById("homeButton")
+        .addEventListener("click", function () {
+          window.location.href = "/";
+        });
+
+      function generateOrderId() {
+        const timestamp = Date.now().toString(36);
+        const random = Math.random().toString(36).substring(2, 8);
+        return timestamp + "-" + random.toUpperCase();
+      }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>

@@ -7,11 +7,14 @@ import affinidi_tdk_credential_issuance_client
 import logging
 from pypdf import PdfWriter, PdfReader
 from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import A4
+from reportlab.lib.pagesizes import A4, letter
 from reportlab.lib.utils import ImageReader
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Spacer, Paragraph
 from reportlab.lib import colors
-
+from reportlab.lib.units import inch  # Import inch
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib import colors
+import uuid
 import json
 from io import BytesIO
 import base64
@@ -37,10 +40,217 @@ employment_credential_type_id = os.environ.get("EMPLOYMENT_CREDENTIAL_TYPE_ID")
 education_credential_type_id = os.environ.get("EDUCATION_CREDENTIAL_TYPE_ID")
 address_credential_type_id = os.environ.get("ADDRESS_CREDENTIAL_TYPE_ID")
 
+DATA_FILE = "orders/order.json"
+
+
+@app.route("/create-case")
+def case():
+    return render_template("case.html")
+
+
+@app.route("/checks")
+def checks():
+    return render_template("checks.html")
+
 
 @app.route("/")
 def home():
     return render_template("index.html")
+
+
+@app.route("/save-order", methods=["POST"])
+def save_order():
+    data = request.get_json()
+    order_id = data.get("orderId")
+
+    # Ensure the orders directory exists
+    orders_dir = "orders"
+    if not os.path.exists(orders_dir):
+        os.makedirs(orders_dir)
+
+    orders_file = os.path.join(orders_dir, "order.json")
+
+    try:
+        # Read existing orders
+        if os.path.exists(orders_file) and os.path.getsize(orders_file) > 0:
+            with open(orders_file, "r") as f:
+                orders = json.load(f)
+                if not isinstance(orders, list):
+                    orders = []  # Reset to empty list if not a list
+        else:
+            orders = []
+
+        # Append new order
+        orders.append(data)
+
+        # Write updated orders back to the file
+        with open(orders_file, "w") as f:
+            json.dump(orders, f, indent=4)
+
+        return jsonify({"success": True})
+    except Exception as e:
+        logging.error(f"Error saving order: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/orders", methods=["GET"])
+def orders_page():
+    return render_template("orders.html")
+
+
+@app.route("/get_orders", methods=["GET"])
+def get_orders():
+    try:
+        with open(DATA_FILE, "r") as f:
+            orders = json.load(f)
+            # Convert checks dictionary to a list if it's a dictionary
+            for order in orders:
+                if isinstance(order.get("checks"), dict):
+                    order["checks"] = [
+                        check for check, value in order["checks"].items() if value
+                    ]
+                    order["checks"] = [
+                        (
+                            "Personal Information Verification"
+                            if check == "personalInfo"
+                            else (
+                                "Address Verification"
+                                if check == "address"
+                                else (
+                                    "Education Verification"
+                                    if check == "education"
+                                    else (
+                                        "Employment Details Verification with HR"
+                                        if check == "employment"
+                                        else (
+                                            "Civil Litigation Check"
+                                            if check == "criminality"
+                                            else check
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                        for check in order["checks"]
+                    ]
+        return jsonify(orders)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return jsonify([]), 200
+
+
+@app.route("/generate_pdf/<order_id>")
+def generate_pdf(order_id):
+    try:
+        with open(DATA_FILE, "r") as f:
+            orders = json.load(f)
+    except FileNotFoundError:
+        return "Orders file not found.", 404
+    except json.JSONDecodeError:
+        return "Invalid JSON in orders file.", 500
+
+    order = next((o for o in orders if o["orderId"] == order_id), None)
+    if not order:
+        return "Order not found", 404
+
+    buffer = BytesIO()
+    p = canvas.Canvas(buffer, pagesize=letter)
+    styles = getSampleStyleSheet()
+    styleN = styles["Normal"]
+
+    # Header Table Data
+    header_data = [
+        [
+            "Candidate/Employee Full Name",
+            "GRAJESH CHANDRA",
+            "Order ID",
+            order.get("orderId", "-"),
+        ],
+        ["Company Name", "TEST COMPANY", "Branch Name", ""],
+        ["Date of Report", "02-02-2024", "Cost Centre", "-"],
+        ["Package Code/Level (if any)", "", "Case Reference No.", "AV0202240DA1OTA"],
+        ["Result", "Processing", "", ""],
+    ]
+
+    # Apply word wrap to the header data
+    for row in header_data:
+        for i in range(len(row)):
+            row[i] = Paragraph(row[i], styleN)
+
+    # Checks Table Data
+    checks_data = [
+        [
+            "Selected Checks",
+            "Years Of Coverage",
+            "Country Name",
+            "Verified Status",
+            "Remarks",
+        ]
+    ]
+    for check_name in order.get("checks", []):
+        if check_name == "personalInfo":
+            check_name = "Personal Information Verification"
+        elif check_name == "address":
+            check_name = "Address Verification"
+        elif check_name == "education":
+            check_name = "Education Verification"
+        elif check_name == "employment":
+            check_name = "Employment Details Verification with HR"
+        elif check_name == "criminality":
+            check_name = "Civil Litigation Check"
+
+        checks_data.append([check_name, "-", "Worldwide", "In Progress", ""])
+
+    # Apply word wrap to the header data
+    for row in checks_data:
+        for i in range(len(row)):
+            row[i] = Paragraph(row[i], styleN)
+
+    # Table Styles
+    table_style = TableStyle(
+        [
+            ("BACKGROUND", (0, 0), (-1, 0), colors.orange),
+            ("TEXTCOLOR", (0, 0), (-1, -1), colors.black),
+            ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+            ("TOPPADDING", (0, 0), (-1, -1), 6),
+            ("GRID", (0, 0), (-1, -1), 1, colors.black),
+        ]
+    )
+
+    # Calculate available width (accounting for margins)
+    available_width = letter[0] - 2 * inch  # 1-inch margins on left and right
+
+    # Create Tables with adjusted colWidths and wrapOn
+    header_table = Table(header_data, colWidths=[available_width / 4.0] * 4)
+    header_table.setStyle(table_style)
+    w1, h1 = header_table.wrapOn(p, available_width, letter[1])
+    header_table.drawOn(p, inch, 7.5 * inch)
+
+    p.drawCentredString(letter[0] / 2, 7.5 * inch - h1 - 0.2 * inch, "Check Details")
+    p.line(
+        inch,
+        7.5 * inch - h1 - 0.3 * inch,
+        letter[0] - inch,
+        7.5 * inch - h1 - 0.3 * inch,
+    )
+    Spacer(1, 0.2 * inch).wrapOn(p, available_width, letter[1])
+
+    checks_table = Table(checks_data, colWidths=[available_width / 5.0] * 5)
+    checks_table.setStyle(table_style)
+    checks_table.wrapOn(p, available_width, letter[1])
+    checks_table.drawOn(p, inch, 7.5 * inch - h1 - 0.5 * inch - checks_table._height)
+
+    p.showPage()
+    p.save()
+    buffer.seek(0)
+
+    return send_file(
+        buffer,
+        mimetype="application/pdf",
+        download_name=f"order_{order_id}.pdf",
+        as_attachment=True,
+    )
 
 
 @app.route("/cis")

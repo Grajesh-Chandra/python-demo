@@ -3,31 +3,72 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='css/bootstrap.min.css') }}"
-    />
     <title>Demo App</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-TTrpTLuAYjTMAiuE4a2MqrVkzJ38nLxVHPxgdLGXZR5EzBv4s/bgHLiKUVVCJcE/wJ"
+      crossorigin="anonymous"
+    />
+    <style>
+      body {
+        background-color: #f8f9fa; /* Light gray background */
+        font-family: "Open Sans", sans-serif; /* Use a modern font */
+      }
+      .container {
+        margin-top: 50px;
+      }
+      .header {
+        background-color: #007bff; /* Bootstrap blue */
+        color: #fff;
+        padding: 20px;
+        border-radius: 5px;
+      }
+      .explore-more {
+        background-color: #007bff;
+        color: #fff;
+        padding: 15px;
+        border-radius: 5px;
+        margin-top: 20px;
+      }
+      .links {
+        list-style: none;
+        padding: 0;
+      }
+      .links li {
+        margin-bottom: 10px;
+      }
+      .links a {
+        color: #007bff; /* Link color */
+        text-decoration: none;
+      }
+    </style>
   </head>
   <body>
     <div class="container">
-      <h1>Welcome to Demo App</h1>
-      <p>This is a simple Flask application using Bootstrap for styling.</p>
+      <div class="header text-center">
+        <h1>Welcome to Background Verification Demo App</h1>
+        <p>This is a simple Flask application using Bootstrap for styling.</p>
+      </div>
+
+      <div class="explore-more text-center">
+        <h3>Explore More</h3>
+      </div>
+
+      <ul class="links">
+        <li><a href="/create-case">Create Case</a></li>
+        <li><a href="/orders">Orders</a></li>
+        <li><a href="/cis">Affinidi Credential Issuance</a></li>
+        <li><a href="/iota">Affinidi Iota Framework</a></li>
+        <li><a href="/report">Generate Final Report</a></li>
+        <li><a href="/verify">Verify Final Report</a></li>
+      </ul>
     </div>
 
-    <div class="card-body">
-      <h2 class="h4 mb-1">Explore More</h2>
-      <hr class="mt-2" />
-      <div>
-        <a href="/cis"> Affinidi Credential Issuance </a>
-        <br />
-        <a href="/iota"> Affinidi Iota Framework </a>
-        <br />
-        <a href="/report"> Generate Final Report </a>
-        <br />
-        <a href="/verify"> Verify Final Report </a>
-      </div>
-    </div>
-    <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-C6ZYgfuA2AA0+9MZqF93AZvh01xk01Pkus4EUkpJ7wY4x/Ta9VRjCzwQOyqkLT7"
+      crossorigin="anonymous"
+    ></script>
   </body>
 </html>
