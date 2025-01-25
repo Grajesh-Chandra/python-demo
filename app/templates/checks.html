@@ -90,7 +90,19 @@
         color: #007bff;
         margin-top: 10px;
       }
+
+      #responseDisplay2 {
+        font-size: 1.5em;
+        font-weight: bold;
+        color: rgb(255, 0, 64);
+        margin-top: 10px;
+      }
       #homeButtonContainer {
+        text-align: center;
+        margin-top: 20px;
+        display: none;
+      }
+      #claimButtonContainer {
         text-align: center;
         margin-top: 20px;
         display: none;
@@ -170,11 +182,22 @@
         <p>Your Order with select background checks have been submitted.</p>
         <p>Your Order ID is:</p>
         <div id="orderIdDisplay"></div>
+      </p>
+        <p>
+          Claim your Digital Credentials of this order using the following
+          transaction code:
+        </p>
+        <div id="responseDisplay2"></div>
       </div>
 
       <div id="homeButtonContainer">
         <button type="button" class="btn btn-info" id="homeButton">Home</button>
       </div>
+
+      <div id="claimButtonContainer">
+        <button type="button" class="btn btn-success" id="claimButton">Claim Credentials</button>
+      </div>
+
     </div>
 
     <script>
@@ -205,7 +228,7 @@
               address: document.getElementById("address").checked,
               education: document.getElementById("education").checked,
               employment: document.getElementById("employment").checked,
-              criminality: document.getElementById("criminality").checked,
+              criminal: document.getElementById("criminality").checked,
             },
             consent: document.getElementById("consent").checked,
           };
@@ -226,6 +249,13 @@
                   "block";
                 document.getElementById("homeButtonContainer").style.display =
                   "block";
+                document.getElementById("claimButtonContainer").style.display =
+                  "block";
+                document.getElementById("responseDisplay2").textContent =
+                  data.txCode;
+                document.getElementById("claimButton").addEventListener("click", function () {
+                window.open(data.vaultLink, "_blank");
+              });
               } else {
                 alert("Failed to save order. Please try again.");
               }
@@ -241,7 +271,6 @@
         .addEventListener("click", function () {
           window.location.href = "/";
         });
-
       function generateOrderId() {
         const timestamp = Date.now().toString(36);
         const random = Math.random().toString(36).substring(2, 8);

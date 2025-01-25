@@ -39,8 +39,12 @@ personal_information_credential_type_id = os.environ.get(
 employment_credential_type_id = os.environ.get("EMPLOYMENT_CREDENTIAL_TYPE_ID")
 education_credential_type_id = os.environ.get("EDUCATION_CREDENTIAL_TYPE_ID")
 address_credential_type_id = os.environ.get("ADDRESS_CREDENTIAL_TYPE_ID")
+background_check_credential_type_id = os.environ.get(
+    "BACKGROUND_CHECK_CREDENTIAL_TYPE_ID"
+)
 
 DATA_FILE = "orders/order.json"
+CHECKS_DATA_DIR = "orders"
 
 
 @app.route("/create-case")
@@ -61,14 +65,101 @@ def home():
 @app.route("/save-order", methods=["POST"])
 def save_order():
     data = request.get_json()
+    if not data:
+        return jsonify({"success": False, "error": "No data provided"}), 400
+
     order_id = data.get("orderId")
+    if not order_id:
+        return jsonify({"success": False, "error": "orderId is required"}), 400
 
-    # Ensure the orders directory exists
-    orders_dir = "orders"
-    if not os.path.exists(orders_dir):
-        os.makedirs(orders_dir)
+    checks_config = data.get("checks", {})
+    payload_for_checks_api = {}
 
-    orders_file = os.path.join(orders_dir, "order.json")
+    try:
+        if not os.path.exists(CHECKS_DATA_DIR):
+            os.makedirs(CHECKS_DATA_DIR)
+
+        for check_type, should_run in checks_config.items():
+            if should_run:
+                check_file = os.path.join(CHECKS_DATA_DIR, f"{check_type}.json")
+                if os.path.exists(check_file):
+                    with open(check_file, "r") as f:
+                        try:
+                            check_data = json.load(f)
+                            payload_for_checks_api[check_type] = check_data
+                        except json.JSONDecodeError:
+                            logging.error(f"{check_file} is corrupted.")
+                            return (
+                                jsonify(
+                                    {
+                                        "success": False,
+                                        "error": f"Error reading {check_type} data.",
+                                    }
+                                ),
+                                500,
+                            )
+                else:
+                    logging.warning(f"Check data file not found: {check_file}")
+                    return (
+                        jsonify(
+                            {"success": False, "error": f"{check_type} data not found."}
+                        ),
+                        400,
+                    )
+
+        # Now, payload_for_checks_api contains the data for the checks that should run.
+        # Here you would typically make a request to the other API:
+        # response = requests.post("other_api_url", json=payload_for_checks_api)
+        # For this example, we'll just log the payload.
+        print(f"Payload for checks API: {payload_for_checks_api}")
+        credentials_request = [
+            {
+                "credentialTypeId": background_check_credential_type_id,
+                "credentialData": payload_for_checks_api,
+            }
+        ]
+        print("credentials_request", credentials_request)
+
+        # Pass the projectScopedToken generated from AuthProvider package
+        configuration = affinidi_tdk_credential_issuance_client.Configuration()
+        configuration.api_key["ProjectTokenAuth"] = pst()
+
+        with affinidi_tdk_credential_issuance_client.ApiClient(
+            configuration
+        ) as api_client:
+            api_instance = affinidi_tdk_credential_issuance_client.IssuanceApi(
+                api_client
+            )
+
+            projectId = project_id
+            request_json = {"data": credentials_request, "claimMode": "TX_CODE"}
+            print("request_json", request_json)
+
+            start_issuance_input = (
+                affinidi_tdk_credential_issuance_client.StartIssuanceInput.from_dict(
+                    request_json
+                )
+            )
+            api_response = api_instance.start_issuance(
+                projectId, start_issuance_input=start_issuance_input
+            )
+
+            print("api_response", api_response)
+            response = api_response.to_dict()
+            response["vaultLink"] = (
+                vault_url
+                + f"/claim?credential_offer_uri={response['credentialOfferUri']}"
+            )
+            print("response", response)
+
+    except Exception as e:
+        logging.error(f"Error processing checks: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+    if not os.path.exists(CHECKS_DATA_DIR):
+        os.makedirs(CHECKS_DATA_DIR)
+
+    orders_file = os.path.join(CHECKS_DATA_DIR, "order.json")
 
     try:
         # Read existing orders
@@ -80,14 +171,17 @@ def save_order():
         else:
             orders = []
 
-        # Append new order
+        # Add backgroundCheckDetails to the order data
+        data["backgroundCheckDetails"] = payload_for_checks_api
+        data["issuanceResponse"] = response
         orders.append(data)
 
         # Write updated orders back to the file
         with open(orders_file, "w") as f:
             json.dump(orders, f, indent=4)
 
-        return jsonify({"success": True})
+        response["success"] = True
+        return response, 200
     except Exception as e:
         logging.error(f"Error saving order: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
@@ -104,35 +198,23 @@ def get_orders():
         with open(DATA_FILE, "r") as f:
             orders = json.load(f)
             # Convert checks dictionary to a list if it's a dictionary
+            check_mapping = {
+                "personalInfo": "Personal Information Verification",
+                "address": "Address Verification",
+                "education": "Education Verification",
+                "employment": "Employment Details Verification with HR",
+                "criminal": "Civil Litigation Check",
+            }
+
             for order in orders:
                 if isinstance(order.get("checks"), dict):
                     order["checks"] = [
                         check for check, value in order["checks"].items() if value
                     ]
                     order["checks"] = [
-                        (
-                            "Personal Information Verification"
-                            if check == "personalInfo"
-                            else (
-                                "Address Verification"
-                                if check == "address"
-                                else (
-                                    "Education Verification"
-                                    if check == "education"
-                                    else (
-                                        "Employment Details Verification with HR"
-                                        if check == "employment"
-                                        else (
-                                            "Civil Litigation Check"
-                                            if check == "criminality"
-                                            else check
-                                        )
-                                    )
-                                )
-                            )
-                        )
-                        for check in order["checks"]
+                        check_mapping.get(check, check) for check in order["checks"]
                     ]
+            print(orders)
         return jsonify(orders)
     except (FileNotFoundError, json.JSONDecodeError):
         return jsonify([]), 200
@@ -156,6 +238,7 @@ def generate_pdf(order_id):
     p = canvas.Canvas(buffer, pagesize=letter)
     styles = getSampleStyleSheet()
     styleN = styles["Normal"]
+    styleH = styles["Heading2"]  # Use a heading style for check titles
 
     # Header Table Data
     header_data = [
@@ -186,19 +269,18 @@ def generate_pdf(order_id):
             "Remarks",
         ]
     ]
-    for check_name in order.get("checks", []):
-        if check_name == "personalInfo":
-            check_name = "Personal Information Verification"
-        elif check_name == "address":
-            check_name = "Address Verification"
-        elif check_name == "education":
-            check_name = "Education Verification"
-        elif check_name == "employment":
-            check_name = "Employment Details Verification with HR"
-        elif check_name == "criminality":
-            check_name = "Civil Litigation Check"
+    check_mapping = {
+        "personalInfo": "Personal Information Verification",
+        "address": "Address Verification",
+        "education": "Education Verification",
+        "employment": "Employment Details Verification with HR",
+        "criminal": "Civil Litigation Check",
+    }
 
-        checks_data.append([check_name, "-", "Worldwide", "In Progress", ""])
+    for check_name, check_value in order.get("checks", {}).items():
+        if check_value:
+            check_name = check_mapping.get(check_name, check_name)
+            checks_data.append([check_name, "-", "Worldwide", "In Progress", ""])
 
     # Apply word wrap to the header data
     for row in checks_data:
@@ -227,7 +309,9 @@ def generate_pdf(order_id):
     w1, h1 = header_table.wrapOn(p, available_width, letter[1])
     header_table.drawOn(p, inch, 7.5 * inch)
 
-    p.drawCentredString(letter[0] / 2, 7.5 * inch - h1 - 0.2 * inch, "Check Details")
+    p.drawCentredString(
+        letter[0] / 2, 7.5 * inch - h1 - 0.2 * inch, "Background Verification Summary"
+    )
     p.line(
         inch,
         7.5 * inch - h1 - 0.3 * inch,
@@ -242,6 +326,104 @@ def generate_pdf(order_id):
     checks_table.drawOn(p, inch, 7.5 * inch - h1 - 0.5 * inch - checks_table._height)
 
     p.showPage()
+    # Add a new page for each check
+    for check_name, check_value in order.get("checks", {}).items():
+        if check_value:
+            check_display_name = check_mapping.get(check_name, check_name)
+
+            p.setFont("Helvetica-Bold", 16)
+            p.drawCentredString(letter[0] / 2, 10.5 * inch, check_display_name)
+            p.setFont("Helvetica", 12)
+
+            check_details = [
+                ["Field Name", "Personal Details", "Verified Value"],
+            ]
+            # Example Data. Replace with your actual data retrieval logic
+            if check_name == "personalInfo":
+                personal_info = order.get(
+                    "personalInfoDetails", {}
+                )  # Access the personalInfoDetails
+                check_details.extend(
+                    [
+                        [
+                            "First Name",
+                            personal_info.get("firstName", "Grajesh"),
+                            personal_info.get("firstName", "-"),
+                        ],
+                        [
+                            "Last Name",
+                            personal_info.get("lastName", "Chandra"),
+                            personal_info.get("lastName", "-"),
+                        ],
+                        [
+                            "Birthdate",
+                            personal_info.get("birthdate", "-"),
+                            personal_info.get("birthdate", "-"),
+                        ],
+                        [
+                            "Country of Birth",
+                            personal_info.get("birthCountry", "-"),
+                            personal_info.get("birthCountry", "-"),
+                        ],
+                        [
+                            "Email Address",
+                            personal_info.get("email", "-"),
+                            personal_info.get("email", "-"),
+                        ],
+                        [
+                            "Gender",
+                            personal_info.get("gender", "-"),
+                            personal_info.get("gender", "-"),
+                        ],
+                    ]
+                )
+            # Add similar blocks for other check types (address, education, etc.)
+            elif check_name == "address":
+                addressInfo = order.get("addressInfoDetails", {})
+                check_details.extend(
+                    [
+                        [
+                            "Address",
+                            addressInfo.get("addressLine1", "-"),
+                            addressInfo.get("addressLine1", "-"),
+                        ],
+                        [
+                            "City",
+                            addressInfo.get("city", "-"),
+                            addressInfo.get("city", "-"),
+                        ],
+                        [
+                            "State",
+                            addressInfo.get("state", "-"),
+                            addressInfo.get("state", "-"),
+                        ],
+                        [
+                            "Postal Code",
+                            addressInfo.get("postalCode", "-"),
+                            addressInfo.get("postalCode", "-"),
+                        ],
+                    ]
+                )
+
+            # Style the Check details table
+            check_table_style = TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.orange),
+                    ("TEXTCOLOR", (0, 0), (-1, -1), colors.black),
+                    ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+                    ("TOPPADDING", (0, 0), (-1, -1), 6),
+                    ("GRID", (0, 0), (-1, -1), 1, colors.black),
+                ]
+            )
+            # Create and draw the table
+            check_table = Table(check_details, colWidths=[available_width / 3.0] * 3)
+            check_table.setStyle(check_table_style)
+            check_table.wrapOn(p, available_width, letter[1])
+            check_table.drawOn(p, inch, 8 * inch)
+            p.showPage()
+
     p.save()
     buffer.seek(0)
 

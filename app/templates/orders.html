@@ -57,6 +57,11 @@
         color: #dc3545;
         cursor: pointer;
       }
+      .checks-column {
+        max-width: 300px; /* Adjust the width as needed */
+        white-space: normal;
+        word-wrap: break-word;
+      }
       .home-button-container {
         text-align: center;
         margin-top: 30px; /* Increased margin-top for more gap */
@@ -74,6 +79,9 @@
             <th>Checks</th>
             <th>Consent</th>
             <th>Action</th>
+            <th>Digital Link</th>
+            <th>Link Status</th>
+            <th>SecureTrust PDF</th>
           </tr>
         </thead>
         <tbody id="ordersTableBody"></tbody>
@@ -115,10 +123,26 @@
             const checksCell = row.insertCell();
             const consentCell = row.insertCell();
             const actionCell = row.insertCell();
+            const digitalLinkCell = row.insertCell();
+            const linkStatusCell = row.insertCell();
+            const secureTrustCell = row.insertCell();
 
             orderIdCell.textContent = order.orderId;
             checksCell.textContent = order.checks.join(", ");
+            checksCell.classList.add("checks-column");
+            checksCell.style.whiteSpace = "normal";
             consentCell.textContent = order.consent ? "Yes" : "No";
+            const link = document.createElement("a");
+            link.href = order.issuanceResponse.vaultLink;
+            link.textContent = "View Link";
+            link.target = "_blank";
+            digitalLinkCell.appendChild(link);
+            linkStatusCell.textContent = "VC_CLAIMED";
+
+            const secureTrustIcon = document.createElement("i");
+            secureTrustIcon.classList.add("fas", "fa-file-pdf", "pdf-icon");
+            secureTrustIcon.title = "SecureTrust Verified";
+            secureTrustCell.appendChild(secureTrustIcon);
 
             const pdfIcon = document.createElement("i");
             pdfIcon.classList.add("fas", "fa-file-pdf", "pdf-icon");
