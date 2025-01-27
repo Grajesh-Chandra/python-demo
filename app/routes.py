@@ -111,6 +111,7 @@ def save_order():
         # Here you would typically make a request to the other API:
         # response = requests.post("other_api_url", json=payload_for_checks_api)
         # For this example, we'll just log the payload.
+
         print(f"Payload for checks API: {payload_for_checks_api}")
         credentials_request = [
             {
@@ -156,6 +157,16 @@ def save_order():
         logging.error(f"Error processing checks: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
+    # Call /api/issuance/status with the given payload
+    status_payload = {
+        "issuanceId": response.get("issuanceId"),
+        "projectId": project_id,
+    }
+    status_response = requests.post(
+        "http://127.0.0.1:5000/api/issuance/status", json=status_payload
+    )
+    print("Status response:", status_response.json())
+
     if not os.path.exists(CHECKS_DATA_DIR):
         os.makedirs(CHECKS_DATA_DIR)
 
@@ -174,6 +185,7 @@ def save_order():
         # Add backgroundCheckDetails to the order data
         data["backgroundCheckDetails"] = payload_for_checks_api
         data["issuanceResponse"] = response
+        data["issuanceState"] = status_response.json()
         orders.append(data)
 
         # Write updated orders back to the file
@@ -433,6 +445,124 @@ def generate_pdf(order_id):
         download_name=f"order_{order_id}.pdf",
         as_attachment=True,
     )
+
+
+@app.route("/api/issuance/status", methods=["POST"])
+def issuance_status():
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+
+    issuance_id = data.get("issuanceId")
+    if not issuance_id:
+        return jsonify({"error": "issuanceId is required"}), 400
+
+    try:
+        # Pass the projectScopedToken generated from AuthProvider package
+        configuration = affinidi_tdk_credential_issuance_client.Configuration()
+        configuration.api_key["ProjectTokenAuth"] = pst()
+
+        with affinidi_tdk_credential_issuance_client.ApiClient(
+            configuration
+        ) as api_client:
+            api_instance = affinidi_tdk_credential_issuance_client.IssuanceApi(
+                api_client
+            )
+
+            projectId = project_id
+            issuanceId = issuance_id
+
+            api_response = api_instance.issuance_state(issuanceId, projectId)
+
+            response = api_response.to_dict()
+            return jsonify(response)
+    except Exception as e:
+        logging.error(f"Error getting issuance status: {e}")
+        return jsonify({"error": "An error occurred"}), 500
+
+
+@app.route("/api/accept-credential-status", methods=["POST"])
+def accept_credential_status():
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+
+    issuance_id = data.get("issuanceId")
+    if not issuance_id:
+        return jsonify({"error": "issuanceId is required"}), 400
+    try:
+        with open(DATA_FILE, "r") as f:
+            if os.path.getsize(DATA_FILE) == 0:
+                return jsonify({"error": "No order with issuanceId exists"}), 404
+    except Exception as e:
+        logging.error(f"Error reading order file: {e}")
+        return jsonify({"error": str(e)}), 500
+    try:
+        # update the order.json file with the issuance_state payload
+        with open(DATA_FILE, "r") as f:
+            orders = json.load(f)
+            for order in orders:
+                if order["issuanceResponse"]["issuanceId"] == issuance_id:
+                    if "issuanceState" in order:
+                        order["issuanceState"].update(data)
+                    else:
+                        order["issuanceState"] = data
+                    break
+        with open(DATA_FILE, "w") as f:
+            json.dump(orders, f, indent=4)
+
+        if data.get("status") == "VC_CLAIMED":
+            issued_credentials_response = issued_credentials()
+            print("issued_credentials_response", issued_credentials_response)
+        if issued_credentials_response[1] == 200:
+            issued_credentials_data = issued_credentials_response[0]
+            for order in orders:
+                if order["issuanceResponse"]["issuanceId"] == issuance_id:
+                    order["issuedCredentials"] = issued_credentials_data
+                break
+            with open(DATA_FILE, "w") as f:
+                json.dump(orders, f, indent=4)
+        return jsonify({"success": True, "message": "Order updated successfully"}), 200
+
+    except Exception as e:
+        logging.error(f"Error updating order: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/issued-credentials", methods=["POST"])
+def issued_credentials():
+    try:
+        with open(os.path.join(CHECKS_DATA_DIR, "issuedCredentials.json"), "r") as f:
+            issued_credentials = json.load(f)
+        print("issued_credentials", issued_credentials)
+        return issued_credentials, 200
+    except FileNotFoundError:
+        return jsonify({"error": "issuedCredentials.json file not found"}), 404
+    except json.JSONDecodeError:
+        return jsonify({"error": "Invalid JSON in issuedCredentials.json file"}), 500
+
+
+# try:
+#     # Pass the projectScopedToken generated from AuthProvider package
+#     configuration = affinidi_tdk_credential_issuance_client.Configuration()
+#     configuration.api_key["ProjectTokenAuth"] = pst()
+
+#     with affinidi_tdk_credential_issuance_client.ApiClient(
+#         configuration
+#     ) as api_client:
+#         api_instance = affinidi_tdk_credential_issuance_client.IssuanceApi(
+#             api_client
+#         )
+
+#         projectId = project_id
+
+#         api_response = api_instance.issued_credentials(projectId)
+
+#         response = api_response.to_dict()
+#         return jsonify(response)
+# except Exception as e:
+#     logging.error(f"Error getting issued credentials: {e}")
+#     return jsonify({"error": "An error occurred"}), 500
 
 
 @app.route("/cis")

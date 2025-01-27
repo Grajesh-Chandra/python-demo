@@ -132,17 +132,6 @@
             checksCell.classList.add("checks-column");
             checksCell.style.whiteSpace = "normal";
             consentCell.textContent = order.consent ? "Yes" : "No";
-            const link = document.createElement("a");
-            link.href = order.issuanceResponse.vaultLink;
-            link.textContent = "View Link";
-            link.target = "_blank";
-            digitalLinkCell.appendChild(link);
-            linkStatusCell.textContent = "VC_CLAIMED";
-
-            const secureTrustIcon = document.createElement("i");
-            secureTrustIcon.classList.add("fas", "fa-file-pdf", "pdf-icon");
-            secureTrustIcon.title = "SecureTrust Verified";
-            secureTrustCell.appendChild(secureTrustIcon);
 
             const pdfIcon = document.createElement("i");
             pdfIcon.classList.add("fas", "fa-file-pdf", "pdf-icon");
@@ -151,6 +140,19 @@
               window.open("/generate_pdf/" + order.orderId, "_blank");
             });
             actionCell.appendChild(pdfIcon);
+
+            const link = document.createElement("a");
+            link.href = order.issuanceResponse.vaultLink;
+            link.textContent = "View Link";
+            link.target = "_blank";
+            digitalLinkCell.appendChild(link);
+
+            linkStatusCell.textContent = order.issuanceState.status;
+
+            const secureTrustIcon = document.createElement("i");
+            secureTrustIcon.classList.add("fas", "fa-file-pdf", "pdf-icon");
+            secureTrustIcon.title = "SecureTrust Verified";
+            secureTrustCell.appendChild(secureTrustIcon);
           });
         });
     </script>
