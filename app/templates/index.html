@@ -124,7 +124,11 @@
     <nav class="navbar navbar-expand-lg">
       <div class="container">
         <a class="navbar-brand" href="https://www.affinidi.com">
-          <img src="static/images/logo.png" alt="Logo" />
+          <img
+            src="static/images/logo.png"
+            alt="Logo"
+            style="max-height: 50px"
+          />
         </a>
         <button
           class="navbar-toggler"
@@ -166,13 +170,22 @@
     </nav>
 
     <div class="container">
+      <div class="text-center my-5">
+        <h1 class="display-4">Welcome to Background Verification Demo App</h1>
+        <p class="lead">
+          This is a demo application to showcase the integration of Affinidi's
+          Elements. You can create cases, generate final check reports
+          (SecureTrust), verify reports, and more.
+        </p>
+      </div>
+
       <div class="card-container">
         <div class="card">
           <div class="card-body">
             <h5 class="card-title">Total Cases</h5>
             <div class="d-flex align-items-center">
-              <span class="status-green">2</span>
-              <span>0</span>
+              <span class="status-green" id="total-cases">2</span>
+              <span id="total-cases-secondary">0</span>
             </div>
           </div>
         </div>
