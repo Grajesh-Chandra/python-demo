@@ -226,8 +226,10 @@
             const valueCell = document.createElement("td");
 
             if (typeof value === "object") {
-              valueCell.innerHTML =
-                "<pre>" + JSON.stringify(value, null, 2) + "</pre>";
+              const sanitizedValue = JSON.stringify(value, null, 2)
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;");
+              valueCell.innerHTML = "<pre>" + sanitizedValue + "</pre>";
             } else {
               valueCell.textContent = value;
             }
