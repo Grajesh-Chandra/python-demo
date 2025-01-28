@@ -390,38 +390,42 @@ def accept_credential_status():
     issuance_id = data.get("issuanceId")
     if not issuance_id:
         return jsonify({"error": "issuanceId is required"}), 400
-    try:
-        with open(DATA_FILE, "r") as f:
-            if os.path.getsize(DATA_FILE) == 0:
-                return jsonify({"error": "No order with issuanceId exists"}), 404
-    except Exception as e:
-        logging.error(f"Error reading order file: {e}")
-        return jsonify({"error": str(e)}), 500
-    try:
-        # update the order.json file with the issuance_state payload
-        with open(DATA_FILE, "r") as f:
-            orders = json.load(f)
-            for order in orders:
-                if order["issuanceResponse"]["issuanceId"] == issuance_id:
-                    if "issuanceState" in order:
-                        order["issuanceState"].update(data)
-                    else:
-                        order["issuanceState"] = data
-                    break
-        with open(DATA_FILE, "w") as f:
-            json.dump(orders, f, indent=4)
 
-        if data.get("status") == "VC_CLAIMED":
-            issued_credentials_response = issued_credentials()
-            # print("issued_credentials_response", issued_credentials_response)
-            if issued_credentials_response[1] == 200:
-                issued_credentials_data = issued_credentials_response[0]
-                for order in orders:
-                    if order["issuanceResponse"]["issuanceId"] == issuance_id:
-                        order["issuedCredentials"] = issued_credentials_data
-                    break
-                with open(DATA_FILE, "w") as f:
-                    json.dump(orders, f, indent=4)
+    try:
+        with open(DATA_FILE, "r") as f:
+            try:
+                orders = json.load(f)
+            except json.JSONDecodeError:
+                logging.error("Error decoding order.json. File might be corrupted.")
+                return jsonify({"error": "Invalid order data"}), 500
+
+        updated = False
+        for order in orders:
+            if order["issuanceResponse"]["issuanceId"] == issuance_id:
+                if "issuanceState" in order:
+                    order["issuanceState"].update(data)
+                else:
+                    order["issuanceState"] = data
+                updated = True
+
+                if data.get("status") == "VC_CLAIMED":
+                    issued_credentials_response = issued_credentials()
+                    if (
+                        issued_credentials_response
+                        and issued_credentials_response[1] == 200
+                    ):
+                        issued_credentials_data = issued_credentials_response[0]
+                        order["issuedCredentials"] = (
+                            issued_credentials_data  # Update IN PLACE
+                        )
+                break
+
+        if not updated:
+            return jsonify({"error": "No order with issuanceId exists"}), 404
+
+        with open(DATA_FILE, "w") as f:
+            json.dump(orders, f, indent=4)  # Write ONCE after ALL updates
+
         return jsonify({"success": True, "message": "Order updated successfully"}), 200
 
     except Exception as e:
