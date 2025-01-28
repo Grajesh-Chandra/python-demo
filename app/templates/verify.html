@@ -226,14 +226,16 @@
             const valueCell = document.createElement("td");
 
             if (typeof value === "object") {
-              valueCell.innerHTML =
-                "<pre>" + JSON.stringify(value, null, 2) + "</pre>";
+              const sanitizedValue = JSON.stringify(value, null, 2)
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;");
+              valueCell.innerHTML = "<pre>" + sanitizedValue + "</pre>";
             } else {
               valueCell.textContent = value;
             }
 
             const verificationCell = document.createElement("td");
-            verificationCell.textContent = "VERIFIED";
+            verificationCell.textContent = "Verified"; // Get status from API response
             row.appendChild(keyCell);
             row.appendChild(valueCell);
             row.appendChild(verificationCell);
