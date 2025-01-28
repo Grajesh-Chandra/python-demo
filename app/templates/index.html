@@ -146,11 +146,46 @@
             <li class="nav-item">
               <a class="nav-link" href="/">DASHBOARD</a>
             </li>
-            <li class="nav-item">
-              <a class="nav-link" href="/create-case">CASES</a>
+            <li class="nav-item dropdown">
+              <a
+                class="nav-link dropdown-toggle"
+                href="#"
+                id="navbarDropdown"
+                role="button"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+              >
+                CASES
+              </a>
+              <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <li>
+                  <a class="dropdown-item" href="/create-case">Create Case</a>
+                </li>
+                <li><a class="dropdown-item" href="/orders">View Cases</a></li>
+              </ul>
             </li>
-            <li class="nav-item">
-              <a class="nav-link" href="/orders">ORDERS</a>
+            <li class="nav-item dropdown">
+              <a
+                class="nav-link dropdown-toggle"
+                href="#"
+                id="ordersDropdown"
+                role="button"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+              >
+                ORDERS
+              </a>
+              <ul class="dropdown-menu" aria-labelledby="ordersDropdown">
+                <li>
+                  <a class="dropdown-item" href="/orders">View All Orders</a>
+                </li>
+                <li>
+                  <a class="dropdown-item" href="/orders">Pending Orders</a>
+                </li>
+                <li>
+                  <a class="dropdown-item" href="/orders">Completed Orders</a>
+                </li>
+              </ul>
             </li>
             <li class="nav-item">
               <a class="nav-link" href="/verify">VERIFY REPORTS</a>
