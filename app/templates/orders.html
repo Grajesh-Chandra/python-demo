@@ -57,6 +57,10 @@
         color: #dc3545;
         cursor: pointer;
       }
+      .pdf-icon.greyed-out {
+        color: #ccc; /* Greyed-out color */
+        cursor: default; /* Remove pointer */
+      }
       .checks-column {
         max-width: 300px; /* Adjust the width as needed */
         white-space: normal;
@@ -67,6 +71,10 @@
         margin-top: 30px; /* Increased margin-top for more gap */
         margin-bottom: 20px;
       }
+      .pdf-icon.greyed-out {
+      color: #ccc; /* Greyed-out color */
+      cursor: default; /* Remove pointer */
+  }
     </style>
   </head>
   <body>
@@ -162,13 +170,19 @@
             checksCell.style.whiteSpace = "normal";
             consentCell.textContent = order.consent ? "Yes" : "No";
 
-            const pdfIcon = document.createElement("i");
-            pdfIcon.classList.add("fas", "fa-file-pdf", "pdf-icon");
-            pdfIcon.title = "View PDF";
-            pdfIcon.addEventListener("click", () => {
-              window.open("/generate_pdf/" + order.orderId, "_blank");
-            });
-            actionCell.appendChild(pdfIcon);
+      const pdfIcon = document.createElement("i");
+      pdfIcon.classList.add("fas", "fa-file-pdf", "pdf-icon");
+      pdfIcon.title = "View PDF";
+
+      if (order.issuanceState && order.issuanceState.status === "VC_CLAIMED") {
+        pdfIcon.classList.add("greyed-out");
+        pdfIcon.title = "Claimed"; // Or a more appropriate message
+      } else {
+          pdfIcon.addEventListener("click", () => {
+            window.open("/generate_pdf/" + order.orderId, "_blank");
+          });
+      }
+      actionCell.appendChild(pdfIcon);
 
             const link = document.createElement("a");
             link.href = order.issuanceResponse.vaultLink;
@@ -181,10 +195,17 @@
             const secureTrustIcon = document.createElement("i");
             secureTrustIcon.classList.add("fas", "fa-file-pdf", "pdf-icon");
             secureTrustIcon.title = "SecureTrust Verified";
-            secureTrustIcon.addEventListener("click", () => {
+
+            if (order.issuanceState && order.issuanceState.status === "VC_CLAIMED") {
+              secureTrustIcon.addEventListener("click", () => {
               window.open("/generate_secure_pdf/" + order.orderId, "_blank");
-            });
-            secureTrustCell.appendChild(secureTrustIcon);
+        });
+        secureTrustCell.appendChild(secureTrustIcon);
+      } else {
+        secureTrustIcon.classList.add("greyed-out"); // Add greyed-out class
+        secureTrustIcon.title = "Not Claimed"; // Update tooltip
+        secureTrustCell.appendChild(secureTrustIcon); // Still append the icon
+      }
           });
         });
     </script>
