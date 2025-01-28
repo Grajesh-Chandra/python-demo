@@ -323,6 +323,7 @@ def generate_secure_pdf(order_id):
 
     # --- Add the attachments (including the signature which we will generate NOW) ---
     issued_credentials = order.get("issuedCredentials")
+    # print("=====issued_credentials=======", issued_credentials)
     if issued_credentials:
         json_buffer = get_file_content_buffer(issued_credentials)
         pdf_writer.add_attachment("issuedCredentials.json", json_buffer.getbuffer())
@@ -413,14 +414,14 @@ def accept_credential_status():
         if data.get("status") == "VC_CLAIMED":
             issued_credentials_response = issued_credentials()
             # print("issued_credentials_response", issued_credentials_response)
-        if issued_credentials_response[1] == 200:
-            issued_credentials_data = issued_credentials_response[0]
-            for order in orders:
-                if order["issuanceResponse"]["issuanceId"] == issuance_id:
-                    order["issuedCredentials"] = issued_credentials_data
-                break
-            with open(DATA_FILE, "w") as f:
-                json.dump(orders, f, indent=4)
+            if issued_credentials_response[1] == 200:
+                issued_credentials_data = issued_credentials_response[0]
+                for order in orders:
+                    if order["issuanceResponse"]["issuanceId"] == issuance_id:
+                        order["issuedCredentials"] = issued_credentials_data
+                    break
+                with open(DATA_FILE, "w") as f:
+                    json.dump(orders, f, indent=4)
         return jsonify({"success": True, "message": "Order updated successfully"}), 200
 
     except Exception as e:
