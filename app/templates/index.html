@@ -7,68 +7,211 @@
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
       rel="stylesheet"
-      integrity="sha384-TTrpTLuAYjTMAiuE4a2MqrVkzJ38nLxVHPxgdLGXZR5EzBv4s/bgHLiKUVVCJcE/wJ"
-      crossorigin="anonymous"
     />
     <style>
       body {
-        background-color: #f8f9fa; /* Light gray background */
-        font-family: "Open Sans", sans-serif; /* Use a modern font */
+        background-color: #f8f9fa;
+        font-family: "Open Sans", sans-serif;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
       }
+
       .container {
         margin-top: 50px;
+        flex: 1;
       }
-      .header {
-        background-color: #007bff; /* Bootstrap blue */
-        color: #fff;
-        padding: 20px;
+
+      /* Navigation Bar */
+      .navbar {
+        background-color: #fff; /* White navbar */
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+      }
+
+      .navbar-brand img {
+        max-height: 30px; /* Adjust logo height */
+      }
+
+      .navbar-nav .nav-link {
+        color: #333; /* Dark gray text */
+        font-weight: 500; /* Slightly bolder */
+        margin-left: 15px; /* Spacing between nav items */
+        transition: color 0.3s ease; /* Smooth transition for color change */
+      }
+
+      .navbar-nav .nav-link:hover {
+        color: #007bff; /* Blue on hover */
+      }
+
+      /* Cards */
+      .card {
+        border: none;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px; /* Space between cards */
+      }
+
+      .card-title {
+        font-weight: bold;
+      }
+
+      .card-body .btn {
+        background-color: #f0ad4e;
+        border-color: #f0ad4e;
+      }
+
+      /* Green and Red Status Indicators */
+      .status-green {
+        background-color: #5cb85c;
+        color: white;
+        padding: 5px 10px;
         border-radius: 5px;
+        margin-right: 10px;
       }
-      .explore-more {
-        background-color: #007bff;
-        color: #fff;
-        padding: 15px;
+
+      .status-red {
+        background-color: #d9534f;
+        color: white;
+        padding: 5px 10px;
         border-radius: 5px;
-        margin-top: 20px;
+        margin-right: 10px;
       }
-      .links {
-        list-style: none;
-        padding: 0;
+
+      /* Dropdown Styling */
+      .dropdown-menu {
+        border: none;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
       }
-      .links li {
-        margin-bottom: 10px;
+
+      .dropdown-item {
+        padding: 10px 15px;
       }
-      .links a {
-        color: #007bff; /* Link color */
-        text-decoration: none;
+
+      footer {
+        background-color: #333;
+        color: #fff;
+        text-align: center;
+        padding: 10px 0;
+        margin-top: auto;
+      }
+
+      /* Example Card Styling (You'll customize this) */
+      .card-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px; /* Space between cards */
+        justify-content: space-between; /* Distribute cards evenly */
+      }
+
+      .card {
+        width: calc(33.33% - 20px); /* Adjust width as needed */
+      }
+
+      @media (max-width: 992px) {
+        .card {
+          width: calc(50% - 20px); /* Two cards per row on medium screens */
+        }
+      }
+
+      @media (max-width: 768px) {
+        .card {
+          width: 100%; /* One card per row on small screens */
+        }
       }
     </style>
   </head>
+
   <body>
+    <nav class="navbar navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="https://www.affinidi.com">
+          <img src="static/images/logo.png" alt="Logo" />
+        </a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+          aria-controls="navbarNav"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav">
+            <li class="nav-item">
+              <a class="nav-link" href="/">DASHBOARD</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/create-case">CASES</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/orders">ORDERS</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/verify">VERIFY REPORTS</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#">REPORTS</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#">ADMINISTRATION</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#">FAQ</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
     <div class="container">
-      <div class="header text-center">
-        <h1>Welcome to Background Verification Demo App</h1>
-        <p>This is a simple Flask application using Bootstrap for styling.</p>
-      </div>
+      <div class="card-container">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Total Cases</h5>
+            <div class="d-flex align-items-center">
+              <span class="status-green">2</span>
+              <span>0</span>
+            </div>
+          </div>
+        </div>
 
-      <div class="explore-more text-center">
-        <h3>Explore More</h3>
-      </div>
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Insufficient Data Cases</h5>
+            <div class="d-flex align-items-center">
+              <span class="status-red">0</span>
+              <span>0</span>
+            </div>
+          </div>
+        </div>
 
-      <ul class="links">
-        <li><a href="/create-case">Create Case</a></li>
-        <li><a href="/orders">Orders</a></li>
-        <li><a href="/cis">Affinidi Credential Issuance</a></li>
-        <li><a href="/iota">Affinidi Iota Framework</a></li>
-        <li><a href="/report">Generate Final Report</a></li>
-        <li><a href="/verify">Verify Final Report</a></li>
-      </ul>
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Total SuperUsers (Level 1)</h5>
+            <span>0</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Total Users (Level 2)</h5>
+            <span>0</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Ready for Check-out Cases</h5>
+            <span>0</span>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <script
-      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
-      integrity="sha384-C6ZYgfuA2AA0+9MZqF93AZvh01xk01Pkus4EUkpJ7wY4x/Ta9VRjCzwQOyqkLT7"
-      crossorigin="anonymous"
-    ></script>
+    <footer>&copy; 2025 Affinidi Private Limited. All rights reserved.</footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   </body>
 </html>
