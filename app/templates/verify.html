@@ -200,47 +200,54 @@
         });
 
         function displayResults(data) {
+          const responseArea = document.getElementById("responseArea");
+          responseArea.innerHTML = ""; // Clear previous results
+
+          if (!Array.isArray(data) || data.length === 0) {
+            responseArea.textContent = "No data to display.";
+            return;
+          }
+
           const table = document.createElement("table");
           table.classList.add("table", "table-bordered", "mt-4");
 
           const thead = document.createElement("thead");
           const headerRow = document.createElement("tr");
-          const keyHeader = document.createElement("th");
-          keyHeader.textContent = "Key";
-          const valueHeader = document.createElement("th");
-          valueHeader.textContent = "Value";
-          const verificationHeader = document.createElement("th");
-          verificationHeader.textContent = "Verification Result";
 
-          headerRow.appendChild(keyHeader);
-          headerRow.appendChild(valueHeader);
-          headerRow.appendChild(verificationHeader);
+          // Define the headers in the desired order
+          const headers = ["key", "value", "result"]; // Fixed header order
+          headers.forEach((headerText) => {
+            const headerCell = document.createElement("th");
+            headerCell.textContent = headerText;
+            headerRow.appendChild(headerCell);
+          });
+
           thead.appendChild(headerRow);
           table.appendChild(thead);
 
           const tbody = document.createElement("tbody");
-          for (const [key, value] of Object.entries(data)) {
+
+          data.forEach((item) => {
+            // Directly iterate over data, no need for itemGroup
             const row = document.createElement("tr");
-            const keyCell = document.createElement("td");
-            keyCell.textContent = key;
-            const valueCell = document.createElement("td");
 
-            if (typeof value === "object") {
-              const sanitizedValue = JSON.stringify(value, null, 2)
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;");
-              valueCell.innerHTML = "<pre>" + sanitizedValue + "</pre>";
-            } else {
-              valueCell.textContent = value;
-            }
-
-            const verificationCell = document.createElement("td");
-            verificationCell.textContent = "Verified"; // Get status from API response
-            row.appendChild(keyCell);
-            row.appendChild(valueCell);
-            row.appendChild(verificationCell);
+            headers.forEach((headerText) => {
+              const cell = document.createElement("td");
+              if (headerText === "value" && typeof item.value === "object") {
+                const sanitizedValue = JSON.stringify(item.value, null, 2)
+                  .replace(/</g, "&lt;")
+                  .replace(/>/g, "&gt;");
+                cell.innerHTML = "<pre>" + sanitizedValue + "</pre>";
+              } else if (item.hasOwnProperty(headerText)) {
+                cell.textContent = item[headerText];
+              } else {
+                cell.textContent = ""; // Handle missing properties (shouldn't happen with this data)
+              }
+              row.appendChild(cell);
+            });
             tbody.appendChild(row);
-          }
+          });
+
           table.appendChild(tbody);
           responseArea.appendChild(table);
         }
