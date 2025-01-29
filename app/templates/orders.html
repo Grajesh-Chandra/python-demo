@@ -11,109 +11,162 @@
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
-      integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg=="
-      crossorigin="anonymous"
-      referrerpolicy="no-referrer"
     />
     <style>
       body {
-        font-family: "Open Sans", sans-serif;
-        background-color: #f8f9fa;
-        margin: 20px;
+        background-color: #f8f9fb;
+        font-family: "Segoe UI", system-ui, sans-serif;
       }
-      .container {
-        max-width: 90%;
-        margin: 0 auto;
-        background-color: #fff;
-        padding: 30px;
-        border-radius: 5px;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+
+      .validation-container {
+        width: 80vw;
+        max-width: 1200px;
+        min-width: 400px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 16px rgba(0, 0, 0, 0.08);
       }
+
+      @media (max-width: 768px) {
+        .validation-container {
+          width: 95vw;
+          min-width: unset;
+          padding: 1.5rem;
+        }
+      }
+
       h2 {
-        color: #333;
+        color: #1a237e;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
         text-align: center;
-        margin-bottom: 30px;
       }
-      th,
-      td {
-        text-align: left;
-        padding: 10px;
-        border-bottom: 1px solid #ddd;
+
+      .table {
+        margin-top: 1.5rem;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
       }
-      th {
-        background-color: #f2f2f2;
+
+      .table th {
+        background-color: #f5f6fa;
+        color: #3f51b5;
+        font-weight: 600;
+        padding: 1rem;
       }
-      tr:hover {
-        background-color: #f5f5f5;
+
+      .table td {
+        padding: 1rem;
+        vertical-align: middle;
+        color: #444;
       }
+
+      .pdf-icon {
+        color: #3f51b5;
+        cursor: pointer;
+        transition: color 0.2s ease;
+      }
+
+      .pdf-icon:hover {
+        color: #303f9f;
+      }
+
+      .pdf-icon.greyed-out {
+        color: #ccc;
+        cursor: default;
+      }
+
+      .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.85rem;
+        font-weight: 500;
+      }
+
+      .status-pending {
+        background-color: #fff3e0;
+        color: #ef6c00;
+      }
+
+      .status-completed {
+        background-color: #e8f5e9;
+        color: #2e7d32;
+      }
+
+      .filter-container {
+        max-width: 400px;
+        margin: 0 auto 2rem auto;
+      }
+
+      .form-select {
+        border-radius: 6px;
+        border-color: #c5cae9;
+        padding: 0.75rem;
+      }
+
+      .form-select:focus {
+        border-color: #3f51b5;
+        box-shadow: 0 0 0 2px rgba(63, 81, 181, 0.2);
+      }
+
       .no-orders {
         text-align: center;
-        font-style: italic;
-        color: #777;
-        padding: 20px;
+        padding: 2rem;
+        color: #666;
+        font-size: 1.1rem;
       }
-      .pdf-icon {
-        font-size: 1.5em;
-        color: #dc3545;
-        cursor: pointer;
+
+      .home-button {
+        background: #3f51b5;
+        color: white;
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 6px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        margin-top: 2rem;
       }
-      .pdf-icon.greyed-out {
-        color: #ccc; /* Greyed-out color */
-        cursor: default; /* Remove pointer */
+
+      .home-button:hover {
+        background: #303f9f;
+        transform: translateY(-1px);
       }
-      .checks-column {
-        max-width: 300px; /* Adjust the width as needed */
-        white-space: normal;
-        word-wrap: break-word;
+      .digital-link-cell {
+        white-space: nowrap;
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
-      .home-button-container {
-        text-align: center;
-        margin-top: 30px; /* Increased margin-top for more gap */
-        margin-bottom: 20px;
+
+      .digital-link-cell a {
+        color: #3f51b5;
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.2s ease;
       }
-      .pdf-icon.greyed-out {
-        color: #ccc; /* Greyed-out color */
-        cursor: default; /* Remove pointer */
+
+      .digital-link-cell a:hover {
+        color: #303f9f;
+        text-decoration: underline;
       }
     </style>
   </head>
   <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-      <a class="navbar-brand" href="/">Home</a>
-      <button
-        class="navbar-toggler"
-        type="button"
-        data-toggle="collapse"
-        data-target="#navbarNav"
-        aria-controls="navbarNav"
-        aria-expanded="false"
-        aria-label="Toggle navigation"
-      >
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav">
-          <li class="nav-item">
-            <a class="nav-link" href="/create-case">Create New Case</a>
-          </li>
-          <li class="nav-item active">
-            <a class="nav-link" href="/verify">Verify Report</a>
-          </li>
-        </ul>
-      </div>
-    </nav>
-    <div class="container">
+    <div class="validation-container">
       <h2>Orders History</h2>
-      <div class="row mb-3">
-        <div class="col-md-4 offset-md-4">
-          <select class="form-select" id="orderStatusFilter">
-            <option value="all">All</option>
-            <option value="pending">Pending</option>
-            <option value="completed">Completed</option>
-          </select>
-        </div>
+
+      <div class="filter-container">
+        <select class="form-select" id="orderStatusFilter">
+          <option value="all">All Orders</option>
+          <option value="pending">Pending Orders</option>
+          <option value="completed">Completed Orders</option>
+        </select>
       </div>
-      <table class="table table-bordered" id="ordersTable">
+
+      <table class="table" id="ordersTable">
         <thead>
           <tr>
             <th>Order ID</th>
@@ -127,19 +180,14 @@
         </thead>
         <tbody id="ordersTableBody"></tbody>
       </table>
+
       <div class="no-orders" id="noOrdersMessage" style="display: none">
-        No orders found.
+        No orders found matching your criteria.
       </div>
-    </div>
-    <div class="home-button-container">
-      <div class="d-flex justify-content-center">
-        <button
-          type="button"
-          class="btn btn-info"
-          id="homeButton"
-          onclick="window.location.href='/'"
-        >
-          Home
+
+      <div class="text-center">
+        <button class="home-button" onclick="window.location.href='/'">
+          <i class="fas fa-home"></i> Return Home
         </button>
       </div>
     </div>
@@ -150,7 +198,6 @@
         const noOrdersMessage = document.getElementById("noOrdersMessage");
         const ordersTable = document.getElementById("ordersTable");
 
-        // Clear existing rows
         tableBody.innerHTML = "";
 
         if (orders.length === 0) {
@@ -164,28 +211,27 @@
 
         orders.forEach((order) => {
           const row = tableBody.insertRow();
-          const orderIdCell = row.insertCell();
-          const checksCell = row.insertCell();
-          const consentCell = row.insertCell();
-          const actionCell = row.insertCell();
-          const digitalLinkCell = row.insertCell();
-          const linkStatusCell = row.insertCell();
-          const secureTrustCell = row.insertCell();
 
+          // Order ID
+          const orderIdCell = row.insertCell();
           orderIdCell.textContent = order.orderId;
+
+          // Checks
+          const checksCell = row.insertCell();
           checksCell.textContent = order.checks.join(", ");
-          checksCell.classList.add("checks-column");
           checksCell.style.whiteSpace = "normal";
+
+          // Consent
+          const consentCell = row.insertCell();
           consentCell.textContent = order.consent ? "Yes" : "No";
 
+          // Action
+          const actionCell = row.insertCell();
           const pdfIcon = document.createElement("i");
           pdfIcon.classList.add("fas", "fa-file-pdf", "pdf-icon");
           pdfIcon.title = "View PDF";
 
-          if (
-            order.issuanceState &&
-            order.issuanceState.status === "VC_CLAIMED"
-          ) {
+          if (order.issuanceState?.status === "VC_CLAIMED") {
             pdfIcon.classList.add("greyed-out");
             pdfIcon.title = "Claimed";
           } else {
@@ -195,31 +241,44 @@
           }
           actionCell.appendChild(pdfIcon);
 
+          // Digital Link
+          const digitalLinkCell = row.insertCell();
+          digitalLinkCell.classList.add("digital-link-cell");
           const link = document.createElement("a");
           link.href = order.issuanceResponse.vaultLink;
           link.textContent = "View Link";
           link.target = "_blank";
+          link.style.color = "#3f51b5";
+          link.style.textDecoration = "none";
+          link.style.fontWeight = "500";
           digitalLinkCell.appendChild(link);
 
-          linkStatusCell.textContent = order.issuanceState.status;
+          // Link Status
+          const linkStatusCell = row.insertCell();
+          const statusBadge = document.createElement("span");
+          statusBadge.className = `status-badge ${
+            order.issuanceState.status === "VC_CLAIMED"
+              ? "status-completed"
+              : "status-pending"
+          }`;
+          statusBadge.textContent = order.issuanceState.status;
+          linkStatusCell.appendChild(statusBadge);
 
+          // SecureTrust PDF
+          const secureTrustCell = row.insertCell();
           const secureTrustIcon = document.createElement("i");
           secureTrustIcon.classList.add("fas", "fa-file-pdf", "pdf-icon");
           secureTrustIcon.title = "SecureTrust Verified";
 
-          if (
-            order.issuanceState &&
-            order.issuanceState.status === "VC_CLAIMED"
-          ) {
+          if (order.issuanceState?.status === "VC_CLAIMED") {
             secureTrustIcon.addEventListener("click", () => {
               window.open("/generate_secure_pdf/" + order.orderId, "_blank");
             });
-            secureTrustCell.appendChild(secureTrustIcon);
           } else {
             secureTrustIcon.classList.add("greyed-out");
             secureTrustIcon.title = "Not Claimed";
-            secureTrustCell.appendChild(secureTrustIcon);
           }
+          secureTrustCell.appendChild(secureTrustIcon);
         });
       }
 
@@ -230,23 +289,18 @@
         }
         fetch(url)
           .then((response) => response.json())
-          .then((orders) => {
-            populateTable(orders);
-          })
-          .catch((error) => {
-            console.error("Error fetching orders:", error);
-          });
+          .then((orders) => populateTable(orders))
+          .catch((error) => console.error("Error fetching orders:", error));
       }
 
-      // Initial load of all orders
+      // Initial load
       loadOrders("all");
 
-      // Add event listener for filter changes
+      // Filter change handler
       document
         .getElementById("orderStatusFilter")
         .addEventListener("change", function () {
-          const selectedFilter = this.value;
-          loadOrders(selectedFilter);
+          loadOrders(this.value);
         });
     </script>
 
