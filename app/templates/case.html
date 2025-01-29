@@ -10,100 +10,137 @@
     />
     <style>
       body {
-        font-family: "Open Sans", sans-serif;
-        background-color: #f8f9fa;
-        margin: 20px;
+        background-color: #f8f9fb;
+        font-family: "Segoe UI", system-ui, sans-serif;
       }
-      .container {
-        max-width: 600px;
-        margin: 0 auto;
-        background-color: #fff;
-        padding: 30px;
-        border-radius: 5px;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+
+      .validation-container {
+        width: 80vw;
+        max-width: 800px;
+        min-width: 400px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 16px rgba(0, 0, 0, 0.08);
       }
+
+      @media (max-width: 768px) {
+        .validation-container {
+          width: 95vw;
+          min-width: unset;
+          padding: 1.5rem;
+        }
+      }
+
       h2 {
-        color: #333;
+        color: #1a237e;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
         text-align: center;
-        margin-bottom: 30px;
       }
-      .alert {
-        margin-bottom: 20px;
-        padding: 15px;
-        border-radius: 5px;
+
+      .alert-info {
+        background-color: #e3f2fd;
+        color: #1a237e;
+        border: none;
+        border-radius: 8px;
+        margin-bottom: 2rem;
       }
+
       .form-group {
-        margin-bottom: 20px;
-        display: flex;
-        align-items: center;
+        margin-bottom: 1.5rem;
       }
+
       label {
-        flex: 0 0 150px;
-        font-weight: bold;
-        margin-right: 10px;
-        color: #555;
+        font-weight: 500;
+        color: #3f51b5;
+        margin-bottom: 0.5rem;
       }
+
       input[type="text"],
       select {
         width: 100%;
-        padding: 12px;
-        border: 1px solid #ddd;
-        border-radius: 3px;
-        box-sizing: border-box;
-        font-size: 14px;
+        padding: 0.75rem;
+        border: 2px solid #c5cae9;
+        border-radius: 6px;
+        transition: all 0.2s ease;
       }
+
+      input[type="text"]:focus,
+      select:focus {
+        border-color: #3f51b5;
+        box-shadow: 0 0 0 2px rgba(63, 81, 181, 0.2);
+        outline: none;
+      }
+
       .phone-inputs {
         display: flex;
+        gap: 0.5rem;
       }
+
       .phone-inputs input {
-        width: 30%;
-        margin-right: 5px;
+        flex: 1;
       }
-      button {
-        background-color: #4caf50;
-        color: white;
-        padding: 12px 20px;
+
+      .button-group {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 2rem;
+        gap: 1rem;
+      }
+
+      .btn {
+        padding: 0.75rem 2rem;
+        border-radius: 6px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+      }
+
+      .btn-success {
+        background-color: #3f51b5;
         border: none;
-        border-radius: 3px;
-        cursor: pointer;
-        transition: background-color 0.3s ease;
       }
-      button:hover {
-        background-color: #45a049;
+
+      .btn-success:hover {
+        background-color: #303f9f;
+        transform: translateY(-1px);
+      }
+
+      .btn-warning {
+        background-color: #fff;
+        border: 2px solid #3f51b5;
+        color: #3f51b5;
+      }
+
+      .btn-warning:hover {
+        background-color: #f8f9fb;
+      }
+
+      .btn-info {
+        background-color: #3f51b5;
+        border: none;
+        color: white;
+      }
+
+      .btn-info:hover {
+        background-color: #303f9f;
+      }
+
+      .required-star {
+        color: #d32f2f;
+        margin-left: 0.25rem;
       }
     </style>
   </head>
   <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-      <a class="navbar-brand" href="/">Home</a>
-      <button
-        class="navbar-toggler"
-        type="button"
-        data-toggle="collapse"
-        data-target="#navbarNav"
-        aria-controls="navbarNav"
-        aria-expanded="false"
-        aria-label="Toggle navigation"
-      >
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav">
-          <li class="nav-item">
-            <a class="nav-link" href="/orders">Orders</a>
-          </li>
-          <li class="nav-item active">
-            <a class="nav-link" href="/verify">Verify Report </a>
-          </li>
-        </ul>
-      </div>
-    </nav>
-    <div class="container">
+    <div class="validation-container">
       <h2>Create a Case</h2>
       <div class="alert alert-info">
         If you need to order more than 20 Cases and wish to have a special
         DISCOUNT CODE or order offline, please email us at consult@avvanz.com.
       </div>
+
       <form id="createCaseForm">
         <div class="form-group">
           <label for="costCentre">Cost Centre</label>
@@ -126,9 +163,10 @@
         </div>
 
         <div class="form-group">
-          <label for="candidateFirstName"
-            >Candidate First Name <span style="color: red">*</span></label
-          >
+          <label for="candidateFirstName">
+            Candidate First Name
+            <span class="required-star">*</span>
+          </label>
           <input
             type="text"
             id="candidateFirstName"
@@ -143,9 +181,10 @@
         </div>
 
         <div class="form-group">
-          <label for="candidateEmail"
-            >Candidate Email Address <span style="color: red">*</span></label
-          >
+          <label for="candidateEmail">
+            Candidate Email Address
+            <span class="required-star">*</span>
+          </label>
           <input
             type="text"
             id="candidateEmail"
@@ -155,9 +194,10 @@
         </div>
 
         <div class="form-group">
-          <label for="candidatePhone"
-            >Candidate Phone <span style="color: red">*</span></label
-          >
+          <label for="candidatePhone">
+            Candidate Phone
+            <span class="required-star">*</span>
+          </label>
           <div class="phone-inputs">
             <input
               type="text"
@@ -190,7 +230,7 @@
         </div>
 
         <div class="form-group">
-          <label for="candidateOrEmployeeId">Candidate or Employee ID</label>
+          <label for="candidateOrEmployeeId">Candidate/Employee ID</label>
           <input
             type="text"
             id="candidateOrEmployeeId"
@@ -201,28 +241,19 @@
         <div class="form-group">
           <label for="caseCurrency">Case Currency</label>
           <select id="caseCurrency" name="caseCurrency">
-            <option value="USD">INR</option>
-            <option value="USD">SGP</option>
+            <option value="INR">INR</option>
+            <option value="SGP">SGP</option>
             <option value="USD">USD</option>
             <option value="EUR">EUR</option>
           </select>
         </div>
 
-        <div class="form-group">
-          <button type="reset" class="btn btn-warning" style="float: left">
-            Reset
-          </button>
-          <button
-            type="submit"
-            class="btn btn-success"
-            style="display: block; margin: 0 auto"
-          >
-            Submit
-          </button>
+        <div class="button-group">
+          <button type="reset" class="btn btn-warning">Reset</button>
+          <button type="submit" class="btn btn-success">Submit</button>
           <button
             type="button"
             class="btn btn-info"
-            style="float: right"
             onclick="window.location.href='/'"
           >
             Home
@@ -230,6 +261,7 @@
         </div>
       </form>
     </div>
+
     <script>
       const createCaseForm = document.getElementById("createCaseForm");
 
