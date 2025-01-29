@@ -128,6 +128,42 @@
       #consent:checked + #consentLabel {
         color: #28a745; /* Green color for checked consent label */
       }
+
+      #loadingOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000; /* Ensure it's on top */
+            display: none; /* Initially hidden */
+        }
+
+        .loader {
+            border: 16px solid #f3f3f3;
+            border-top: 16px solid #3498db;
+            border-radius: 50%;
+            width: 120px;
+            height: 120px;
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .message {
+            color: white;
+            margin-top: 20px;
+            font-size: 1.2em;
+        }
+
     </style>
   </head>
   <body>
@@ -219,92 +255,95 @@
         <div id="responseDisplay2"></div>
       </div>
 
-      <div id="claimButtonContainer">
+      <!-- <div id="claimButtonContainer">
         <button type="button" class="btn btn-success" id="claimButton">Claim Credentials</button>
-      </div>
+      </div> -->
 
       <div id="homeButtonContainer">
         <button type="button" class="btn btn-info" id="homeButton">Home</button>
       </div>
 
     </div>
+          <div id="loadingOverlay">
+        <div class="loader"></div>
+        <div class="message">Creating Order...</div> </div>
 
-    <script>
-      document
-        .getElementById("goBackButton")
-        .addEventListener("click", function () {
-          window.history.back();
+
+   <script>
+        document.getElementById("goBackButton").addEventListener("click", function () {
+            window.history.back();
         });
 
-      document
-        .getElementById("submitChecks")
-        .addEventListener("click", function (event) {
-          event.preventDefault();
+        const loadingOverlay = document.getElementById("loadingOverlay");
+        const message = document.querySelector(".message");
+        const submitButton = document.getElementById("submitChecks");
 
-          const consentCheckbox = document.getElementById("consent");
-          if (!consentCheckbox.checked) {
-            alert("Please provide your consent to proceed.");
-            return; // Stop form submission
-          }
+        submitButton.addEventListener("click", function (event) {
+            event.preventDefault();
 
-          const orderId = generateOrderId();
-          document.getElementById("orderIdDisplay").textContent = orderId;
+            const consentCheckbox = document.getElementById("consent");
+            if (!consentCheckbox.checked) {
+                alert("Please provide your consent to proceed.");
+                return;
+            }
 
-          const formData = {
-            orderId: orderId,
-            checks: {
-              personalInfo: document.getElementById("personalInfo").checked,
-              address: document.getElementById("address").checked,
-              education: document.getElementById("education").checked,
-              employment: document.getElementById("employment").checked,
-              criminal: document.getElementById("criminality").checked,
-            },
-            consent: document.getElementById("consent").checked,
-          };
+            const orderId = generateOrderId();
+            document.getElementById("orderIdDisplay").textContent = orderId;
 
-          fetch("/save-order", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(formData),
-          })
+            const formData = {
+                orderId: orderId,
+                checks: {
+                    personalInfo: document.getElementById("personalInfo").checked,
+                    address: document.getElementById("address").checked,
+                    education: document.getElementById("education").checked,
+                    employment: document.getElementById("employment").checked,
+                    criminal: document.getElementById("criminality").checked,
+                },
+                consent: document.getElementById("consent").checked,
+            };
+
+            loadingOverlay.style.display = "flex";
+            message.textContent = "Creating Order...";
+
+            fetch("/save-order", {  // Replace with your actual endpoint
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(formData),
+            })
             .then((response) => response.json())
             .then((data) => {
-              if (data.success) {
-                document.getElementById("backgroundCheckForm").style.display =
-                  "none";
-                document.getElementById("orderConfirmation").style.display =
-                  "block";
-                document.getElementById("homeButtonContainer").style.display =
-                  "block";
-                document.getElementById("claimButtonContainer").style.display =
-                  "block";
-                document.getElementById("responseDisplay2").textContent =
-                  data.txCode;
-                document.getElementById("claimButton").addEventListener("click", function () {
-                window.open(data.vaultLink, "_blank");
-              });
-              } else {
-                alert("Failed to save order. Please try again.");
-              }
+                loadingOverlay.style.display = "none";
+                if (data.success) {
+                    document.getElementById("backgroundCheckForm").style.display = "none";
+                    document.getElementById("orderConfirmation").style.display = "block";
+                    document.getElementById("homeButtonContainer").style.display = "block";
+                    // document.getElementById("claimButtonContainer").style.display = "block";
+                    document.getElementById("responseDisplay2").textContent = data.txCode;
+                    //document.getElementById("claimButton").addEventListener("click", function () {
+                    //    window.open(data.vaultLink, "_blank");
+                    //});
+                } else {
+                    alert("Failed to save order. Please try again.");
+                }
             })
             .catch((error) => {
-              console.error("Error:", error);
-              alert("An error occurred. Please try again.");
+                loadingOverlay.style.display = "none"; // Hide on error too!
+                console.error("Error:", error);
+                alert("An error occurred. Please try again.");
             });
         });
 
-      document
-        .getElementById("homeButton")
-        .addEventListener("click", function () {
-          window.location.href = "/";
+        document.getElementById("homeButton").addEventListener("click", function () {
+            window.location.href = "/";
         });
-      function generateOrderId() {
-        const timestamp = Date.now().toString(36);
-        const random = Math.random().toString(36).substring(2, 8);
-        return timestamp + "-" + random.toUpperCase();
-      }
+
+        function generateOrderId() {
+            const timestamp = Date.now().toString(36);
+            const random = Math.random().toString(36).substring(2, 8);
+            return timestamp + "-" + random.toUpperCase();
+        }
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   </body>
