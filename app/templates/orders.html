@@ -155,6 +155,43 @@
     </style>
   </head>
   <body>
+    <header>
+      <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+          <a class="navbar-brand" href="https://www.affinidi.com">
+            <img
+              src="{{ url_for('static', filename='images/logo.png') }}"
+              alt="Logo"
+              style="max-height: 50px"
+            />
+          </a>
+          <button
+            class="navbar-toggler"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#navbarNav"
+          >
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+              <li class="nav-item">
+                <a class="nav-link active" href="/">DASHBOARD</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="/create-case">CREATE CASE</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="/orders">ORDERS</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="/verify">VERIFY REPORTS</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </nav>
+    </header>
     <div class="validation-container">
       <h2>Orders History</h2>
 
