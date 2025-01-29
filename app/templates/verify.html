@@ -9,6 +9,7 @@
       href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
     />
     <style>
+      /* Existing styles */
       .container {
         background-color: white;
         padding: 20px;
@@ -27,6 +28,24 @@
         padding: 0.375rem 0.75rem;
       }
 
+      /* New drop zone styles */
+      .drop-zone {
+        border: 2px dashed #ced4da;
+        border-radius: 0.25rem;
+        padding: 2rem;
+        text-align: center;
+        background-color: #f8f9fa;
+        color: #6c757d;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .drop-zone.dragover {
+        background-color: #e9ecef;
+        border-color: #80bdff;
+      }
+
+      /* Rest of existing styles remain the same */
       .custom-file-input:focus ~ .custom-file-label {
         border-color: #80bdff;
         box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
@@ -58,7 +77,6 @@
         margin-top: 20px;
         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         table-layout: fixed;
-        /* Key for consistent cell widths */
       }
 
       th,
@@ -70,7 +88,6 @@
         word-wrap: break-word;
         overflow-wrap: break-word;
         white-space: normal;
-        /* Most common case */
         background-color: white;
       }
 
@@ -174,10 +191,16 @@
               id="report_pdf"
               name="report_pdf"
               required
+              accept="application/pdf"
             />
             <label class="custom-file-label" for="report_pdf"
               >Choose your final report (PDF)</label
             >
+          </div>
+
+          <!-- Add Drop Zone Here -->
+          <div id="dropZone" class="drop-zone mb-3">
+            <span>Or drag and drop your PDF here</span>
           </div>
 
           <div class="text-center">
@@ -213,18 +236,9 @@
     </div>
 
     <script>
-      const messages = [
-        "Uploading...",
-        "Processing data...",
-        "Validating...",
-        "Almost done...",
-      ];
-      let messageIndex = 0;
-      let progress = 0;
+      // Existing DOM selections
       const progressBar = document.querySelector(".progress-bar");
       const progressBarDiv = document.getElementById("progressBar");
-      let progressInterval;
-
       const loadingOverlay = document.getElementById("loadingOverlay");
       const message = document.querySelector(".message");
       const verifyButton = document.getElementById("verifyButton");
@@ -233,6 +247,46 @@
       const fileInput = document.getElementById("report_pdf");
       const fileLabel = document.querySelector(".custom-file-label");
 
+      // New drop zone elements
+      const dropZone = document.getElementById("dropZone");
+
+      // Drag and drop event handlers
+      dropZone.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        dropZone.classList.add("dragover");
+      });
+
+      dropZone.addEventListener("dragleave", (e) => {
+        e.preventDefault();
+        dropZone.classList.remove("dragover");
+      });
+
+      dropZone.addEventListener("drop", (e) => {
+        e.preventDefault();
+        dropZone.classList.remove("dragover");
+
+        const files = e.dataTransfer.files;
+        if (files.length === 0) return;
+
+        const file = files[0];
+        if (file.type !== "application/pdf") {
+          alert("Please upload a PDF file.");
+          return;
+        }
+
+        // Update file input and label
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+        fileInput.files = dataTransfer.files;
+        fileLabel.textContent = file.name;
+      });
+
+      // Click to open file dialog
+      dropZone.addEventListener("click", () => {
+        fileInput.click();
+      });
+
+      // Existing event listeners
       fileInput.addEventListener("change", (e) => {
         fileLabel.textContent =
           e.target.files.length > 0
@@ -250,7 +304,6 @@
 
         try {
           const response = await fetch("/api/verify_pdf", {
-            // Replace with your API endpoint
             method: "POST",
             body: formData,
           });
@@ -273,6 +326,17 @@
           clearProgressInterval();
         }
       });
+
+      // Rest of existing JavaScript remains the same
+      const messages = [
+        "Uploading...",
+        "Processing data...",
+        "Validating...",
+        "Almost done...",
+      ];
+      let messageIndex = 0;
+      let progress = 0;
+      let progressInterval;
 
       function startProgressInterval() {
         messageIndex = 0;
@@ -338,8 +402,8 @@
             const cell = document.createElement("td");
 
             cell.style.overflow = "auto";
-            cell.style.maxHeight = "150px"; // Adjust as needed
-            cell.style.maxWidth = "300px"; // Adjust as needed
+            cell.style.maxHeight = "150px";
+            cell.style.maxWidth = "300px";
             cell.style.wordBreak = "break-word";
             cell.style.whiteSpace = "normal";
 
@@ -347,29 +411,28 @@
               const pre = document.createElement("pre");
               const valueString = JSON.stringify(item.value, null, 2);
 
-              // Create toggle button
               const toggleButton = document.createElement("button");
               toggleButton.textContent = "Show/Hide";
               toggleButton.classList.add(
                 "btn",
                 "btn-sm",
                 "btn-outline-secondary"
-              ); // Add Bootstrap styling
+              );
               toggleButton.addEventListener("click", () => {
                 if (pre.style.display === "none") {
                   pre.style.display = "block";
-                  toggleButton.textContent = "Hide"; // Change button text
+                  toggleButton.textContent = "Hide";
                 } else {
                   pre.style.display = "none";
-                  toggleButton.textContent = "Show"; // Change button text
+                  toggleButton.textContent = "Show";
                 }
               });
 
               pre.textContent = valueString;
-              pre.style.display = "none"; // Initially hide the pre
+              pre.style.display = "none";
 
-              cell.appendChild(toggleButton); // Add button to cell
-              cell.appendChild(pre); // Add pre to cell
+              cell.appendChild(toggleButton);
+              cell.appendChild(pre);
             } else if (item.hasOwnProperty(headerText)) {
               cell.textContent = item[headerText];
             } else {
@@ -390,8 +453,6 @@
         });
 
         table.appendChild(tbody);
-
-        table.style.overflowX = "auto"; // Optional: Horizontal table scrolling
         responseArea.appendChild(table);
       }
     </script>
