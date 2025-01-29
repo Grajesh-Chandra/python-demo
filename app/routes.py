@@ -216,9 +216,9 @@ def orders_page():
 @app.route("/get_orders", methods=["GET"])
 def get_orders():
     try:
+        status_filter = request.args.get("status", "all").lower()
         with open(DATA_FILE, "r") as f:
             orders = json.load(f)
-            # Convert checks dictionary to a list if it's a dictionary
             check_mapping = {
                 "personalInfo": "Personal Information Verification",
                 "address": "Address Verification",
@@ -227,18 +227,34 @@ def get_orders():
                 "criminal": "Civil Litigation Check",
             }
 
+            filtered_orders = []
             for order in orders:
+                # Convert checks dictionary to list of human-readable values
                 if isinstance(order.get("checks"), dict):
                     order["checks"] = [
-                        check for check, value in order["checks"].items() if value
+                        check_mapping.get(check, check)
+                        for check, value in order["checks"].items()
+                        if value
                     ]
-                    order["checks"] = [
-                        check_mapping.get(check, check) for check in order["checks"]
-                    ]
-            # print(orders)
-        return jsonify(orders)
+
+                # Determine order status
+                order_status = (
+                    "completed"
+                    if order.get("issuanceState", {}).get("status") == "VC_CLAIMED"
+                    else "pending"
+                )
+
+                # Apply filter
+                if status_filter == "all" or order_status == status_filter:
+                    filtered_orders.append(order)
+
+            return jsonify(filtered_orders)
+
     except (FileNotFoundError, json.JSONDecodeError):
         return jsonify([]), 200
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
 
 
 @app.route("/generate_pdf/<order_id>")

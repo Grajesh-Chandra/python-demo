@@ -104,6 +104,15 @@
     </nav>
     <div class="container">
       <h2>Orders History</h2>
+      <div class="row mb-3">
+        <div class="col-md-4 offset-md-4">
+          <select class="form-select" id="orderStatusFilter">
+            <option value="all">All</option>
+            <option value="pending">Pending</option>
+            <option value="completed">Completed</option>
+          </select>
+        </div>
+      </div>
       <table class="table table-bordered" id="ordersTable">
         <thead>
           <tr>
@@ -136,80 +145,111 @@
     </div>
 
     <script>
-      fetch("/get_orders")
-        .then((response) => response.json())
-        .then((orders) => {
-          const tableBody = document.getElementById("ordersTableBody");
-          const noOrdersMessage = document.getElementById("noOrdersMessage");
-          const ordersTable = document.getElementById("ordersTable");
+      function populateTable(orders) {
+        const tableBody = document.getElementById("ordersTableBody");
+        const noOrdersMessage = document.getElementById("noOrdersMessage");
+        const ordersTable = document.getElementById("ordersTable");
 
-          if (orders.length === 0) {
-            ordersTable.style.display = "none";
-            noOrdersMessage.style.display = "block";
-            return;
+        // Clear existing rows
+        tableBody.innerHTML = "";
+
+        if (orders.length === 0) {
+          ordersTable.style.display = "none";
+          noOrdersMessage.style.display = "block";
+          return;
+        } else {
+          ordersTable.style.display = "table";
+          noOrdersMessage.style.display = "none";
+        }
+
+        orders.forEach((order) => {
+          const row = tableBody.insertRow();
+          const orderIdCell = row.insertCell();
+          const checksCell = row.insertCell();
+          const consentCell = row.insertCell();
+          const actionCell = row.insertCell();
+          const digitalLinkCell = row.insertCell();
+          const linkStatusCell = row.insertCell();
+          const secureTrustCell = row.insertCell();
+
+          orderIdCell.textContent = order.orderId;
+          checksCell.textContent = order.checks.join(", ");
+          checksCell.classList.add("checks-column");
+          checksCell.style.whiteSpace = "normal";
+          consentCell.textContent = order.consent ? "Yes" : "No";
+
+          const pdfIcon = document.createElement("i");
+          pdfIcon.classList.add("fas", "fa-file-pdf", "pdf-icon");
+          pdfIcon.title = "View PDF";
+
+          if (
+            order.issuanceState &&
+            order.issuanceState.status === "VC_CLAIMED"
+          ) {
+            pdfIcon.classList.add("greyed-out");
+            pdfIcon.title = "Claimed";
+          } else {
+            pdfIcon.addEventListener("click", () => {
+              window.open("/generate_pdf/" + order.orderId, "_blank");
+            });
           }
+          actionCell.appendChild(pdfIcon);
 
-          orders.forEach((order) => {
-            const row = tableBody.insertRow();
-            const orderIdCell = row.insertCell();
-            const checksCell = row.insertCell();
-            const consentCell = row.insertCell();
-            const actionCell = row.insertCell();
-            const digitalLinkCell = row.insertCell();
-            const linkStatusCell = row.insertCell();
-            const secureTrustCell = row.insertCell();
+          const link = document.createElement("a");
+          link.href = order.issuanceResponse.vaultLink;
+          link.textContent = "View Link";
+          link.target = "_blank";
+          digitalLinkCell.appendChild(link);
 
-            orderIdCell.textContent = order.orderId;
-            checksCell.textContent = order.checks.join(", ");
-            checksCell.classList.add("checks-column");
-            checksCell.style.whiteSpace = "normal";
-            consentCell.textContent = order.consent ? "Yes" : "No";
+          linkStatusCell.textContent = order.issuanceState.status;
 
-            const pdfIcon = document.createElement("i");
-            pdfIcon.classList.add("fas", "fa-file-pdf", "pdf-icon");
-            pdfIcon.title = "View PDF";
+          const secureTrustIcon = document.createElement("i");
+          secureTrustIcon.classList.add("fas", "fa-file-pdf", "pdf-icon");
+          secureTrustIcon.title = "SecureTrust Verified";
 
-            if (
-              order.issuanceState &&
-              order.issuanceState.status === "VC_CLAIMED"
-            ) {
-              pdfIcon.classList.add("greyed-out");
-              pdfIcon.title = "Claimed"; // Or a more appropriate message
-            } else {
-              pdfIcon.addEventListener("click", () => {
-                window.open("/generate_pdf/" + order.orderId, "_blank");
-              });
-            }
-            actionCell.appendChild(pdfIcon);
+          if (
+            order.issuanceState &&
+            order.issuanceState.status === "VC_CLAIMED"
+          ) {
+            secureTrustIcon.addEventListener("click", () => {
+              window.open("/generate_secure_pdf/" + order.orderId, "_blank");
+            });
+            secureTrustCell.appendChild(secureTrustIcon);
+          } else {
+            secureTrustIcon.classList.add("greyed-out");
+            secureTrustIcon.title = "Not Claimed";
+            secureTrustCell.appendChild(secureTrustIcon);
+          }
+        });
+      }
 
-            const link = document.createElement("a");
-            link.href = order.issuanceResponse.vaultLink;
-            link.textContent = "View Link";
-            link.target = "_blank";
-            digitalLinkCell.appendChild(link);
-
-            linkStatusCell.textContent = order.issuanceState.status;
-
-            const secureTrustIcon = document.createElement("i");
-            secureTrustIcon.classList.add("fas", "fa-file-pdf", "pdf-icon");
-            secureTrustIcon.title = "SecureTrust Verified";
-
-            if (
-              order.issuanceState &&
-              order.issuanceState.status === "VC_CLAIMED"
-            ) {
-              secureTrustIcon.addEventListener("click", () => {
-                window.open("/generate_secure_pdf/" + order.orderId, "_blank");
-              });
-              secureTrustCell.appendChild(secureTrustIcon);
-            } else {
-              secureTrustIcon.classList.add("greyed-out"); // Add greyed-out class
-              secureTrustIcon.title = "Not Claimed"; // Update tooltip
-              secureTrustCell.appendChild(secureTrustIcon); // Still append the icon
-            }
+      function loadOrders(filter) {
+        let url = "/get_orders";
+        if (filter !== "all") {
+          url += `?status=${filter}`;
+        }
+        fetch(url)
+          .then((response) => response.json())
+          .then((orders) => {
+            populateTable(orders);
+          })
+          .catch((error) => {
+            console.error("Error fetching orders:", error);
           });
+      }
+
+      // Initial load of all orders
+      loadOrders("all");
+
+      // Add event listener for filter changes
+      document
+        .getElementById("orderStatusFilter")
+        .addEventListener("change", function () {
+          const selectedFilter = this.value;
+          loadOrders(selectedFilter);
         });
     </script>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   </body>
 </html>
