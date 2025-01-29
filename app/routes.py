@@ -472,19 +472,32 @@ def verify():
 
 @app.route("/api/verify_pdf", methods=["POST"])
 def verify_pdf():
+    results = []
+    pdf_signature_valid = False
+    issued_credentials_valid = False
+    hash_match = False
+    signature_data = None
+    issued_credentials = None
+    calculated_hash = None
+    expected_hash = None
 
     try:
         if "report_pdf" not in request.files:
-            return jsonify({"error": "No PDF file uploaded"}), 400
+            results.append(
+                {
+                    "key": "PDF File Upload",
+                    "value": "No PDF file uploaded",
+                    "result": "Invalid",
+                }
+            )
+            return jsonify(results), 400
 
         pdf_file = request.files["report_pdf"]
         pdf_buffer = BytesIO(pdf_file.read())
 
         pdf_reader = PdfReader(pdf_buffer)
 
-        # 1. Extract the Signature and Hash:
-        signature_data = None
-        signature_verified = False  # Flag to track if any signature is verified
+        # 1. Extract and Verify Signature and Issued Credentials
         for filename, data in pdf_reader.attachments.items():
             if filename == "PDFSignature.json":
                 try:
@@ -492,80 +505,141 @@ def verify_pdf():
                         "".join([item.decode("utf-8") for item in data])
                     )
                     signature_data_vc = signature_data.get("signedCredential")
-                    # print("signature_data_vc", signature_data_vc)
                     verification_results = verification(signature_data_vc)
-                    print("verification_results", verification_results)
-                    if verification_results.get("isValid") == "True":
-                        signature_verified = True
-                        break  # Exit loop once signature is found and verified
+                    if verification_results.get("isValid") == True:
+                        pdf_signature_valid = True
+                    else:
+                        results.append(
+                            {
+                                "key": "PDF Signature Verification",
+                                "value": "Invalid Signature",
+                                "result": "Invalid",
+                            }
+                        )
+
                 except (json.JSONDecodeError, UnicodeDecodeError):
-                    return jsonify({"error": "Invalid signature format"}), 400
-        for filename, data in pdf_reader.attachments.items():
-            if filename == "issuedCredentials.json":
+                    results.append(
+                        {
+                            "key": "PDF Signature Attachment",
+                            "value": "Invalid PDFSignature.json Exception",
+                            "result": "Invalid",
+                        }
+                    )
+            elif filename == "issuedCredentials.json":
                 try:
                     issued_credentials = json.loads(
                         "".join([item.decode("utf-8") for item in data])
                     )
                     issued_credentials_vc = issued_credentials.get("signedCredential")
-                    # print("issued_credentials", issued_credentials)
                     verification_results = verification(issued_credentials_vc)
-                    print("verification_results", verification_results)
-                    if verification_results.get("isValid") == "True":
-                        signature_verified = True
-                        break  # Exit loop once signature is found and verified
+                    if verification_results.get("isValid") == True:
+                        issued_credentials_valid = True
+                    else:
+                        results.append(
+                            {
+                                "key": "Issued Credentials VC Verification",
+                                "value": "Invalid Issued Credentials",
+                                "result": "Invalid",
+                            }
+                        )
+
                 except (json.JSONDecodeError, UnicodeDecodeError):
-                    return jsonify({"error": "Invalid issuedCredentials format"}), 400
-
-        # if not signature_verified:  # Check AFTER the loop
-        #     return (
-        #         jsonify({"error": "No valid signature found. VC Verification failed"}),
-        #         400,
-        #     )
+                    results.append(
+                        {
+                            "key": "Issued Credentials Attachment",
+                            "value": "Invalid issuedCredentials.json Exception",
+                            "result": "Invalid",
+                        }
+                    )
+        print("signature_data", signature_data)
         if not signature_data:
-            return jsonify({"error": "Signature not found"}), 400
 
-        expected_hash = signature_data_vc["credentialSubject"].get(
-            "hashWithoutAttachments"
-        )  # Get the hash from signature
-        if not expected_hash:
-            return jsonify({"error": "Hash not found in signature"}), 400
+            results.append(
+                {
+                    "key": "PDF Signature Attachment",
+                    "value": "Missing PDFSignature.json",
+                    "result": "Invalid",
+                }
+            )
+        print("issued_credentials", issued_credentials)
+        if not issued_credentials:
+            results.append(
+                {
+                    "key": "Issued Credentials Attachment",
+                    "value": "Missing issuedCredentials.json",
+                    "result": "Invalid",
+                }
+            )
 
-        # 2. Calculate the Hash of the PDF (excluding attachments)
-        calculated_hash = hash_pdf_content_excluding_attachments(pdf_reader)
-        print("calculated_hash", calculated_hash)
-        print("expected_hash", expected_hash)
-
-        # 3. Verify the Signature (Compare Hashes)
-        if calculated_hash == expected_hash:
-            return (
-                jsonify(
+        if (
+            signature_data and pdf_signature_valid
+        ):  # only proceed if signature data exists and is valid
+            expected_hash = (
+                signature_data.get("signedCredential", {})
+                .get("credentialSubject", {})
+                .get("hashWithoutAttachments")
+            )
+            if not expected_hash:
+                results.append(
                     {
-                        "PDF Signature Validation": "Valid PDF",
-                        "Calculated Hash": calculated_hash,
-                        "Expected Hash": expected_hash,
-                        "Issued Credentials": issued_credentials,
-                        "PDF Signature": signature_data,
+                        "key": "PDF Hash",
+                        "value": "Hash not found in signature",
+                        "result": "Invalid",
                     }
-                ),
-                200,
-            )  # Successful verification
-        else:
-            return (
-                jsonify(
-                    {
-                        "PDF Signature Validation": "Invalid PDF",
-                        "Calculated Hash": calculated_hash,
-                        "Expected Hash": expected_hash,
-                        "Issued Credentials": issued_credentials,
-                        "PDF Signature": signature_data,
-                    }
-                ),
-                400,
-            )  # Hash mismatch
+                )
+            else:
+                # 2. Calculate the Hash of the PDF (excluding attachments)
+                calculated_hash = hash_pdf_content_excluding_attachments(pdf_reader)
+
+                # 3. Verify the Hash
+                if calculated_hash == expected_hash:
+                    hash_match = True
+                else:
+                    results.append(
+                        {
+                            "key": "PDF Hash Match",
+                            "value": "Hash mismatch",
+                            "result": "Invalid",
+                        }
+                    )
+
+        # Build Results Array
+        if pdf_signature_valid:
+            results.append(
+                {
+                    "key": "PDF Signature Verification",
+                    "value": "Valid PDF Signature",
+                    "result": "Valid",
+                }
+            )
+        if issued_credentials_valid:
+            results.append(
+                {
+                    "key": "Issued Credentials Verification",
+                    "value": "Valid Issued Credentials",
+                    "result": "Valid",
+                }
+            )
+        if hash_match:
+            results.append(
+                {"key": "PDF Hash Match", "value": "Hash match", "result": "Valid"}
+            )
+
+        if (
+            not results
+        ):  # If no explicit "Invalid" results were added, it means everything is valid
+            results.append(
+                {"key": "PDF Validation", "value": "PDF is Valid", "result": "Valid"}
+            )
+
+        return jsonify(results), 200
 
     except Exception as e:
         logging.exception("Error verifying PDF:")
-        return jsonify({"error": str(e)}), 500
+        results.append(
+            {"key": "PDF Processing Error", "value": str(e), "result": "Invalid"}
+        )
+        return jsonify(results), 500
 
 
 def pst():
