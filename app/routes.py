@@ -257,6 +257,11 @@ def get_orders():
         return jsonify({"error": "Internal server error"}), 500
 
 
+# @app.route("/test")
+# def test():
+#     return render_template("test.html")
+
+
 @app.route("/generate_pdf/<order_id>")
 def generate_pdf(order_id):
     try:
