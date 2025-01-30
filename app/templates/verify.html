@@ -1,418 +1,111 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SecureTrust® Validation</title>
-    <link
-      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
-      rel="stylesheet"
-    />
-    <style>
-      body {
-        background-color: #f8f9fb;
-        min-height: 100vh;
-        font-family: "Segoe UI", system-ui, sans-serif;
-      }
+{% extends "base.html" %}
+{% block title %}SecureTrust® Validation{% endblock %}
+{% block content %}
+<div class="validation-container">
+  <div class="validation-header">
+    <h1>Validate SecureTrust® PDF</h1>
+    <p style="color: #666; margin-top: 0.5rem">
+      Verify your document's authenticity
+    </p>
+  </div>
 
-      .validation-container {
-        width: 80vw;
-        max-width: 1200px;
-        min-width: 400px;
-        margin: 2rem auto;
-        padding: 2rem;
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 2px 16px rgba(0, 0, 0, 0.08);
-      }
-
-      @media (max-width: 768px) {
-        .validation-container {
-          width: 95vw;
-          min-width: unset;
-          padding: 1.5rem;
-        }
-      }
-
-      .validation-header {
-        text-align: center;
-        margin-bottom: 2rem;
-      }
-
-      .validation-header h1 {
-        color: #1a237e;
-        font-weight: 600;
-        font-size: 1.8rem;
-        margin-bottom: 0.5rem;
-      }
-
-      .upload-section {
-        border: 2px dashed #c5cae9;
-        border-radius: 8px;
-        padding: 2rem 1.5rem;
-        text-align: center;
-        background: #f8f9fb;
-        margin: 1.5rem 0;
-        transition: all 0.2s ease;
-      }
-
-      .upload-section.dragover {
-        border-color: #3f51b5;
-        background-color: #e8eaf6;
-      }
-
-      .upload-button {
-        background: #3f51b5;
-        color: white;
-        border: none;
-        padding: 0.75rem 2rem;
-        border-radius: 6px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-      }
-
-      .upload-button:hover {
-        background: #303f9f;
-        transform: translateY(-1px);
-      }
-
-      .drag-drop-text {
-        color: #5c6bc0;
-        font-size: 0.95rem;
-        margin-top: 1.5rem;
-        font-weight: 500;
-      }
-
-      .file-input {
-        opacity: 0;
-        position: absolute;
-        z-index: -1;
-      }
-
-      /* Results Table Styling */
-      .result-table {
-        width: 100%;
-        margin-top: 2rem;
-        border-collapse: collapse;
-        background: white;
-        border-radius: 8px;
-        overflow: hidden;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-      }
-
-      .result-table th {
-        background-color: #f5f6fa;
-        color: #3f51b5;
-        font-weight: 600;
-        padding: 1rem;
-        text-align: left;
-      }
-
-      .result-table td {
-        padding: 1rem;
-        border-top: 1px solid #eee;
-        color: #444;
-      }
-
-      .valid-badge {
-        background: #e8f5e9;
-        color: #2e7d32;
-        padding: 0.25rem 0.75rem;
-        border-radius: 12px;
-        font-size: 0.85rem;
-        font-weight: 500;
-      }
-
-      .invalid-badge {
-        background: #ffebee;
-        color: #c62828;
-        padding: 0.25rem 0.75rem;
-        border-radius: 12px;
-        font-size: 0.85rem;
-        font-weight: 500;
-      }
-
-      #loadingOverlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(255, 255, 255, 0.9);
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        z-index: 1000;
-        display: none;
-      }
-
-      .loader {
-        border: 4px solid #f3f3f3;
-        border-top: 4px solid #3f51b5;
-        border-radius: 50%;
-        width: 40px;
-        height: 40px;
-        animation: spin 1s linear infinite;
-      }
-
-      @keyframes spin {
-        0% {
-          transform: rotate(0deg);
-        }
-        100% {
-          transform: rotate(360deg);
-        }
-      }
-
-      #resetButton {
-        margin-top: 1.5rem;
-        background: none;
-        border: 2px solid #3f51b5;
-        color: #3f51b5;
-        padding: 0.5rem 1.5rem;
-        border-radius: 6px;
-        font-weight: 500;
-        display: none;
-      }
-
-      .result-table-container {
-        max-width: 100%;
-        overflow-x: auto;
-        margin-top: 2rem;
-        border-radius: 8px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-      }
-
-      .result-table {
-        min-width: 600px;
-        table-layout: fixed;
-      }
-
-      .result-table td:nth-child(1) {
-        width: 20%;
-      }
-      .result-table td:nth-child(2) {
-        width: 60%;
-      }
-      .result-table td:nth-child(3) {
-        width: 20%;
-      }
-
-      .json-content {
-        max-height: 150px;
-        overflow-y: auto;
-        background: #f8f9fb;
-        border-radius: 6px;
-        padding: 0.5rem;
-        margin-top: 0.5rem;
-        display: none;
-      }
-
-      .toggle-button {
-        background: #3f51b5;
-        color: white;
-        border: none;
-        padding: 0.25rem 0.75rem;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 0.85rem;
-      }
-
-      .toggle-button:hover {
-        background: #303f9f;
-      }
-
-      .value-cell {
-        max-width: 300px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-      .validation-header h1 {
-        font-size: 2rem;
-        color: #1a237e;
-        font-weight: 600;
-      }
-
-      .header-divider {
-        border-top: 2px solid #3f51b5;
-        width: 60px;
-        margin: 1.5rem auto;
-        opacity: 0.7;
-      }
-
-      .lead.text-muted {
-        font-size: 1.1rem;
-        color: #666;
-      }
-    </style>
-  </head>
-  <body>
-    <header>
-      <nav class="navbar navbar-expand-lg">
-        <div class="container-fluid">
-          <a class="navbar-brand" href="https://www.affinidi.com">
-            <img
-              src="{{ url_for('static', filename='images/logo.png') }}"
-              alt="Logo"
-              style="max-height: 50px"
-            />
-          </a>
-          <button
-            class="navbar-toggler"
-            type="button"
-            data-bs-toggle="collapse"
-            data-bs-target="#navbarNav"
-          >
-            <span class="navbar-toggler-icon"></span>
-          </button>
-          <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ms-auto">
-              <li class="nav-item">
-                <a class="nav-link active" href="/">DASHBOARD</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="/create-case">CREATE CASE</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="/orders">ORDERS</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="/verify">VERIFY REPORTS</a>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </nav>
-    </header>
-    <div class="validation-container">
-      <div class="validation-header">
-        <h1>Validate SecureTrust® PDF</h1>
-        <p style="color: #666; margin-top: 0.5rem">
-          Verify your document's authenticity
-        </p>
-      </div>
-
-      <form id="uploadForm">
-        <div class="upload-section" id="dropZone">
-          <input
-            type="file"
-            id="report_pdf"
-            class="file-input"
-            accept="application/pdf"
-          />
-          <button
-            type="button"
-            class="upload-button"
-            onclick="document.getElementById('report_pdf').click()"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-              <polyline points="17 8 12 3 7 8"></polyline>
-              <line x1="12" y1="3" x2="12" y2="15"></line>
-            </svg>
-            Upload from your computer
-          </button>
-          <div class="drag-drop-text">
-            or drag & drop your SecureTrust PDF here
-          </div>
-        </div>
-      </form>
-
-      <div id="responseArea"></div>
-      <button id="resetButton" onclick="resetForm()">
-        Validate Another Document
+  <form id="uploadForm">
+    <div class="upload-section" id="dropZone">
+      <input type="file" id="report_pdf" class="file-input" accept="application/pdf" />
+      <button type="button" class="upload-button" onclick="document.getElementById('report_pdf').click()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="17 8 12 3 7 8"></polyline>
+          <line x1="12" y1="3" x2="12" y2="15"></line>
+        </svg>
+        Upload from your computer
       </button>
-    </div>
-
-    <div id="loadingOverlay">
-      <div class="loader"></div>
-      <div style="margin-top: 1rem; color: #3f51b5; font-weight: 500">
-        Validating document...
+      <div class="drag-drop-text">
+        or drag & drop your SecureTrust PDF here
       </div>
     </div>
+  </form>
 
-    <script>
-      const dropZone = document.getElementById("dropZone");
-      const fileInput = document.getElementById("report_pdf");
-      const loadingOverlay = document.getElementById("loadingOverlay");
-      const responseArea = document.getElementById("responseArea");
-      const resetButton = document.getElementById("resetButton");
+  <div id="responseArea"></div>
+  <button id="resetButton" onclick="resetForm()">
+    Validate Another Document
+  </button>
+</div>
 
-      // Drag and drop handlers
-      dropZone.addEventListener("dragover", (e) => {
-        e.preventDefault();
-        dropZone.classList.add("dragover");
+<div id="loadingOverlay">
+  <div class="loader"></div>
+  <div style="margin-top: 1rem; color: #3f51b5; font-weight: 500">
+    Validating document...
+  </div>
+</div>
+
+<script>
+  const dropZone = document.getElementById("dropZone");
+  const fileInput = document.getElementById("report_pdf");
+  const loadingOverlay = document.getElementById("loadingOverlay");
+  const responseArea = document.getElementById("responseArea");
+  const resetButton = document.getElementById("resetButton");
+
+  // Drag and drop handlers
+  dropZone.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    dropZone.classList.add("dragover");
+  });
+
+  dropZone.addEventListener("dragleave", () => {
+    dropZone.classList.remove("dragover");
+  });
+
+  dropZone.addEventListener("drop", (e) => {
+    e.preventDefault();
+    dropZone.classList.remove("dragover");
+    const files = e.dataTransfer.files;
+    if (files.length > 0) handleFile(files[0]);
+  });
+
+  fileInput.addEventListener("change", (e) => {
+    if (e.target.files.length > 0) handleFile(e.target.files[0]);
+  });
+
+  async function handleFile(file) {
+    if (file.type !== "application/pdf") {
+      alert("Please upload a PDF file.");
+      return;
+    }
+
+    loadingOverlay.style.display = "flex";
+    const formData = new FormData();
+    formData.append("report_pdf", file);
+
+    try {
+      const response = await fetch("/api/verify_pdf", {
+        method: "POST",
+        body: formData,
       });
 
-      dropZone.addEventListener("dragleave", () => {
-        dropZone.classList.remove("dragover");
-      });
+      const data = await response.json();
+      displayResults(data);
+      resetButton.style.display = "block";
+    } catch (error) {
+      console.error("Error:", error);
+      responseArea.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+    } finally {
+      loadingOverlay.style.display = "none";
+    }
+  }
 
-      dropZone.addEventListener("drop", (e) => {
-        e.preventDefault();
-        dropZone.classList.remove("dragover");
-        const files = e.dataTransfer.files;
-        if (files.length > 0) handleFile(files[0]);
-      });
+  function displayResults(data) {
+    responseArea.innerHTML = "";
+    const container = document.createElement("div");
+    container.className = "result-table-container";
 
-      fileInput.addEventListener("change", (e) => {
-        if (e.target.files.length > 0) handleFile(e.target.files[0]);
-      });
+    const table = document.createElement("table");
+    table.className = "result-table";
 
-      async function handleFile(file) {
-        if (file.type !== "application/pdf") {
-          alert("Please upload a PDF file.");
-          return;
-        }
-
-        loadingOverlay.style.display = "flex";
-        const formData = new FormData();
-        formData.append("report_pdf", file);
-
-        try {
-          const response = await fetch("/api/verify_pdf", {
-            method: "POST",
-            body: formData,
-          });
-
-          const data = await response.json();
-          displayResults(data);
-          resetButton.style.display = "block";
-        } catch (error) {
-          console.error("Error:", error);
-          responseArea.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
-        } finally {
-          loadingOverlay.style.display = "none";
-        }
-      }
-
-      function displayResults(data) {
-        responseArea.innerHTML = "";
-        const container = document.createElement("div");
-        container.className = "result-table-container";
-
-        const table = document.createElement("table");
-        table.className = "result-table";
-
-        // Table Header
-        const thead = document.createElement("thead");
-        thead.innerHTML = `
+    // Table Header
+    const thead = document.createElement("thead");
+    thead.innerHTML = `
                 <tr>
                     <th>Property</th>
                     <th>Value</th>
@@ -420,66 +113,66 @@
                 </tr>
             `;
 
-        // Table Body
-        const tbody = document.createElement("tbody");
-        data.forEach((item) => {
-          const row = document.createElement("tr");
+    // Table Body
+    const tbody = document.createElement("tbody");
+    data.forEach((item) => {
+      const row = document.createElement("tr");
 
-          // Property Cell
-          const propCell = document.createElement("td");
-          propCell.textContent = item.key;
+      // Property Cell
+      const propCell = document.createElement("td");
+      propCell.textContent = item.key;
 
-          // Value Cell
-          const valueCell = document.createElement("td");
-          valueCell.className = "value-cell";
+      // Value Cell
+      const valueCell = document.createElement("td");
+      valueCell.className = "value-cell";
 
-          if (typeof item.value === "object") {
-            const toggleBtn = document.createElement("button");
-            toggleBtn.className = "toggle-button";
-            toggleBtn.textContent = "Show Details";
+      if (typeof item.value === "object") {
+        const toggleBtn = document.createElement("button");
+        toggleBtn.className = "toggle-button";
+        toggleBtn.textContent = "Show Details";
 
-            const jsonContent = document.createElement("pre");
-            jsonContent.className = "json-content";
-            jsonContent.textContent = JSON.stringify(item.value, null, 2);
+        const jsonContent = document.createElement("pre");
+        jsonContent.className = "json-content";
+        jsonContent.textContent = JSON.stringify(item.value, null, 2);
 
-            toggleBtn.onclick = () => {
-              jsonContent.style.display =
-                jsonContent.style.display === "none" ? "block" : "none";
-              toggleBtn.textContent =
-                jsonContent.style.display === "none"
-                  ? "Show Details"
-                  : "Hide Details";
-            };
+        toggleBtn.onclick = () => {
+          jsonContent.style.display =
+            jsonContent.style.display === "none" ? "block" : "none";
+          toggleBtn.textContent =
+            jsonContent.style.display === "none"
+              ? "Show Details"
+              : "Hide Details";
+        };
 
-            valueCell.innerHTML = "";
-            valueCell.append(toggleBtn, jsonContent);
-          } else {
-            valueCell.textContent = item.value;
-          }
-
-          // Status Cell
-          const statusCell = document.createElement("td");
-          const badge = document.createElement("span");
-          badge.className =
-            item.result === "Valid" ? "valid-badge" : "invalid-badge";
-          badge.textContent = item.result;
-          statusCell.appendChild(badge);
-
-          row.append(propCell, valueCell, statusCell);
-          tbody.appendChild(row);
-        });
-
-        table.append(thead, tbody);
-        container.appendChild(table);
-        responseArea.appendChild(container);
-        resetButton.style.display = "block";
+        valueCell.innerHTML = "";
+        valueCell.append(toggleBtn, jsonContent);
+      } else {
+        valueCell.textContent = item.value;
       }
 
-      function resetForm() {
-        fileInput.value = "";
-        responseArea.innerHTML = "";
-        resetButton.style.display = "none";
-      }
-    </script>
-  </body>
-</html>
+      // Status Cell
+      const statusCell = document.createElement("td");
+      const badge = document.createElement("span");
+      badge.className =
+        item.result === "Valid" ? "valid-badge" : "invalid-badge";
+      badge.textContent = item.result;
+      statusCell.appendChild(badge);
+
+      row.append(propCell, valueCell, statusCell);
+      tbody.appendChild(row);
+    });
+
+    table.append(thead, tbody);
+    container.appendChild(table);
+    responseArea.appendChild(container);
+    resetButton.style.display = "block";
+  }
+
+  function resetForm() {
+    fileInput.value = "";
+    responseArea.innerHTML = "";
+    resetButton.style.display = "none";
+  }
+</script>
+
+{% endblock %}
