@@ -336,9 +336,7 @@
 
     <div id="loadingOverlay">
       <div class="loader"></div>
-      <div style="margin-top: 1rem; color: #3f51b5; font-weight: 500">
-        Validating document...
-      </div>
+      <div class="message" id="loadingMessage">Validating PDF Content....</div>
     </div>
 
     <script>
@@ -347,6 +345,14 @@
       const loadingOverlay = document.getElementById("loadingOverlay");
       const responseArea = document.getElementById("responseArea");
       const resetButton = document.getElementById("resetButton");
+
+      // Update the messages array
+      const messages = [
+        "Checking PDF Attachment...",
+        "Verifying PDF Signature Credentials...",
+        "Verifying Background Check Credentials...",
+        "Finalizing Secure Proof Verification...",
+      ];
 
       // Drag and drop handlers
       dropZone.addEventListener("dragover", (e) => {
@@ -376,6 +382,9 @@
         }
 
         loadingOverlay.style.display = "flex";
+        messageIndex = 0;
+        progress = 0;
+        startProgressInterval();
         const formData = new FormData();
         formData.append("report_pdf", file);
 
@@ -393,6 +402,7 @@
           responseArea.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
         } finally {
           loadingOverlay.style.display = "none";
+          clearProgressInterval();
         }
       }
 
@@ -467,6 +477,29 @@
         container.appendChild(table);
         responseArea.appendChild(container);
         resetButton.style.display = "block";
+      }
+      // Update progress handling
+      let messageIndex = 0;
+      let progress = 0;
+      let progressInterval;
+
+      function startProgressInterval() {
+        progressInterval = setInterval(() => {
+          if (messageIndex < messages.length) {
+            document.getElementById("loadingMessage").textContent =
+              messages[messageIndex];
+            messageIndex++;
+            progress += 25 / messages.length;
+          } else {
+            clearInterval(progressInterval);
+          }
+        }, 300);
+      }
+
+      function clearProgressInterval() {
+        clearInterval(progressInterval);
+        messageIndex = 0;
+        progress = 0;
       }
 
       function resetForm() {
