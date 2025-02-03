@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Create a Case</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+    />
+
+    <style>
+      body {
+        background-color: #f8f9fb;
+        font-family: "Segoe UI", system-ui, sans-serif;
+      }
+
+      .navbar {
+        background-color: #fff;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+      }
+
+      .navbar-nav .nav-link {
+        color: #3f51b5;
+        font-weight: 500;
+        margin: 0 1rem;
+        transition: all 0.2s ease;
+      }
+
+      .navbar-nav .nav-link:hover,
+      .navbar-nav .nav-link.active {
+        color: #1a237e;
+        transform: translateY(-1px);
+      }
+
+      .validation-container {
+        width: 80vw;
+        max-width: 800px;
+        min-width: 400px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 16px rgba(0, 0, 0, 0.08);
+      }
+
+      @media (max-width: 768px) {
+        .validation-container {
+          width: 95vw;
+          min-width: unset;
+          padding: 1.5rem;
+        }
+      }
+
+      h2 {
+        color: #1a237e;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        text-align: center;
+      }
+
+      .alert-info {
+        background-color: #e3f2fd;
+        color: #1a237e;
+        border: none;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+      }
+
+      .form-group {
+        margin-bottom: 1.5rem;
+      }
+
+      label {
+        font-weight: 500;
+        color: #3f51b5;
+        margin-bottom: 0.5rem;
+      }
+
+      input[type="text"],
+      select {
+        width: 100%;
+        padding: 0.75rem;
+        border: 2px solid #c5cae9;
+        border-radius: 6px;
+        transition: all 0.2s ease;
+      }
+
+      input[type="text"]:focus,
+      select:focus {
+        border-color: #3f51b5;
+        box-shadow: 0 0 0 2px rgba(63, 81, 181, 0.2);
+        outline: none;
+      }
+
+      .phone-inputs {
+        display: flex;
+        gap: 0.5rem;
+      }
+
+      .phone-inputs input {
+        flex: 1;
+      }
+
+      .button-group {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 2rem;
+        gap: 1rem;
+      }
+
+      .btn {
+        padding: 0.75rem 2rem;
+        border-radius: 6px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+      }
+
+      .btn-success {
+        background-color: #3f51b5;
+        border: none;
+      }
+
+      .btn-success:hover {
+        background-color: #303f9f;
+        transform: translateY(-1px);
+      }
+
+      .btn-warning {
+        background-color: #fff;
+        border: 2px solid #3f51b5;
+        color: #3f51b5;
+      }
+
+      .btn-warning:hover {
+        background-color: #f8f9fb;
+      }
+
+      .btn-info {
+        background-color: #3f51b5;
+        border: none;
+        color: white;
+      }
+
+      .btn-info:hover {
+        background-color: #303f9f;
+      }
+
+      .required-star {
+        color: #d32f2f;
+        margin-left: 0.25rem;
+      }
+
+      footer {
+        background-color: #f8f9fb;
+        color: #666;
+        text-align: center;
+        padding: 1rem;
+        margin-top: auto;
+        font-size: 0.9rem;
+      }
+    </style>
+  </head>
+  <body>
+    {% include 'header.html' %}
+    <div class="validation-container">
+      <h2>Create a Case</h2>
+      <div class="alert alert-info">
+        If you need to order more than 20 Cases and wish to have a special
+        DISCOUNT CODE or order offline, please email us at
+        consult@backgroundchecks.com.
+      </div>
+
+      <form id="createCaseForm">
+        <div class="form-group">
+          <label for="costCentre">Cost Centre</label>
+          <input
+            type="text"
+            id="costCentre"
+            name="costCentre"
+            placeholder="Enter Cost Centre"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="riskLevel">Risk Level</label>
+          <select id="riskLevel" name="riskLevel">
+            <option value="">Select Risk Level</option>
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="candidateFirstName">
+            Candidate First Name
+            <span class="required-star">*</span>
+          </label>
+          <input
+            type="text"
+            id="candidateFirstName"
+            name="candidateFirstName"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="candidateLastName">Candidate Last Name</label>
+          <input type="text" id="candidateLastName" name="candidateLastName" />
+        </div>
+
+        <div class="form-group">
+          <label for="candidateEmail">
+            Candidate Email Address
+            <span class="required-star">*</span>
+          </label>
+          <input
+            type="text"
+            id="candidateEmail"
+            name="candidateEmail"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="candidatePhone">
+            Candidate Phone
+            <span class="required-star">*</span>
+          </label>
+          <div class="phone-inputs">
+            <input
+              type="text"
+              id="countryCode"
+              name="countryCode"
+              placeholder="Country Code"
+            />
+            <input
+              type="text"
+              id="areaCode"
+              name="areaCode"
+              placeholder="Area Code"
+            />
+            <input
+              type="text"
+              id="phoneNumber"
+              name="phoneNumber"
+              placeholder="Number"
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="positionAppliedFor">Position Applied For</label>
+          <input
+            type="text"
+            id="positionAppliedFor"
+            name="positionAppliedFor"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="candidateOrEmployeeId">Candidate/Employee ID</label>
+          <input
+            type="text"
+            id="candidateOrEmployeeId"
+            name="candidateOrEmployeeId"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="caseCurrency">Case Currency</label>
+          <select id="caseCurrency" name="caseCurrency">
+            <option value="INR">INR</option>
+            <option value="SGP">SGP</option>
+            <option value="USD">USD</option>
+            <option value="EUR">EUR</option>
+          </select>
+        </div>
+
+        <div class="button-group">
+          <button type="reset" class="btn btn-warning">Reset</button>
+          <button type="submit" class="btn btn-success">Submit</button>
+          <button
+            type="button"
+            class="btn btn-info"
+            onclick="window.location.href='/'"
+          >
+            Home
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <script>
+      const createCaseForm = document.getElementById("createCaseForm");
+
+      createCaseForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        window.location.href = "/checks";
+      });
+
+      createCaseForm.addEventListener("reset", (event) => {
+        createCaseForm.reset();
+      });
+    </script>
+    <footer>&copy; 2025 Affinidi Private Limited. All rights reserved.</footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>

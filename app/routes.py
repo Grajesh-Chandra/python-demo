@@ -1,37 +1,37 @@
-from flask import Flask, render_template, jsonify, request, send_file
+import affinidi_tdk_wallets_client.api_client
+from flask import Flask, Response, render_template, jsonify, request, send_file
+from affinidi_tdk_wallets_client.models.sign_credential_input_dto_unsigned_credential_params import (
+    SignCredentialInputDtoUnsignedCredentialParams,
+)
+from cryptography.hazmat.primitives.hashes import Hash, SHA256
 from . import app
 import affinidi_tdk_auth_provider
 import affinidi_tdk_credential_issuance_client
 import logging
 from pypdf import PdfWriter, PdfReader
 from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import A4, letter
+from reportlab.lib.utils import ImageReader
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Spacer, Paragraph
+from reportlab.lib import colors
+from reportlab.lib.units import inch  # Import inch
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib import colors
+import uuid
 import json
 from io import BytesIO
 import base64
 import affinidi_tdk_credential_verification_client
 import requests
 import os
-
-# api_gateway_url = app.config["api_gateway_url"]
-# token_endpoint = app.config["token_endpoint"]
-# project_id = app.config["project_id"]
-# private_key = app.config["private_key"]
-# token_id = app.config["token_id"]
-# passphrase = app.config["passphrase"]
-# key_id = app.config["key_id"]
-# vault_url = app.config["vault_url"]
-# course_credential_type_id = app.config["course_credential_type_id"]
-# personal_information_credential_type_id = app.config[
-#     "personal_information_credential_type_id"
-# ]
-# employment_credential_type_id = app.config["employment_credential_type_id"]
-# education_credential_type_id = app.config["education_credential_type_id"]
-# address_credential_type_id = app.config["address_credential_type_id"]
+import hashlib
+import qrcode
+import datetime
 
 api_gateway_url = os.environ.get("API_GATEWAY_URL")
 token_endpoint = os.environ.get("TOKEN_ENDPOINT")
 project_id = os.environ.get("PROJECT_ID")
-private_key = os.environ.get("PRIVATE_KEY")
+private_key = os.environ.get("PRIVATE_KEY").replace("\\n", "\n")
 token_id = os.environ.get("TOKEN_ID")
 passphrase = os.environ.get("PASSPHRASE")
 key_id = os.environ.get("KEY_ID")
@@ -43,6 +43,27 @@ personal_information_credential_type_id = os.environ.get(
 employment_credential_type_id = os.environ.get("EMPLOYMENT_CREDENTIAL_TYPE_ID")
 education_credential_type_id = os.environ.get("EDUCATION_CREDENTIAL_TYPE_ID")
 address_credential_type_id = os.environ.get("ADDRESS_CREDENTIAL_TYPE_ID")
+background_check_credential_type_id = os.environ.get(
+    "BACKGROUND_CHECK_CREDENTIAL_TYPE_ID"
+)
+wallet_id = os.environ.get("WALLET_ID")
+holder_did = os.environ.get("HOLDER_DID")
+pdf_signature_json_context = os.environ.get("PDF_SIGNATURE_JSON")
+pdf_signature_jsonld_context = os.environ.get("PDF_SIGNATURE_JSONLD")
+pdf_signature_type_id = os.environ.get("PDF_SIGNATURE_TYPE_ID")
+
+DATA_FILE = "orders/order.json"
+CHECKS_DATA_DIR = "orders"
+
+
+@app.route("/create-case")
+def case():
+    return render_template("case.html")
+
+
+@app.route("/checks")
+def checks():
+    return render_template("checks.html")
 
 
 @app.route("/")
@@ -50,210 +71,64 @@ def home():
     return render_template("index.html")
 
 
-@app.route("/cis")
-def cis():
-    return render_template("cis.html")
+@app.route("/save-order", methods=["POST"])
+def save_order():
+    data = request.get_json()
+    if not data:
+        return jsonify({"success": False, "error": "No data provided"}), 400
 
+    order_id = data.get("orderId")
+    if not order_id:
+        return jsonify({"success": False, "error": "orderId is required"}), 400
 
-@app.route("/iota")
-def iota():
-    return render_template("iota.html")
-
-
-@app.route("/report")
-def report():
-    return render_template("report.html")
-
-
-@app.route("/verify")
-def verify():
-    return render_template("verify.html")
-
-
-@app.route("/api/issue-credential", methods=["POST"])
-def issue_credentials():
-    # Placeholder for issuing credentials
-    # response = {"credentialOfferUri":"https://97dde52f-e99c-420e-885a-3cc3032e73d9.apse1.issuance.affinidi.io/offers/461349d1-4e6b-4588-b346-c7a9f71b9c30","txCode":"631279","issuanceId":"461349d1-4e6b-4588-b346-c7a9f71b9c30","expiresIn":600,"vaultLink":"https://vault.affinidi.com/claim?credential_offer_uri=https://97dde52f-e99c-420e-885a-3cc3032e73d9.apse1.issuance.affinidi.io/offers/461349d1-4e6b-4588-b346-c7a9f71b9c30"}
+    checks_config = data.get("checks", {})
+    payload_for_checks_api = {}
 
     try:
-        type_id = request.json.get("credentialType")
-        if not type_id:
-            return jsonify({"error": "typeId is required"}), 400
+        if not os.path.exists(CHECKS_DATA_DIR):
+            os.makedirs(CHECKS_DATA_DIR)
 
-        credentials_request = []
-        print("credentialType", type_id)
+        for check_type, should_run in checks_config.items():
+            if should_run:
+                check_file = os.path.join(CHECKS_DATA_DIR, f"{check_type}.json")
+                if os.path.exists(check_file):
+                    with open(check_file, "r") as f:
+                        try:
+                            check_data = json.load(f)
+                            payload_for_checks_api[check_type] = check_data
+                        except json.JSONDecodeError:
+                            logging.error(f"{check_file} is corrupted.")
+                            return (
+                                jsonify(
+                                    {
+                                        "success": False,
+                                        "error": f"Error reading {check_type} data.",
+                                    }
+                                ),
+                                500,
+                            )
+                else:
+                    logging.warning(f"Check data file not found: {check_file}")
+                    return (
+                        jsonify(
+                            {"success": False, "error": f"{check_type} data not found."}
+                        ),
+                        400,
+                    )
 
-        if type_id == "personalInformation":
-            credentials_request = [
-                {
-                    "credentialTypeId": personal_information_credential_type_id,
-                    "credentialData": {
-                        "name": {
-                            "givenName": "Grajesh",
-                            "familyName": "Chandra",
-                            "nickname": "Grajesh Testing",
-                        },
-                        "birthdate": "01-01-1990",
-                        "birthCountry": "India",
-                        "citizenship": "Indian",
-                        "phoneNumber": "7666009585",
-                        "nationalIdentification": {
-                            "idNumber1": "pan",
-                            "idType1": "askjd13212432d",
-                        },
-                        "email": "grajesh.c@affinidi.com",
-                        "gender": "male",
-                        "maritalStatus": "married",
-                        "verificationStatus": "Completed",
-                        "verificationEvidence": {
-                            "evidenceName1": "letter",
-                            "evidenceURL1": "http://localhost",
-                        },
-                        "verificationRemarks": "Done",
-                    },
-                }
-            ]
-        elif type_id == "address":
-            credentials_request = [
-                {
-                    "credentialTypeId": address_credential_type_id,
-                    "credentialData": {
-                        "address": {
-                            "addressLine1": "Varthur, Gunjur",
-                            "addressLine2": "B305, Candeur Landmark, Tower Eiffel",
-                            "postalCode": "560087",
-                            "addressRegion": "Karnataka",
-                            "addressCountry": "India",
-                        },
-                        "ownerDetails": {
-                            "ownerName": "TestOwner",
-                            "ownerContactDetails1": "+912325435634",
-                        },
-                        "neighbourDetails": {
-                            "neighbourName": "Test Neighbour",
-                            "neighbourContactDetails1": "+912325435634",
-                        },
-                        "stayDetails": {
-                            "fromDate": "01-01-2000",
-                            "toDate": "01-01-2020",
-                        },
-                        "verificationStatus": "Completed",
-                        "verificationEvidence": {
-                            "evidenceName1": "Letter",
-                            "evidenceURL1": "http://localhost",
-                        },
-                        "verificationRemarks": "done",
-                    },
-                }
-            ]
-        elif type_id == "education":
-            credentials_request = [
-                {
-                    "credentialTypeId": education_credential_type_id,
-                    "credentialData": {
-                        "candidateDetails": {
-                            "name": "Grajesh Chandra",
-                            "phoneNumber": "7666009585",
-                            "email": "grajesh.c@affinidi.com",
-                            "gender": "male",
-                        },
-                        "institutionDetails": {
-                            "institutionName": "Affinidi",
-                            "institutionAddress": {
-                                "addressLine1": "Varthur, Gunjur",
-                                "addressLine2": "B305, Candeur Landmark, Tower Eiffel",
-                                "postalCode": "560087",
-                                "addressRegion": "Karnataka",
-                                "addressCountry": "India",
-                            },
-                            "institutionContact1": "+91 1234567890",
-                            "institutionContact2": "+91 1234567890",
-                            "institutionEmail": "test@affinidi.com",
-                            "institutionWebsiteURL": "affinidi.com",
-                        },
-                        "educationDetails": {
-                            "qualification": "Graduation",
-                            "course": "MBA",
-                            "graduationDate": "12-08-2013",
-                            "dateAttendedFrom": "12-08-2011",
-                            "dateAttendedTo": "12-07-2013",
-                            "educationRegistrationID": "admins1223454356",
-                        },
-                        "verificationStatus": "Verified",
-                        "verificationEvidence": {
-                            "evidenceName1": "Degree",
-                            "evidenceURL1": "http://localhost",
-                        },
-                        "verificationRemarks": "completed",
-                    },
-                }
-            ]
-        elif type_id == "employment":
-            credentials_request = [
-                {
-                    "credentialTypeId": employment_credential_type_id,
-                    "credentialData": {
-                        "candidateDetails": {
-                            "name": "Grajesh Chandra",
-                            "phoneNumber": "7666009585",
-                            "email": "grajesh.c@affinidi.com",
-                            "gender": "male",
-                        },
-                        "employerDetails": {
-                            "companyName": "Affinidi",
-                            "companyAddress": {
-                                "addressLine1": "Varthur, Gunjur",
-                                "addressLine2": "B305, Candeur Landmark, Tower Eiffel",
-                                "postalCode": "560087",
-                                "addressRegion": "Karnataka",
-                                "addressCountry": "India",
-                            },
-                            "hRDetails": {
-                                "hRfirstName": "Testing",
-                                "hRLastName": "HR",
-                                "hREmail": "hr@affinidi.com",
-                                "hRDesignation": "Lead HR",
-                                "hRContactNumber1": "+911234567789",
-                                "whenToContact": "9:00-6:00 PM",
-                            },
-                        },
-                        "employmentDetails": {
-                            "designation": "Testing",
-                            "employmentStatus": "Fulltime",
-                            "annualisedSalary": "10000",
-                            "currency": "INR",
-                            "tenure": {"fromDate": "05-2022", "toDate": "06-2050"},
-                            "reasonForLeaving": "Resignation",
-                            "eligibleForRehire": "Yes",
-                        },
-                        "verificationStatus": "Completed",
-                        "verificationEvidence": {
-                            "evidenceName1": "letter",
-                            "evidenceURL1": "http://localhost",
-                        },
-                        "verificationRemarks": "Done",
-                    },
-                }
-            ]
-        else:
-            return jsonify({"error": "Invalid typeId"}), 400
+        # Now, payload_for_checks_api contains the data for the checks that should run.
+        # Here you would typically make a request to the other API:
+        # response = requests.post("other_api_url", json=payload_for_checks_api)
+        # For this example, we'll just log the payload.
 
-        print("credentials_request", credentials_request)
-
-        # # Pass the stats generated from config.py
-        # stats = {
-        #     "apiGatewayUrl": "https://apse1.api.affinidi.io",
-        #     "tokenEndpoint": "https://apse1.auth.developer.affinidi.io/auth/oauth2/token",
-        #     "projectId": "97dde52f-e99c-420e-885a-3cc3032e73d9",
-        #     "privateKey": "-----BEGIN ENCRYPTED PRIVATE KEY-----\nMIIJrTBXBgkqhkiG9w0BBQ0wSjApBgkqhkiG9w0BBQwwHAQIvPZ2P7cSzEwCAggA\nMAwGCCqGSIb3DQIJBQAwHQYJYIZIAWUDBAEqBBC4WEwfNJT+psX7VM6AYQFqBIIJ\nUC+yfA4+QEkRYUVZVlIYVBjs/m4lCRtVMkguMAPZRV0J2jSJkbxjOqw/baLX0eaP\ni6ZJHLrEf/tPyFt38KgQH4oRumzrA8ppicBPY8YIAkuDK/xpKgydnFNl4EdWw1nZ\nXo5remCP013uV2OqlmyZaf9GjMJQTjjcIxsLSQxgyeJCn3Mas6iyzdQxGz+9hlIX\nQE1bB7gcmWBHX1AKvQ+mQDzS/RfqbPhaQ4xk72uyDoxp98xHO3qVHbSdfGKSg1do\nLtW1xypE17zg1H4DAv9H041POZ34XXUU/ISNv0UBmf6iey9At4dG8I73fBiMWgNp\n7OQaAX04ReUgm7k8xYc6kyffDGA9my4qZHs9uAqZHDAUuwdPvsxlfwqI+cIUQhCw\nt5H+0PepuM5bWh81jbC/FLeVE+QvgwYwDmD/f23HdSV+OfNXDXO6Qixe36/SHyvd\nHQpU8B8kt7KfDQzdZOwwnVjDZFBwYufJUpFHWEjY2S4jC2uDT/iTSjN+0QbG8f/E\nwWkl7u3iet1Xc9NTl0Mcy4+Q2UPA9Cr9Roc9ZVv54Ka9Z4/GgB2a/jMxoUC7rgBt\n1F9+r4wPwI+vpJFufv5w3C12sq5Srb3aeVdtUX9NpH/6dkMWNJjJl8lcvhKYqZLt\nTjaSrkqmqmZ4b3mfLCmfDsaK/LwwThQzlc+fyL+UYF6okLkR/TudN35H+zT5CTk/\nuF+p5zwzMxjHu/V9UKmjPLq+otmbDsILiRVrI4c31MlOFIFYosA7IBORhOvdVTN+\n36x+BqBP8L7H6+SVSflup7VY6pK9G3HVvay2okFSvWvQEvt5+iFNlOGWbISUUaGp\npnlC+lMfvrrBRmdyzdu7VSIF5zxDx25mtorCOoRK5m8mw+Sd5MVG772juvZl60HR\nIFgm+DvsvXASN6GS18xdozazB0lR9eL/K5Cb3iBa3GzqxxliicHibpoboJiDvSl6\nPjuG2DryJWh5rq8f+7fWVBiReGc08GT2PHnlnYQtdwKAttrQnv0fiYlQA7rr9lwR\nJJjRlej7CCTLio9FY6SAdCamIdjcPQaOeXF1vV07tXGb4LgUGa8VHbwAlgotpYzH\nber1sCSNZfK9EUQhCl1kPvZceeujXG+47dlvjjFR28sYT1Jp+oO6XODcXk7VSDge\n3WQxgpDuHR1DTEvGJC6aVHhcRhVDYS+FhVC0lglwuoiUMIVjr0PH7bAoZRXk2kkZ\nmWpaEet0GuwLSo9EtrcW/YvzKWA5qEqYDEGwBo4vKZxZNI20L6xcouoUoPmp/hLp\ngynPxXNMwiPZLG//1P5fJD+ucC2wg30mTUQRlGg3hMF61/kzESTo0JNHfajR930p\nLpEhjrHD98DhW1G0pT3PHlhCvx/PmKRaYNASSMviiRNN1EqB2ZLmFjofPDrg3y4M\nKXGgT3y8Urx86l8xH0k8cqMniK6Ax17EnsdpRQ0Z4cGpGvMNviWju5VpXe11aztk\nvuXvDYyorRQY36rIScu+Gyn2V+7XwcoKyo43kli4M121Q+5Obk5KmJnaW/UHRfPn\nZdnMntXQ0hF3xN7ninzNXNKWPDG+dAhF2a2Udj5H/hiaQL7vDN3OtSNbV9fS3jqm\ntChA5Jx6qf9SPZgLHDRkG1jkCcWbXfCEgShog4nqR8EZTIM2BDQEMaEHVzw4IZyB\nQRTT21slFP9j5M/m0UKPs2of3G8R9pIhFlMPHt7ELIY7ZeMaRD44db7raH/GtpSo\n6NO6fm+hAZSobhwS2Ksk4fw9VsSxDxA6d0Fn1LWxooQpW+2/UvwFk+f9K0Hxm8Sw\nSuzAvG9hBIOZHGsraEXRdysxKDAXpmUgw7Iurns2uAOwaNrzaDlT1WRdiekJ2EkI\ncHf2ctQp0Z7eG9FJuol313+XJKz23HiVtJjnRz3EVUI6ehOrYRcAkqpOH/q1lmfH\nBzXOhhiPT1MK1HU5MUWKcVHRkALNzTOzn2aBpHIwCr7tUtd46WhQlVPvap9GQbvh\nWblqZD+TcDPPCtJNjs9Jqa6T3DF0bfU1GohV8OY+1w6V4BItIwMtU6E/lHGMx5Z7\nAYjUk5D2mrDbnBUuwpGj3sDs0diTgTOp3it1s9ErHZNZZiicudNwoX5RlgzI/gS7\nSCLe6Q1Zx3u63uw0C0Q2X1yhe8ZV9mkUX66uDGy+x/7ICYX78w32WGCKfqyHoVHM\nYRLmsbOzf/fVh7HWRdw/lezwMaBDuUbn2x9ixA/Bh8iQx4ZWYDDy9RpindFQKHhP\nvIJHWRZN1SROlWKmsjh+z0+gD5+VU60OSKMuhsxl/qxIEvPQ//gluxSmyzF64Bti\nvPLW2ku8YVDMvSFudTqmOB90UtzNQf4SyYfz1g5pu2m+0+Gejmc6m40me7jv3isw\n+h4qA8iHpbcutYDUi22BQ8hoZJm7v5Jr4lhodmtkg7rg554dGNNQt4ppg3wkTR+A\n1yMYDDnfiSxgMo8D6U6lBL4qYkgAsjFH2Gw31qbYvhvlc4sRzx35Yh0pW4RkZaaV\n31QZygq9f3esoo5gDvKC2zGqVo0A/TZNWEEIHfwNcnU5GKh4pCqEYgcpkI187GDM\n3QxiWXQirom7LfbqIgy3Ny18Pno0QsRyuUQv3nJpRBRr0mslONkwBxCmiqfhba7e\nYcVzgFIFE+z64nIz3vwCzWWFKdVVdSIRTbYooJqjCWr8XwShHBKkUmqSgF0c7BZd\nw7DgBwd59zE+90KhpAbgUBTLaawTsQhe7DWBKlfWuFRCabnniDRfOLR78I+FfJcV\njAkpGSUnsZnKoCI3qpSLF6rHebFBRwJRLR37G0sPzflse7CWcWusLQm8R+X7tUPx\njLgm352WHH1TwLdVzpUZu1p2YooMbPIVI5XIXN3VID07f35h89x4WSrT9x3j21Kq\ndIpzUoQeXtWGG6rSs9BkW/mE0aPpFiPcgbtn4Nz3u5GBzkpsKyOc1JEvbp7KH/RS\nJTD8WUasTzRB+J0RW/LM6q6IWJcI+/jaEbCDOkk44cr9qNGr1IeIsD0Gyow1UC+7\nKPQpn8iGYOUnbxXh6Oy4Ffqs6Fx+DPJnM1nsZojt5vpWkwDexM2JbcnWEqoei92+\nWllGIt1mojWikevx8h/IBt5CE0tofxTwyH8dqWR6CijBrwMusYXXGVPOmEY/NEuq\n4vDgkT2s0f+9szY8Taabh3kLYLI/mAxk3r10vvFOdC7o\n-----END ENCRYPTED PRIVATE KEY-----\n",
-        #     "tokenId": "14070269-7cd3-4a5f-a5fa-07ff4100ca9e",
-        #     "passphrase": "top-secret",
-        #     "keyId": "",
-        #     "vaultUrl": "https://vault.affinidi.com"
-        # }
-        # authProvider = affinidi_tdk_auth_provider.AuthProvider(stats)
-        # projectScopedToken = authProvider.fetch_project_scoped_token()
-        # print('projectScopedToken', projectScopedToken)
+        # print(f"Payload for checks API: {payload_for_checks_api}")
+        credentials_request = [
+            {
+                "credentialTypeId": background_check_credential_type_id,
+                "credentialData": payload_for_checks_api,
+            }
+        ]
+        # print("credentials_request", credentials_request)
 
         # Pass the projectScopedToken generated from AuthProvider package
         configuration = affinidi_tdk_credential_issuance_client.Configuration()
@@ -266,9 +141,9 @@ def issue_credentials():
                 api_client
             )
 
-            projectId = "97dde52f-e99c-420e-885a-3cc3032e73d9"
+            projectId = project_id
             request_json = {"data": credentials_request, "claimMode": "TX_CODE"}
-            print("request_json", request_json)
+            # print("request_json", request_json)
 
             start_issuance_input = (
                 affinidi_tdk_credential_issuance_client.StartIssuanceInput.from_dict(
@@ -279,358 +154,482 @@ def issue_credentials():
                 projectId, start_issuance_input=start_issuance_input
             )
 
-            print("api_response", api_response)
+            # print("api_response", api_response)
             response = api_response.to_dict()
             response["vaultLink"] = (
                 vault_url
                 + f"/claim?credential_offer_uri={response['credentialOfferUri']}"
             )
             print("response", response)
-        return jsonify(response)
 
     except Exception as e:
-        logging.error(f"Error in credential_request: {e}")
+        logging.error(f"Error processing checks: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+    # Call /api/issuance/status with the given payload
+    status_payload = {
+        "issuanceId": response.get("issuanceId"),
+        "projectId": project_id,
+    }
+    status_response = requests.post(
+        "http://127.0.0.1:5000/api/issuance/status", json=status_payload
+    )
+    # print("Status response:", status_response.json())
+
+    if not os.path.exists(CHECKS_DATA_DIR):
+        os.makedirs(CHECKS_DATA_DIR)
+
+    orders_file = os.path.join(CHECKS_DATA_DIR, "order.json")
+
+    try:
+        # Read existing orders
+        if os.path.exists(orders_file) and os.path.getsize(orders_file) > 0:
+            with open(orders_file, "r") as f:
+                orders = json.load(f)
+                if not isinstance(orders, list):
+                    orders = []  # Reset to empty list if not a list
+        else:
+            orders = []
+
+        # Add backgroundCheckDetails to the order data
+        data["backgroundCheckDetails"] = payload_for_checks_api
+        data["issuanceResponse"] = response
+        data["issuanceState"] = status_response.json()
+        orders.append(data)
+
+        # Write updated orders back to the file
+        with open(orders_file, "w") as f:
+            json.dump(orders, f, indent=4)
+
+        response["success"] = True
+        return response, 200
+    except Exception as e:
+        logging.error(f"Error saving order: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/orders", methods=["GET"])
+def orders_page():
+    return render_template("orders.html")
+
+
+@app.route("/get_orders", methods=["GET"])
+def get_orders():
+    try:
+        status_filter = request.args.get("status", "all").lower()
+        with open(DATA_FILE, "r") as f:
+            orders = json.load(f)
+            check_mapping = {
+                "personalInfo": "Personal Information Verification",
+                "address": "Address Verification",
+                "education": "Education Verification",
+                "employment": "Employment Details Verification with HR",
+                "criminal": "Civil Litigation Check",
+            }
+
+            filtered_orders = []
+            for order in orders:
+                # Convert checks dictionary to list of human-readable values
+                if isinstance(order.get("checks"), dict):
+                    order["checks"] = [
+                        check_mapping.get(check, check)
+                        for check, value in order["checks"].items()
+                        if value
+                    ]
+
+                # Determine order status
+                order_status = (
+                    "completed"
+                    if order.get("issuanceState", {}).get("status") == "VC_CLAIMED"
+                    else "pending"
+                )
+
+                # Apply filter
+                if status_filter == "all" or order_status == status_filter:
+                    filtered_orders.append(order)
+
+            return jsonify(filtered_orders)
+
+    except (FileNotFoundError, json.JSONDecodeError):
+        return jsonify([]), 200
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
+
+
+# @app.route("/test")
+# def test():
+#     return render_template("test.html")
+
+
+@app.route("/generate_pdf/<order_id>")
+def generate_pdf(order_id):
+    try:
+        with open(DATA_FILE, "r") as f:
+            orders = json.load(f)
+    except FileNotFoundError:
+        return "Orders file not found.", 404
+    except json.JSONDecodeError:
+        return "Invalid JSON in orders file.", 500
+
+    order = next((o for o in orders if o["orderId"] == order_id), None)
+    if not order:
+        return "Order not found", 404
+
+    # call generae_pdf_report function
+    print("Calling generae_pdf_report function ")
+    pdf_buffer = generate_pdf_report(order)
+
+    return send_file(
+        pdf_buffer,
+        mimetype="application/pdf",
+        download_name=f"order_{order_id}.pdf",
+        as_attachment=True,
+    )
+
+
+@app.route("/generate_secure_pdf/<order_id>")
+def generate_secure_pdf(order_id):
+    try:
+        with open(DATA_FILE, "r") as f:
+            orders = json.load(f)
+    except FileNotFoundError:
+        return "Orders file not found.", 404
+    except json.JSONDecodeError:
+        return "Invalid JSON in orders file.", 500
+
+    order = next((o for o in orders if o["orderId"] == order_id), None)
+    if not order:
+        return "Order not found", 404
+
+    # call generae_pdf_report function
+    # Generate initial PDF report (same as before)
+    pdf_secure_buffer = generate_pdf_report(order)
+
+    pdf_writer = PdfWriter()
+    pdf_reader = PdfReader(pdf_secure_buffer)  # Use the buffer as input
+    pdf_writer.append_pages_from_reader(pdf_reader)
+
+    # --- Calculate hash of the INITIAL PDF CONTENT (WITHOUT QR, ATTACHMENTS) ---
+    pdf_hash_excluding_attachments = hash_pdf_content_excluding_attachments(pdf_reader)
+    print("pdf_hash_excluding_attachments (initial)", pdf_hash_excluding_attachments)
+
+    # --- NOW add the QR code page ---
+    url = "http://127.0.0.1:5000/verify"
+    qr_buffer = generate_qr_code(url)  # url same as before
+
+    qr_reader = ImageReader(qr_buffer)
+    qr_page_buffer = BytesIO()
+    c = canvas.Canvas(qr_page_buffer, pagesize=A4)
+    c.drawString(100, 750, f"Click here ({url}) for Verification")
+    c.linkURL(url, (100, 740, 300, 760), relative=0)
+    c.drawImage(qr_reader, 100, 600, width=100, height=100)
+    c.showPage()
+
+    c.save()
+    qr_page_buffer.seek(0)
+
+    pdf_reader_qr = PdfReader(qr_page_buffer)
+    pdf_writer.append_pages_from_reader(pdf_reader_qr)
+
+    # --- Calculate hash of the PDF (including QR code, excluding attachments) ---
+    # Create a new PdfReader from the current state of the pdf_writer:
+    current_pdf_buffer = BytesIO()
+    pdf_writer.write(current_pdf_buffer)
+    current_pdf_buffer.seek(0)
+    pdf_reader_with_qr = PdfReader(current_pdf_buffer)  # Reader with QR
+
+    pdf_hash_with_qr = hash_pdf_content_excluding_attachments(pdf_reader_with_qr)
+    print("pdf_hash_with_qr", pdf_hash_with_qr)  # Hash including QR code
+
+    # --- Add the attachments (including the signature which we will generate NOW) ---
+    issued_credentials = order.get("issuedCredentials")
+    # print("=====issued_credentials=======", issued_credentials)
+    if issued_credentials:
+        json_buffer = get_file_content_buffer(issued_credentials)
+        pdf_writer.add_attachment("issuedCredentials.json", json_buffer.getbuffer())
+
+    pdf_signature = pdf_signature_vc(pdf_hash_with_qr)  # Sign the initial hash
+    print("pdf_signature", pdf_signature)
+    if pdf_signature:
+        json_buffer = get_file_content_buffer(pdf_signature)
+        pdf_writer.add_attachment("PDFSignature.json", json_buffer.getbuffer())
+
+    # --- Write the final PDF (now with QR and attachments) ---
+    final_pdf_buffer = BytesIO()
+    pdf_writer.write(final_pdf_buffer)
+    final_pdf_buffer.seek(0)
+
+    return send_file(
+        final_pdf_buffer,
+        mimetype="application/pdf",
+        download_name=f"secure_pdf_{order_id}.pdf",
+        as_attachment=True,
+    )
+
+
+@app.route("/api/issuance/status", methods=["POST"])
+def issuance_status():
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+
+    issuance_id = data.get("issuanceId")
+    if not issuance_id:
+        return jsonify({"error": "issuanceId is required"}), 400
+
+    try:
+        # Pass the projectScopedToken generated from AuthProvider package
+        configuration = affinidi_tdk_credential_issuance_client.Configuration()
+        configuration.api_key["ProjectTokenAuth"] = pst()
+
+        with affinidi_tdk_credential_issuance_client.ApiClient(
+            configuration
+        ) as api_client:
+            api_instance = affinidi_tdk_credential_issuance_client.IssuanceApi(
+                api_client
+            )
+
+            projectId = project_id
+            issuanceId = issuance_id
+
+            api_response = api_instance.issuance_state(issuanceId, projectId)
+
+            response = api_response.to_dict()
+            return jsonify(response)
+    except Exception as e:
+        logging.error(f"Error getting issuance status: {e}")
         return jsonify({"error": "An error occurred"}), 500
 
 
-@app.route("/api/generate-report", methods=["POST"])
-def generate_report():
+@app.route("/api/accept-credential-status", methods=["POST"])
+def accept_credential_status():
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+
+    issuance_id = data.get("issuanceId")
+    if not issuance_id:
+        return jsonify({"error": "issuanceId is required"}), 400
+
     try:
-        report_type = request.json.get("reportType")
-        if not report_type:
-            return jsonify({"error": "reportType is required"}), 400
+        with open(DATA_FILE, "r") as f:
+            try:
+                orders = json.load(f)
+            except json.JSONDecodeError:
+                logging.error("Error decoding order.json. File might be corrupted.")
+                return jsonify({"error": "Invalid order data"}), 500
 
-        # Generate initial PDF content using reportlab
-        pdf_buffer = BytesIO()
-        c = canvas.Canvas(pdf_buffer)
-        c.drawString(100, 750, f"Report Type: {report_type}")
-        c.save()
-        pdf_buffer.seek(0)
+        updated = False
+        for order in orders:
+            if order["issuanceResponse"]["issuanceId"] == issuance_id:
+                if "issuanceState" in order:
+                    order["issuanceState"].update(data)
+                else:
+                    order["issuanceState"] = data
+                updated = True
 
-        # Create a PdfReader to read the reportlab output
-        pdf_reader = PdfReader(pdf_buffer)
-        page = pdf_reader.pages[0]  # Get the page
+                if data.get("status") == "VC_CLAIMED":
+                    issued_credentials_response = issued_credentials()
+                    if (
+                        issued_credentials_response
+                        and issued_credentials_response[1] == 200
+                    ):
+                        issued_credentials_data = issued_credentials_response[0]
+                        order["issuedCredentials"] = (
+                            issued_credentials_data  # Update IN PLACE
+                        )
+                break
 
-        pdf_writer = PdfWriter()
-        pdf_writer.add_page(page)  # Add the PageObject
+        if not updated:
+            return jsonify({"error": "No order with issuanceId exists"}), 404
 
-        # Create JSON data
-        AddressVerification_credentials = {
-            "credentialSchema": {
-                "type": "TAddressVerificationV1R0",
-                "id": "https://schema.affinidi.io/TAddressVerificationV1R0.json",
-            },
-            "credentialSubject": {
-                "address": {
-                    "addressCountry": "India",
-                    "addressLine1": "Varthur, Gunjur",
-                    "addressLine2": "B305, Candeur Landmark, Tower Eiffel",
-                    "addressRegion": "Karnataka",
-                    "postalCode": "560087",
-                },
-                "ownerDetails": {
-                    "ownerName": "TestOwner",
-                    "ownerContactDetails1": "+912325435634",
-                },
-                "verificationStatus": "Completed",
-                "verificationEvidence": {
-                    "evidenceName1": "Letter",
-                    "evidenceURL1": "http://localhost",
-                },
-                "stayDetails": {"fromDate": "01-01-2000", "toDate": "01-01-2020"},
-                "verificationRemarks": "done",
-                "neighbourDetails": {
-                    "neighbourName": "Test Neighbour",
-                    "neighbourContactDetails1": "+912325435634",
-                },
-            },
-            "issuanceDate": "2024-12-02T16:53:40.405Z",
-            "holder": {
-                "id": "did:key:zQ3shs2AM1EMpfDthXaZJmBnjvGbuzMPB94uFAeUkvGe5sM15"
-            },
-            "id": "claimId:97c5117320016ec0",
-            "type": ["VerifiableCredential", "TAddressVerificationV1R0"],
-            "@context": [
-                "https://www.w3.org/2018/credentials/v1",
-                "https://schema.affinidi.io/TAddressVerificationV1R0.jsonld",
-            ],
-            "issuer": "did:key:zQ3shNyLdzYDbwZibk5hinAm5ChzxMinywBJz98fbFcQbn6Xf",
-            "proof": {
-                "type": "EcdsaSecp256k1Signature2019",
-                "created": "2024-12-02T16:53:50Z",
-                "verificationMethod": "did:key:zQ3shNyLdzYDbwZibk5hinAm5ChzxMinywBJz98fbFcQbn6Xf#zQ3shNyLdzYDbwZibk5hinAm5ChzxMinywBJz98fbFcQbn6Xf",
-                "proofPurpose": "assertionMethod",
-                "jws": "eyJhbGciOiJFUzI1NksiLCJiNjQiOmZhbHNlLCJjcml0IjpbImI2NCJdfQ..Jiq6yE6BTq9wXI2QT8-174_BAA-W2fdEF1d5DaUXEC1gMr62zSw2pGL_fl_eIBUPwKsOgc6TA0E1_rMmD8BOKA",
-            },
-        }
-        json_buffer = BytesIO()
-        json_buffer.write(json.dumps(AddressVerification_credentials).encode("utf-8"))
-        json_buffer.seek(0)
+        with open(DATA_FILE, "w") as f:
+            json.dump(orders, f, indent=4)  # Write ONCE after ALL updates
 
-        # Attach JSON to PDF
-        pdf_writer.add_attachment("AddressVerification.json", json_buffer.getbuffer())
+        return jsonify({"success": True, "message": "Order updated successfully"}), 200
 
-        # Create JSON data
-        PersonalInformationVerification_credentials = {
-            "credentialSchema": {
-                "type": "TAddressVerificationV1R0",
-                "id": "https://schema.affinidi.io/TAddressVerificationV1R0.json",
-            },
-            "credentialSubject": {
-                "address": {
-                    "addressCountry": "India",
-                    "addressLine1": "Varthur, Gunjur",
-                    "addressLine2": "B305, Candeur Landmark, Tower Eiffel",
-                    "addressRegion": "Karnataka",
-                    "postalCode": "560087",
-                },
-                "ownerDetails": {
-                    "ownerName": "TestOwner",
-                    "ownerContactDetails1": "+912325435634",
-                },
-                "verificationStatus": "Completed",
-                "verificationEvidence": {
-                    "evidenceName1": "Letter",
-                    "evidenceURL1": "http://localhost",
-                },
-                "stayDetails": {"fromDate": "01-01-2000", "toDate": "01-01-2020"},
-                "verificationRemarks": "done",
-                "neighbourDetails": {
-                    "neighbourName": "Test Neighbour",
-                    "neighbourContactDetails1": "+912325435634",
-                },
-            },
-            "issuanceDate": "2024-12-02T16:53:40.405Z",
-            "holder": {
-                "id": "did:key:zQ3shs2AM1EMpfDthXaZJmBnjvGbuzMPB94uFAeUkvGe5sM15"
-            },
-            "id": "claimId:97c5117320016ec0",
-            "type": ["VerifiableCredential", "TAddressVerificationV1R0"],
-            "@context": [
-                "https://www.w3.org/2018/credentials/v1",
-                "https://schema.affinidi.io/TAddressVerificationV1R0.jsonld",
-            ],
-            "issuer": "did:key:zQ3shNyLdzYDbwZibk5hinAm5ChzxMinywBJz98fbFcQbn6Xf",
-            "proof": {
-                "type": "EcdsaSecp256k1Signature2019",
-                "created": "2024-12-02T16:53:50Z",
-                "verificationMethod": "did:key:zQ3shNyLdzYDbwZibk5hinAm5ChzxMinywBJz98fbFcQbn6Xf#zQ3shNyLdzYDbwZibk5hinAm5ChzxMinywBJz98fbFcQbn6Xf",
-                "proofPurpose": "assertionMethod",
-                "jws": "eyJhbGciOiJFUzI1NksiLCJiNjQiOmZhbHNlLCJjcml0IjpbImI2NCJdfQ..Jiq6yE6BTq9wXI2QT8-174_BAA-W2fdEF1d5DaUXEC1gMr62zSw2pGL_fl_eIBUPwKsOgc6TA0E1_rMmD8BOKA",
-            },
-        }
-        json_buffer = BytesIO()
-        json_buffer.write(
-            json.dumps(PersonalInformationVerification_credentials).encode("utf-8")
-        )
-        json_buffer.seek(0)
-
-        # Attach JSON to PDF
-        pdf_writer.add_attachment(
-            "PersonalInformationVerification.json", json_buffer.getbuffer()
-        )
-
-        # Create JSON data
-        EducationVerification_credentials = (
-            {
-                "credentialSchema": {
-                    "type": "TEducationVerificationV1R0",
-                    "id": "https://schema.affinidi.io/TEducationVerificationV1R0.json",
-                },
-                "credentialSubject": {
-                    "educationDetails": {
-                        "educationRegistrationID": "admins1223454356",
-                        "qualification": "Graduation",
-                        "course": "MBA",
-                        "graduationDate": "12-08-2013",
-                        "dateAttendedFrom": "12-08-2011",
-                        "dateAttendedTo": "12-07-2013",
-                    },
-                    "verificationRemarks": "completed",
-                    "verificationStatus": "Verified",
-                    "institutionDetails": {
-                        "institutionEmail": "test@affinidi.com",
-                        "institutionContact1": "+91 1234567890",
-                        "institutionContact2": "+91 1234567890",
-                        "institutionName": "Affinidi",
-                        "institutionAddress": {
-                            "addressCountry": "India",
-                            "addressLine1": "Varthur, Gunjur",
-                            "addressLine2": "B305, Candeur Landmark, Tower Eiffel",
-                            "addressRegion": "Karnataka",
-                            "postalCode": "560087",
-                        },
-                        "institutionWebsiteURL": "affinidi.com",
-                    },
-                    "candidateDetails": {
-                        "name": "Grajesh Chandra",
-                        "phoneNumber": "7666009585",
-                        "gender": "male",
-                        "email": "grajesh.c@affinidi.com",
-                    },
-                    "verificationEvidence": {
-                        "evidenceName1": "Degree",
-                        "evidenceURL1": "http://localhost",
-                    },
-                },
-                "issuanceDate": "2024-12-02T16:53:59.689Z",
-                "holder": {
-                    "id": "did:key:zQ3shs2AM1EMpfDthXaZJmBnjvGbuzMPB94uFAeUkvGe5sM15"
-                },
-                "id": "claimId:b92044d269deaafb",
-                "type": ["VerifiableCredential", "TEducationVerificationV1R0"],
-                "@context": [
-                    "https://www.w3.org/2018/credentials/v1",
-                    "https://schema.affinidi.io/TEducationVerificationV1R0.jsonld",
-                ],
-                "issuer": "did:key:zQ3shNyLdzYDbwZibk5hinAm5ChzxMinywBJz98fbFcQbn6Xf",
-                "proof": {
-                    "type": "EcdsaSecp256k1Signature2019",
-                    "created": "2024-12-02T16:54:07Z",
-                    "verificationMethod": "did:key:zQ3shNyLdzYDbwZibk5hinAm5ChzxMinywBJz98fbFcQbn6Xf#zQ3shNyLdzYDbwZibk5hinAm5ChzxMinywBJz98fbFcQbn6Xf",
-                    "proofPurpose": "assertionMethod",
-                    "jws": "eyJhbGciOiJFUzI1NksiLCJiNjQiOmZhbHNlLCJjcml0IjpbImI2NCJdfQ..MTr4jleSgTx5WuDHd6QQz6VqeNs-LI1bAgvvADE30DkXYXHk1xUF4fgLgKkcyPprMsQNJ6Rd3gSoKfXVAyUxow",
-                },
-            },
-        )
-        json_buffer = BytesIO()
-        json_buffer.write(json.dumps(EducationVerification_credentials).encode("utf-8"))
-        json_buffer.seek(0)
-
-        # Attach JSON to PDF
-        pdf_writer.add_attachment("EducationVerification.json", json_buffer.getbuffer())
-
-        # Create JSON data
-        EmploymentVerification_credentials = {
-            "credentialSchema": {
-                "type": "TEmploymentVerificationV1R1",
-                "id": "https://schema.affinidi.io/TEmploymentVerificationV1R1.json",
-            },
-            "credentialSubject": {
-                "verificationRemarks": "Done",
-                "employerDetails": {
-                    "companyName": "Affinidi",
-                    "companyAddress": {
-                        "addressCountry": "India",
-                        "addressLine1": "Varthur, Gunjur",
-                        "addressLine2": "B305, Candeur Landmark, Tower Eiffel",
-                        "addressRegion": "Karnataka",
-                        "postalCode": "560087",
-                    },
-                    "hRDetails": {
-                        "hRfirstName": "Testing",
-                        "hRContactNumber1": "+911234567789",
-                        "whenToContact": "9:00-6:00 PM",
-                        "hRDesignation": "Lead HR",
-                        "hREmail": "hr@affinidi.com",
-                        "hRLastName": "HR",
-                    },
-                },
-                "verificationStatus": "Completed",
-                "candidateDetails": {
-                    "name": "Grajesh Chandra",
-                    "phoneNumber": "7666009585",
-                    "gender": "male",
-                    "email": "grajesh.c@affinidi.com",
-                },
-                "employmentDetails": {
-                    "eligibleForRehire": "Yes",
-                    "reasonForLeaving": "Resignation",
-                    "annualisedSalary": "10000",
-                    "currency": "INR",
-                    "designation": "Testing",
-                    "employmentStatus": "Fulltime",
-                    "tenure": {"fromDate": "05-2022", "toDate": "06-2050"},
-                },
-                "verificationEvidence": {
-                    "evidenceName1": "letter",
-                    "evidenceURL1": "http://localhost",
-                },
-            },
-            "issuanceDate": "2024-12-02T16:54:12.767Z",
-            "holder": {
-                "id": "did:key:zQ3shs2AM1EMpfDthXaZJmBnjvGbuzMPB94uFAeUkvGe5sM15"
-            },
-            "id": "claimId:8076e3f05e734b4a",
-            "type": ["VerifiableCredential", "TEmploymentVerificationV1R1"],
-            "@context": [
-                "https://www.w3.org/2018/credentials/v1",
-                "https://schema.affinidi.io/TEmploymentVerificationV1R1.jsonld",
-            ],
-            "issuer": "did:key:zQ3shNyLdzYDbwZibk5hinAm5ChzxMinywBJz98fbFcQbn6Xf",
-            "proof": {
-                "type": "EcdsaSecp256k1Signature2019",
-                "created": "2024-12-02T16:54:21Z",
-                "verificationMethod": "did:key:zQ3shNyLdzYDbwZibk5hinAm5ChzxMinywBJz98fbFcQbn6Xf#zQ3shNyLdzYDbwZibk5hinAm5ChzxMinywBJz98fbFcQbn6Xf",
-                "proofPurpose": "assertionMethod",
-                "jws": "eyJhbGciOiJFUzI1NksiLCJiNjQiOmZhbHNlLCJjcml0IjpbImI2NCJdfQ..wsOTPlB_E21Av4JORHBBF-RL5XK6CSvQR9KNvFi8yDBzfRY8JgFsSLRmd9kiiHkk6rYsJeHhWBmL-iY-LG5nlQ",
-            },
-        }
-        json_buffer = BytesIO()
-        json_buffer.write(
-            json.dumps(EmploymentVerification_credentials).encode("utf-8")
-        )
-        json_buffer.seek(0)
-
-        # Attach JSON to PDF
-        pdf_writer.add_attachment(
-            "EmploymentVerification.json", json_buffer.getbuffer()
-        )
-
-        # Write the final PDF to a buffer
-        final_pdf_buffer = BytesIO()
-        pdf_writer.write(final_pdf_buffer)
-        final_pdf_buffer.seek(0)
-
-        return send_file(
-            final_pdf_buffer,
-            as_attachment=True,
-            download_name="report.pdf",
-            mimetype="application/pdf",
-        )
     except Exception as e:
-        logging.exception("Error generating report:")  # Improved logging
+        logging.error(f"Error updating order: {e}")
         return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/issued-credentials", methods=["POST"])
+def issued_credentials():
+    try:
+        with open(os.path.join(CHECKS_DATA_DIR, "issuedCredentials.json"), "r") as f:
+            issued_credentials = json.load(f)
+        # print("issued_credentials", issued_credentials)
+        return issued_credentials, 200
+    except FileNotFoundError:
+        return jsonify({"error": "issuedCredentials.json file not found"}), 404
+    except json.JSONDecodeError:
+        return jsonify({"error": "Invalid JSON in issuedCredentials.json file"}), 500
+
+
+def get_file_content_buffer(credential):
+    json_buffer = BytesIO()
+    json_buffer.write(json.dumps(credential).encode("utf-8"))
+    json_buffer.seek(0)
+    return json_buffer
+
+
+def generate_qr_code(url):
+    qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_H)
+    qr.add_data(url)
+    qr.make(fit=True)
+
+    qr_image = qr.make_image(fill_color="black", back_color="white")
+    qr_buffer = BytesIO()
+    qr_image.save(qr_buffer, format="PNG")
+    qr_buffer.seek(0)
+    return qr_buffer
+
+
+@app.route("/verify")
+def verify():
+    return render_template("verify.html")
 
 
 @app.route("/api/verify_pdf", methods=["POST"])
 def verify_pdf():
+    results = [
+        {
+            "key": "PDF File Upload",
+            "value": "No PDF file uploaded",
+            "result": "Invalid",
+        },
+        {
+            "key": "PDFSignature VC Verification",
+            "value": "Not Verified",
+            "result": "Invalid",
+        },
+        {
+            "key": "PDFSignature Attachment",
+            "value": "Not Verified",
+            "result": "Invalid",
+        },
+        {
+            "key": "IssuedCredentials VC Verification",
+            "value": "Not Verified",
+            "result": "Invalid",
+        },
+        {
+            "key": "IssuedCredentials Attachment",
+            "value": "Not Verified",
+            "result": "Invalid",
+        },
+        {"key": "PDF Hash", "value": "Not Verified", "result": "Invalid"},
+    ]
+
+    pdf_signature_valid = False
+    issued_credentials_valid = False
+    hash_match = False
+    signature_data = None
+    issued_credentials = None
+    calculated_hash = None
+    expected_hash = None
+
     try:
         if "report_pdf" not in request.files:
-            return jsonify({"error": "No PDF file uploaded"}), 400
+            return jsonify(results), 400
 
         pdf_file = request.files["report_pdf"]
-        pdf_buffer = BytesIO(pdf_file.read())
+        results[0]["value"] = pdf_file.filename
+        results[0]["result"] = "Valid"
 
+        pdf_buffer = BytesIO(pdf_file.read())
         pdf_reader = PdfReader(pdf_buffer)
 
-        attachments = {}
+        # 1. Extract and Verify Signature and Issued Credentials
         for filename, data in pdf_reader.attachments.items():
-            if isinstance(data, list):  # Check if data is a list
+            if filename == "PDFSignature.json":
+                try:
+                    signature_data = json.loads(
+                        "".join([item.decode("utf-8") for item in data])
+                    )
+                    results[2]["value"] = "PDFSignature.json attached"
+                    results[2]["result"] = "Valid"
 
-                data = b"".join(data)  # join bytes in list to single bytes object
+                    signature_data_vc = signature_data.get("signedCredential")
+                    verification_results = verification(signature_data_vc)
+                    if verification_results.get("isValid") == True:
+                        pdf_signature_valid = True
+                        results[1]["value"] = signature_data_vc
+                        results[1]["result"] = "Valid"
+                    else:
+                        results[1]["value"] = signature_data_vc
+                        results[1]["result"] = "Invalid"
 
-            try:
-                # Attempt to decode as JSON
-                json_data = json.loads(data.decode("utf-8"))
-                attachments[filename] = json_data
+                except (json.JSONDecodeError, UnicodeDecodeError):
+                    results[2]["value"] = "Invalid PDFSignature.json Exception"
+                    results[2]["result"] = "Invalid"
+            elif filename == "issuedCredentials.json":
+                try:
+                    issued_credentials = json.loads(
+                        "".join([item.decode("utf-8") for item in data])
+                    )
+                    results[4]["value"] = "issuedCredentials.json attached"
+                    results[4]["result"] = "Valid"
 
-                # verification_results = verification(json_data)
-                # print('verification_results', verification_results)
-                # verification_results['verificationResult'] = json_data
-                # print('new_json_data', json_data)
-            except (
-                json.JSONDecodeError,
-                UnicodeDecodeError,
-            ):  # added UnicodeDecodeError
-                # If not JSON or Unicode, store as base64
-                attachments[filename] = base64.b64encode(data).decode("utf-8")
+                    issued_credentials_vc = issued_credentials.get("signedCredential")
+                    verification_results = verification(issued_credentials_vc)
+                    if verification_results.get("isValid") == True:
+                        issued_credentials_valid = True
+                        results[3]["value"] = issued_credentials_vc
+                        results[3]["result"] = "Valid"
+                    else:
+                        results[3]["value"] = issued_credentials_vc
+                        results[3]["result"] = "Invalid"
 
-        return jsonify(attachments), 200
+                except (json.JSONDecodeError, UnicodeDecodeError):
+                    results[4]["value"] = "Invalid issuedCredentials.json Exception"
+                    results[4]["result"] = "Invalid"
+
+        if not signature_data:
+            results[2]["value"] = "Missing PDFSignature.json"
+            results[2]["result"] = "Invalid"
+
+        if not issued_credentials:
+            results[4]["value"] = "Missing issuedCredentials.json"
+            results[4]["result"] = "Invalid"
+
+        if (
+            signature_data and pdf_signature_valid
+        ):  # only proceed if signature data exists and is valid
+            expected_hash = (
+                signature_data.get("signedCredential", {})
+                .get("credentialSubject", {})
+                .get("hashWithoutAttachments")
+            )
+            if not expected_hash:
+                results[5]["value"] = "Hash not found in signature"
+                results[5]["result"] = "Invalid"
+            else:
+                # 2. Calculate the Hash of the PDF (excluding attachments)
+                calculated_hash = hash_pdf_content_excluding_attachments(pdf_reader)
+
+                # 3. Verify the Hash
+                if calculated_hash == expected_hash:
+                    hash_match = True
+                    results[5][
+                        "value"
+                    ] = f"Calculated Hash ({calculated_hash}) matches expected Hash ({expected_hash})"
+                    results[5]["result"] = "Valid"
+                else:
+                    results[5][
+                        "value"
+                    ] = f"Calculated Hash ({calculated_hash}) matches expected Hash ({expected_hash})"
+                    results[5]["result"] = "Invalid"
+
+        return jsonify(results), 200
 
     except Exception as e:
         logging.exception("Error verifying PDF:")
-        return jsonify({"error": str(e)}), 500
+        results.append(
+            {"key": "PDF Processing Error", "value": str(e), "result": "Invalid"}
+        )
+        return jsonify(results), 500
 
 
 def pst():
@@ -640,10 +639,9 @@ def pst():
         "projectId": project_id,
         "privateKey": private_key,
         "tokenId": token_id,
-        "passphrase": passphrase,
-        "keyId": key_id,
         "vaultUrl": vault_url,
     }
+    # print("stats", stats)
     authProvider = affinidi_tdk_auth_provider.AuthProvider(stats)
     projectScopedToken = authProvider.fetch_project_scoped_token()
     print("projectScopedToken", projectScopedToken)
@@ -659,90 +657,288 @@ def verification(request):
     print("verification input:", request)
     verifiable_credentials = request
 
-    # configuration = affinidi_tdk_credential_issuance_client.Configuration()
-    # configuration.api_key['ProjectTokenAuth'] = pst()
-
-    # with affinidi_tdk_credential_verification_client.ApiClient(configuration) as api_client:
-    #     api_instance = affinidi_tdk_credential_verification_client.DefaultApi(api_client)
-
     url = api_gateway_url + f"/ver/v1/verifier/verify-vcs"
-    headers = {"Authorization": f"Bearer {pst()}", "Content-Type": "application/json"}
-
-    body = {
-        "verifiableCredentials": [
-            {
-                "credentialSchema": {
-                    "type": "TEmploymentVerificationV1R1",
-                    "id": "https://schema.affinidi.io/TEmploymentVerificationV1R1.json",
-                },
-                "credentialSubject": {
-                    "verificationRemarks": "Done",
-                    "employerDetails": {
-                        "companyName": "Affinidi",
-                        "companyAddress": {
-                            "addressCountry": "India",
-                            "addressLine1": "Varthur, Gunjur",
-                            "addressLine2": "B305, Candeur Landmark, Tower Eiffel",
-                            "addressRegion": "Karnataka",
-                            "postalCode": "560087",
-                        },
-                        "hRDetails": {
-                            "hRfirstName": "Testing",
-                            "hRContactNumber1": "+911234567789",
-                            "whenToContact": "9:00-6:00 PM",
-                            "hRDesignation": "Lead HR",
-                            "hREmail": "hr@affinidi.com",
-                            "hRLastName": "HR",
-                        },
-                    },
-                    "verificationStatus": "Completed",
-                    "candidateDetails": {
-                        "name": "Grajesh Chandra",
-                        "phoneNumber": "7666009585",
-                        "gender": "male",
-                        "email": "grajesh.c@affinidi.com",
-                    },
-                    "employmentDetails": {
-                        "eligibleForRehire": "Yes",
-                        "reasonForLeaving": "Resignation",
-                        "annualisedSalary": "10000",
-                        "currency": "INR",
-                        "designation": "Testing",
-                        "employmentStatus": "Fulltime",
-                        "tenure": {"fromDate": "05-2022", "toDate": "06-2050"},
-                    },
-                    "verificationEvidence": {
-                        "evidenceName1": "letter",
-                        "evidenceURL1": "http://localhost",
-                    },
-                },
-                "issuanceDate": "2024-12-02T16:54:12.767Z",
-                "holder": {
-                    "id": "did:key:zQ3shs2AM1EMpfDthXaZJmBnjvGbuzMPB94uFAeUkvGe5sM15"
-                },
-                "id": "claimId:8076e3f05e734b4a",
-                "type": ["VerifiableCredential", "TEmploymentVerificationV1R1"],
-                "@context": [
-                    "https://www.w3.org/2018/credentials/v1",
-                    "https://schema.affinidi.io/TEmploymentVerificationV1R1.jsonld",
-                ],
-                "issuer": "did:key:zQ3shNyLdzYDbwZibk5hinAm5ChzxMinywBJz98fbFcQbn6Xf",
-                "proof": {
-                    "type": "EcdsaSecp256k1Signature2019",
-                    "created": "2024-12-02T16:54:21Z",
-                    "verificationMethod": "did:key:zQ3shNyLdzYDbwZibk5hinAm5ChzxMinywBJz98fbFcQbn6Xf#zQ3shNyLdzYDbwZibk5hinAm5ChzxMinywBJz98fbFcQbn6Xf",
-                    "proofPurpose": "assertionMethod",
-                    "jws": "eyJhbGciOiJFUzI1NksiLCJiNjQiOmZhbHNlLCJjcml0IjpbImI2NCJdfQ..wsOTPlB_E21Av4JORHBBF-RL5XK6CSvQR9KNvFi8yDBzfRY8JgFsSLRmd9kiiHkk6rYsJeHhWBmL-iY-LG5nlQ",
-                },
-            }
-        ]
+    headers = {
+        "Authorization": f"Bearer {
+        pst()}",
+        "Content-Type": "application/json",
     }
+
+    body = {"verifiableCredentials": [verifiable_credentials]}
 
     response = requests.post(url, headers=headers, json=body)
     api_response = response.json()
     print("api_response", api_response)
-    # verify_credentials_input = affinidi_tdk_credential_verification_client.VerifyCredentialInput.from_dict(request_json)
-    # print('verify_credentials_input', verify_credentials_input)
-    # api_response = api_instance.verify_credentials(verify_credentials_input=verify_credentials_input)
-    # print('api_response', api_response)
     return api_response
+
+
+def hash_pdf_content(pdf_buffer):
+    # Get the PDF content
+    pdf_buffer.seek(0)
+    pdf_content = pdf_buffer.getvalue()
+
+    # Hash the content
+    pdf_hash = hashlib.sha256(pdf_content).hexdigest()
+    return pdf_hash
+
+
+def hash_pdf_content_excluding_attachments(pdf_reader):
+    try:
+        extracted_text = ""
+        for page in pdf_reader.pages:
+            extracted_text += page.extract_text()  # Extract text from each page
+
+        pdf_hash = hashlib.sha256(
+            extracted_text.encode("utf-8")
+        ).hexdigest()  # Hash the TEXT
+        return pdf_hash
+    except Exception as e:
+        raise RuntimeError(f"Error processing PDF: {e}")
+
+
+def generate_pdf_report(order):
+    buffer = BytesIO()
+    p = canvas.Canvas(buffer, pagesize=letter)
+    styles = getSampleStyleSheet()
+    styleN = styles["Normal"]
+    styleH = styles["Heading2"]  # Use a heading style for check titles
+
+    # Header Table Data
+    header_data = [
+        [
+            "Candidate/Employee Full Name",
+            "GRAJESH CHANDRA",
+            "Order ID",
+            order.get("orderId", "-"),
+        ],
+        ["Company Name", "TEST COMPANY", "Branch Name", ""],
+        ["Date of Report", "02-02-2024", "Cost Centre", "-"],
+        ["Package Code/Level (if any)", "", "Case Reference No.", "AV0202240DA1OTA"],
+        ["Result", "Processing", "", ""],
+    ]
+
+    # Apply word wrap to the header data
+    for row in header_data:
+        for i in range(len(row)):
+            row[i] = Paragraph(row[i], styleN)
+
+    # Checks Table Data
+    checks_data = [
+        [
+            "Selected Checks",
+            "Years Of Coverage",
+            "Country Name",
+            "Verified Status",
+            "Remarks",
+        ]
+    ]
+    check_mapping = {
+        "personalInfo": "Personal Information Verification",
+        "address": "Address Verification",
+        "education": "Education Verification",
+        "employment": "Employment Details Verification with HR",
+        "criminal": "Civil Litigation Check",
+    }
+
+    for check_name, check_value in order.get("checks", {}).items():
+        if check_value:
+            check_name = check_mapping.get(check_name, check_name)
+            checks_data.append([check_name, "-", "Worldwide", "In Progress", ""])
+
+    # Apply word wrap to the header data
+    for row in checks_data:
+        for i in range(len(row)):
+            row[i] = Paragraph(row[i], styleN)
+
+    # Table Styles
+    table_style = TableStyle(
+        [
+            ("BACKGROUND", (0, 0), (-1, 0), colors.orange),
+            ("TEXTCOLOR", (0, 0), (-1, -1), colors.black),
+            ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+            ("TOPPADDING", (0, 0), (-1, -1), 6),
+            ("GRID", (0, 0), (-1, -1), 1, colors.black),
+        ]
+    )
+
+    # Calculate available width (accounting for margins)
+    available_width = letter[0] - 2 * inch  # 1-inch margins on left and right
+
+    # Create Tables with adjusted colWidths and wrapOn
+    header_table = Table(header_data, colWidths=[available_width / 4.0] * 4)
+    header_table.setStyle(table_style)
+    w1, h1 = header_table.wrapOn(p, available_width, letter[1])
+    header_table.drawOn(p, inch, 7.5 * inch)
+
+    p.drawCentredString(
+        letter[0] / 2, 7.5 * inch - h1 - 0.2 * inch, "Background Verification Summary"
+    )
+    p.line(
+        inch,
+        7.5 * inch - h1 - 0.3 * inch,
+        letter[0] - inch,
+        7.5 * inch - h1 - 0.3 * inch,
+    )
+    Spacer(1, 0.2 * inch).wrapOn(p, available_width, letter[1])
+
+    checks_table = Table(checks_data, colWidths=[available_width / 5.0] * 5)
+    checks_table.setStyle(table_style)
+    checks_table.wrapOn(p, available_width, letter[1])
+    checks_table.drawOn(p, inch, 7.5 * inch - h1 - 0.5 * inch - checks_table._height)
+
+    p.showPage()
+    # Add a new page for each check
+    for check_name, check_value in order.get("checks", {}).items():
+        if check_value:
+            check_display_name = check_mapping.get(check_name, check_name)
+
+            p.setFont("Helvetica-Bold", 16)
+            p.drawCentredString(letter[0] / 2, 10.5 * inch, check_display_name)
+            p.setFont("Helvetica", 12)
+
+            check_details = [
+                ["Field Name", "Personal Details", "Verified Value"],
+            ]
+            # Example Data. Replace with your actual data retrieval logic
+            if check_name == "personalInfo":
+                personal_info = order.get(
+                    "personalInfoDetails", {}
+                )  # Access the personalInfoDetails
+                check_details.extend(
+                    [
+                        [
+                            "First Name",
+                            personal_info.get("firstName", "Grajesh"),
+                            personal_info.get("firstName", "-"),
+                        ],
+                        [
+                            "Last Name",
+                            personal_info.get("lastName", "Chandra"),
+                            personal_info.get("lastName", "-"),
+                        ],
+                        [
+                            "Birthdate",
+                            personal_info.get("birthdate", "-"),
+                            personal_info.get("birthdate", "-"),
+                        ],
+                        [
+                            "Country of Birth",
+                            personal_info.get("birthCountry", "-"),
+                            personal_info.get("birthCountry", "-"),
+                        ],
+                        [
+                            "Email Address",
+                            personal_info.get("email", "-"),
+                            personal_info.get("email", "-"),
+                        ],
+                        [
+                            "Gender",
+                            personal_info.get("gender", "-"),
+                            personal_info.get("gender", "-"),
+                        ],
+                    ]
+                )
+            # Add similar blocks for other check types (address, education, etc.)
+            elif check_name == "address":
+                addressInfo = order.get("addressInfoDetails", {})
+                check_details.extend(
+                    [
+                        [
+                            "Address",
+                            addressInfo.get("addressLine1", "-"),
+                            addressInfo.get("addressLine1", "-"),
+                        ],
+                        [
+                            "City",
+                            addressInfo.get("city", "-"),
+                            addressInfo.get("city", "-"),
+                        ],
+                        [
+                            "State",
+                            addressInfo.get("state", "-"),
+                            addressInfo.get("state", "-"),
+                        ],
+                        [
+                            "Postal Code",
+                            addressInfo.get("postalCode", "-"),
+                            addressInfo.get("postalCode", "-"),
+                        ],
+                    ]
+                )
+
+            # Style the Check details table
+            check_table_style = TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.orange),
+                    ("TEXTCOLOR", (0, 0), (-1, -1), colors.black),
+                    ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+                    ("TOPPADDING", (0, 0), (-1, -1), 6),
+                    ("GRID", (0, 0), (-1, -1), 1, colors.black),
+                ]
+            )
+            # Create and draw the table
+            check_table = Table(check_details, colWidths=[available_width / 3.0] * 3)
+            check_table.setStyle(check_table_style)
+            check_table.wrapOn(p, available_width, letter[1])
+            check_table.drawOn(p, inch, 8 * inch)
+            p.showPage()
+
+    p.save()
+    buffer.seek(0)
+    return buffer
+
+
+# @app.route("/api/generate_pdf_signature_vc", methods=["POST"])
+def pdf_signature_vc(pdf_hash) -> dict:  # Type hinting for clarity
+    """Generates a signed verifiable credential (VC) for a given PDF hash.
+
+    Args:
+        pdf_hash: The hash of the PDF document to be signed.
+
+    Returns:
+        A dictionary containing the JSON response from the signing API, or
+        None if an error occurs (consider raising an exception instead).
+
+    Raises:
+        requests.exceptions.RequestException: If there's an issue with the API request.
+        # Or a custom exception if you prefer:
+        # SigningError: If the signing process fails.
+    """
+
+    url = f"{api_gateway_url}/cwe/v1/wallets/{wallet_id}/sign-credential"
+
+    headers = {
+        "Authorization": f"Bearer {pst()}",  # More descriptive function name
+        "Content-Type": "application/json",
+    }
+
+    expires_at = datetime.datetime.now() + datetime.timedelta(days=5 * 365)
+    expires_at_str = expires_at.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+
+    body = {
+        "unsignedCredentialParams": {
+            "jsonLdContextUrl": pdf_signature_jsonld_context,
+            "jsonSchemaUrl": pdf_signature_json_context,
+            "typeName": pdf_signature_type_id,
+            "holderDid": holder_did,
+            "credentialSubject": {
+                "@type": ["VerifiableCredential", pdf_signature_type_id],
+                "hashWithoutAttachments": pdf_hash,
+            },
+            "expiresAt": expires_at_str,
+        }
+    }
+
+    try:
+        response = requests.post(url, headers=headers, json=body)
+        response.raise_for_status()  # Raise an exception for bad status codes (4xx or 5xx)
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        print(f"Error signing credential: {e}")  # Log the error
+        # Consider raising the exception or returning None
+        raise  # Re-raise the exception for handling higher up
+        # return None  # Or return None if you want to handle the error differently
