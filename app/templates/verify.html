@@ -407,9 +407,6 @@
       </form>
 
       <div id="responseArea"></div>
-      <button id="resetButton" onclick="resetForm()">
-        Validate Another Document
-      </button>
     </div>
 
     <div id="loadingOverlay">
@@ -424,7 +421,6 @@
       const fileInput = document.getElementById("report_pdf");
       const loadingOverlay = document.getElementById("loadingOverlay");
       const responseArea = document.getElementById("responseArea");
-      const resetButton = document.getElementById("resetButton");
 
       // Update the messages array
       const messages = [
@@ -476,7 +472,6 @@
 
           const data = await response.json();
           displayResults(data);
-          resetButton.style.display = "block";
         } catch (error) {
           console.error("Error:", error);
           responseArea.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
@@ -599,8 +594,6 @@
         popupContainer.appendChild(popupContent);
 
         popupOverlay.appendChild(popupContainer); // Append container to overlay
-
-        resetButton.style.display = "block";
         // No longer need to update responseArea content
         // responseArea.innerHTML = "";
         // responseArea.appendChild(container);
@@ -609,6 +602,7 @@
       function closePopup() {
         const popupOverlay = document.getElementById("validationPopupOverlay");
         popupOverlay.classList.remove("show");
+        window.location.reload(); // Added line to reload the page
       }
       // Update progress handling
       let messageIndex = 0;
@@ -632,13 +626,6 @@
         clearInterval(progressInterval);
         messageIndex = 0;
         progress = 0;
-      }
-
-      function resetForm() {
-        fileInput.value = "";
-        responseArea.innerHTML = "";
-        resetButton.style.display = "none";
-        closePopup(); // Close popup on reset as well, in case it's open
       }
     </script>
     <footer>&copy; 2025 Affinidi Private Limited. All rights reserved.</footer>

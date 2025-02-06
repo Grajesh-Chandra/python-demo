@@ -614,12 +614,12 @@ def verify_pdf():
                     hash_match = True
                     results[5][
                         "value"
-                    ] = f"Calculated Hash ({calculated_hash}) matches expected Hash ({expected_hash})"
+                    ] = "No Change in Content of the PDF, Hash Details Match"
                     results[5]["result"] = "Valid"
                 else:
                     results[5][
                         "value"
-                    ] = f"Calculated Hash ({calculated_hash}) matches expected Hash ({expected_hash})"
+                    ] = "Content of the PDF is tempered with, Hash does not match"
                     results[5]["result"] = "Invalid"
 
         return jsonify(results), 200
