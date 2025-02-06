@@ -280,6 +280,84 @@
         margin-top: auto;
         font-size: 0.9rem;
       }
+
+      /* Popup Styles */
+      .validation-popup {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+        z-index: 1001; /* Ensure it's above loading overlay */
+        width: 80%;
+        max-width: 800px;
+      }
+
+      .popup-header {
+        text-align: center;
+        margin-bottom: 1.5rem;
+      }
+
+      .popup-header h2 {
+        font-size: 1.5rem;
+        color: #1a237e;
+        font-weight: 600;
+      }
+
+      .popup-content {
+        margin-bottom: 1.5rem;
+        max-height: 70vh; /* Scrollable content if needed */
+        overflow-y: auto;
+      }
+
+      .popup-close-btn {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: none;
+        border: none;
+        font-size: 1.2rem;
+        cursor: pointer;
+        color: #777;
+      }
+
+      .popup-close-btn:hover {
+        color: #333;
+      }
+
+      .popup-success {
+        border: 4px solid #4caf50; /* Green border for success */
+      }
+
+      .popup-success .popup-header h2 {
+        color: #4caf50; /* Green header text for success */
+      }
+
+      .popup-error {
+        border: 4px solid #f44336; /* Red border for error */
+      }
+
+      .popup-error .popup-header h2 {
+        color: #f44336; /* Red header text for error */
+      }
+
+      .overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5); /* Semi-transparent black overlay */
+        z-index: 1000; /* Below popup but above other content */
+        display: none; /* Hidden by default */
+      }
+
+      .overlay.show {
+        display: block; /* Show overlay when popup is active */
+      }
     </style>
   </head>
   <body>
@@ -338,6 +416,8 @@
       <div class="loader"></div>
       <div class="message" id="loadingMessage">Validating PDF Content....</div>
     </div>
+
+    <div class="overlay" id="validationPopupOverlay"></div>
 
     <script>
       const dropZone = document.getElementById("dropZone");
@@ -407,22 +487,54 @@
       }
 
       function displayResults(data) {
-        responseArea.innerHTML = "";
-        const container = document.createElement("div");
-        container.className = "result-table-container";
+        // Determine overall validation status
+        let overallStatus = "Valid";
+        for (const item of data) {
+          if (item.result === "Invalid") {
+            overallStatus = "Invalid";
+            break;
+          }
+        }
+
+        // Create popup elements
+        const popupOverlay = document.getElementById("validationPopupOverlay");
+        popupOverlay.innerHTML = ""; // Clear previous popup content if any
+        popupOverlay.classList.add("show");
+
+        const popupContainer = document.createElement("div");
+        popupContainer.className = "validation-popup";
+        if (overallStatus === "Valid") {
+          popupContainer.classList.add("popup-success"); // Add success class
+        } else {
+          popupContainer.classList.add("popup-error"); // Add error class
+        }
+
+        const popupHeader = document.createElement("div");
+        popupHeader.className = "popup-header";
+        const headerText = document.createElement("h2");
+        headerText.textContent =
+          overallStatus === "Valid"
+            ? "Validation Successful"
+            : "Validation Failed";
+        popupHeader.appendChild(headerText);
+
+        const popupContent = document.createElement("div");
+        popupContent.className = "popup-content";
+
+        const tableContainer = document.createElement("div"); // Table container
+        tableContainer.className = "result-table-container";
 
         const table = document.createElement("table");
         table.className = "result-table";
-
         // Table Header
         const thead = document.createElement("thead");
         thead.innerHTML = `
-                <tr>
-                    <th>Property</th>
-                    <th>Value</th>
-                    <th>Status</th>
-                </tr>
-            `;
+                  <tr>
+                      <th>Property</th>
+                      <th>Value</th>
+                      <th>Status</th>
+                  </tr>
+              `;
 
         // Table Body
         const tbody = document.createElement("tbody");
@@ -474,9 +586,29 @@
         });
 
         table.append(thead, tbody);
-        container.appendChild(table);
-        responseArea.appendChild(container);
+        tableContainer.appendChild(table);
+        popupContent.appendChild(tableContainer); // Append table to popup content
+
+        const closeButton = document.createElement("button");
+        closeButton.className = "popup-close-btn";
+        closeButton.innerHTML = "&times;"; // Times symbol for close
+        closeButton.onclick = closePopup;
+
+        popupContainer.appendChild(closeButton);
+        popupContainer.appendChild(popupHeader);
+        popupContainer.appendChild(popupContent);
+
+        popupOverlay.appendChild(popupContainer); // Append container to overlay
+
         resetButton.style.display = "block";
+        // No longer need to update responseArea content
+        // responseArea.innerHTML = "";
+        // responseArea.appendChild(container);
+      }
+
+      function closePopup() {
+        const popupOverlay = document.getElementById("validationPopupOverlay");
+        popupOverlay.classList.remove("show");
       }
       // Update progress handling
       let messageIndex = 0;
@@ -506,6 +638,7 @@
         fileInput.value = "";
         responseArea.innerHTML = "";
         resetButton.style.display = "none";
+        closePopup(); // Close popup on reset as well, in case it's open
       }
     </script>
     <footer>&copy; 2025 Affinidi Private Limited. All rights reserved.</footer>
