@@ -140,6 +140,11 @@
         font-weight: 500;
       }
 
+      /* Highlight failed row */
+      .failed-row {
+        background-color: #ffebee; /* Light red background for failed rows */
+      }
+
       #loadingOverlay {
         position: fixed;
         top: 0;
@@ -509,8 +514,8 @@
         const headerText = document.createElement("h2");
         headerText.textContent =
           overallStatus === "Valid"
-            ? "Validation Successful"
-            : "Validation Failed";
+            ? "All Verification Check are Successful"
+            : "Verification Failed";
         popupHeader.appendChild(headerText);
 
         const popupContent = document.createElement("div");
@@ -535,6 +540,10 @@
         const tbody = document.createElement("tbody");
         data.forEach((item) => {
           const row = document.createElement("tr");
+
+          if (item.result === "Invalid") {
+            row.classList.add("failed-row"); // Add class for failed rows
+          }
 
           // Property Cell
           const propCell = document.createElement("td");

@@ -37,7 +37,7 @@ token_id = os.environ.get("TOKEN_ID")
 passphrase = os.environ.get("PASSPHRASE")
 key_id = os.environ.get("KEY_ID")
 vault_url = os.environ.get("VAULT_URL")
-course_credential_type_id = os.environ.get("COURSE_CREDENTIAL_TYPE_ID")
+
 personal_information_credential_type_id = os.environ.get(
     "PERSONAL_INFORMATION_CREDENTIAL_TYPE_ID"
 )
