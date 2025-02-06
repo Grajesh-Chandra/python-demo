@@ -15,8 +15,9 @@ from reportlab.lib.utils import ImageReader
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Spacer, Paragraph
 from reportlab.lib import colors
 from reportlab.lib.units import inch  # Import inch
-from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
+from reportlab.lib.enums import TA_CENTER
 import uuid
 import json
 from io import BytesIO
@@ -707,14 +708,24 @@ def generate_pdf_report(order):
     header_data = [
         [
             "Candidate/Employee Full Name",
-            "GRAJESH CHANDRA",
+            "GRAJESH CHANDRA",  # This is hardcoded, might need to be dynamic if candidate name is in order data
             "Order ID",
             order.get("orderId", "-"),
         ],
-        ["Company Name", "TEST COMPANY", "Branch Name", ""],
-        ["Date of Report", "02-02-2024", "Cost Centre", "-"],
-        ["Package Code/Level (if any)", "", "Case Reference No.", "AV0202240DA1OTA"],
-        ["Result", "Processing", "", ""],
+        [
+            "Company Name",
+            "TEST COMPANY",
+            "Branch Name",
+            "",
+        ],  # Company Name is hardcoded
+        ["Date of Report", "02-02-2024", "Cost Centre", "-"],  # Date is hardcoded
+        [
+            "Package Code/Level (if any)",
+            "",
+            "Case Reference No.",
+            "AV0202240DA1OTA",
+        ],  # Case ref is hardcoded
+        ["Result", "Processing", "", ""],  # Result is hardcoded
     ]
 
     # Apply word wrap to the header data
@@ -743,7 +754,15 @@ def generate_pdf_report(order):
     for check_name, check_value in order.get("checks", {}).items():
         if check_value:
             check_name = check_mapping.get(check_name, check_name)
-            checks_data.append([check_name, "-", "Worldwide", "In Progress", ""])
+            verification_status = "In Progress"  # Default status
+            if order.get("backgroundCheckDetails") and order[
+                "backgroundCheckDetails"
+            ].get(check_name.split(" ")[0].lower()):
+                verification_status = order["backgroundCheckDetails"][
+                    check_name.split(" ")[0].lower()
+                ].get("verificationStatus", "In Progress")
+
+            checks_data.append([check_name, "-", "Worldwide", verification_status, ""])
 
     # Apply word wrap to the header data
     for row in checks_data:
@@ -795,7 +814,9 @@ def generate_pdf_report(order):
             check_display_name = check_mapping.get(check_name, check_name)
 
             p.setFont("Helvetica-Bold", 16)
-            p.drawCentredString(letter[0] / 2, 10.5 * inch, check_display_name)
+            p.drawCentredString(
+                letter[0] / 2, 7.5 * inch, check_display_name
+            )  # Adjusted position to 7.5 inch
             p.setFont("Helvetica", 12)
 
             check_details = [
@@ -803,70 +824,327 @@ def generate_pdf_report(order):
             ]
             # Example Data. Replace with your actual data retrieval logic
             if check_name == "personalInfo":
-                personal_info = order.get(
-                    "personalInfoDetails", {}
-                )  # Access the personalInfoDetails
-                check_details.extend(
-                    [
+                personal_info = order.get("backgroundCheckDetails", {}).get(
+                    "personalInfo", {}
+                )  # Access personalInfo from backgroundCheckDetails
+                if personal_info:  # Check if personal_info exists
+                    pi_name = personal_info.get("PIname", {})
+                    verification_evidence = personal_info.get(
+                        "verificationEvidence", {}
+                    )
+
+                    check_details.extend(
                         [
-                            "First Name",
-                            personal_info.get("firstName", "Grajesh"),
-                            personal_info.get("firstName", "-"),
-                        ],
-                        [
-                            "Last Name",
-                            personal_info.get("lastName", "Chandra"),
-                            personal_info.get("lastName", "-"),
-                        ],
-                        [
-                            "Birthdate",
-                            personal_info.get("birthdate", "-"),
-                            personal_info.get("birthdate", "-"),
-                        ],
-                        [
-                            "Country of Birth",
-                            personal_info.get("birthCountry", "-"),
-                            personal_info.get("birthCountry", "-"),
-                        ],
-                        [
-                            "Email Address",
-                            personal_info.get("email", "-"),
-                            personal_info.get("email", "-"),
-                        ],
-                        [
-                            "Gender",
-                            personal_info.get("gender", "-"),
-                            personal_info.get("gender", "-"),
-                        ],
-                    ]
-                )
-            # Add similar blocks for other check types (address, education, etc.)
+                            [
+                                "Verification Status",
+                                "-",
+                                personal_info.get("verificationStatus", "-"),
+                            ],
+                            ["Given Name", "-", pi_name.get("givenName", "-")],
+                            ["Family Name", "-", pi_name.get("familyName", "-")],
+                            ["Nickname", "-", pi_name.get("nickname", "-")],
+                            ["Birthdate", "-", personal_info.get("birthdate", "-")],
+                            [
+                                "Birth Country",
+                                "-",
+                                personal_info.get("birthCountry", "-"),
+                            ],
+                            ["Citizenship", "-", personal_info.get("citizenship", "-")],
+                            [
+                                "Phone Number",
+                                "-",
+                                personal_info.get("phoneNumber", "-"),
+                            ],
+                            ["Email Address", "-", personal_info.get("email", "-")],
+                            ["Gender", "-", personal_info.get("gender", "-")],
+                            [
+                                "Marital Status",
+                                "-",
+                                personal_info.get("maritalStatus", "-"),
+                            ],
+                            [
+                                "Verification Evidence Name",
+                                "-",
+                                verification_evidence.get("evidenceName1", "-"),
+                            ],
+                            [
+                                "Verification Evidence URL",
+                                "-",
+                                verification_evidence.get("evidenceURL1", "-"),
+                            ],
+                            [
+                                "Verification Remarks",
+                                "-",
+                                personal_info.get("verificationRemarks", "-"),
+                            ],
+                        ]
+                    )
             elif check_name == "address":
-                addressInfo = order.get("addressInfoDetails", {})
-                check_details.extend(
-                    [
+                address_info = order.get("backgroundCheckDetails", {}).get(
+                    "address", {}
+                )  # Access address from backgroundCheckDetails
+                if address_info:  # Check if address_info exists
+                    address_data = address_info.get("address", {})
+                    owner_details = address_info.get("ownerDetails", {})
+                    neighbour_details = address_info.get("neighbourDetails", {})
+                    stay_details = address_info.get("stayDetails", {})
+                    verification_evidence = address_info.get("verificationEvidence", {})
+
+                    check_details.extend(
                         [
-                            "Address",
-                            addressInfo.get("addressLine1", "-"),
-                            addressInfo.get("addressLine1", "-"),
-                        ],
+                            [
+                                "Verification Status",
+                                "-",
+                                address_info.get("verificationStatus", "-"),
+                            ],
+                            [
+                                "Address Line 1",
+                                "-",
+                                address_data.get("addressLine1", "-"),
+                            ],
+                            [
+                                "Address Line 2",
+                                "-",
+                                address_data.get("addressLine2", "-"),
+                            ],
+                            ["Postal Code", "-", address_data.get("postalCode", "-")],
+                            [
+                                "Address Region",
+                                "-",
+                                address_data.get("addressRegion", "-"),
+                            ],
+                            [
+                                "Address Country",
+                                "-",
+                                address_data.get("addressCountry", "-"),
+                            ],
+                            ["Owner Name", "-", owner_details.get("ownerName", "-")],
+                            [
+                                "Neighbour Name",
+                                "-",
+                                neighbour_details.get("neighbourName", "-"),
+                            ],
+                            ["Stay From Date", "-", stay_details.get("fromDate", "-")],
+                            ["Stay To Date", "-", stay_details.get("toDate", "-")],
+                            [
+                                "Verification Evidence Name",
+                                "-",
+                                verification_evidence.get("evidenceName1", "-"),
+                            ],
+                            [
+                                "Verification Evidence URL",
+                                "-",
+                                verification_evidence.get("evidenceURL1", "-"),
+                            ],
+                            [
+                                "Verification Remarks",
+                                "-",
+                                address_info.get("verificationRemarks", "-"),
+                            ],
+                        ]
+                    )
+
+            elif check_name == "education":
+                education_info = order.get("backgroundCheckDetails", {}).get(
+                    "education", {}
+                )  # Access education from backgroundCheckDetails
+                if education_info:  # Check if education_info exists
+                    candidate_details = education_info.get("candidateDetails", {})
+                    institution_details_data = education_info.get(
+                        "institutionDetails", {}
+                    )  # Renamed to avoid conflict
+                    institution_address = education_info.get("institutionAddress", {})
+                    education_details_data = education_info.get(
+                        "educationDetails", {}
+                    )  # Renamed to avoid conflict
+                    verification_evidence = education_info.get(
+                        "verificationEvidence", {}
+                    )
+
+                    check_details.extend(
                         [
-                            "City",
-                            addressInfo.get("city", "-"),
-                            addressInfo.get("city", "-"),
-                        ],
+                            [
+                                "Verification Status",
+                                "-",
+                                education_info.get("verificationStatus", "-"),
+                            ],
+                            [
+                                "Candidate Name",
+                                "-",
+                                candidate_details.get("studentName", "-"),
+                            ],
+                            [
+                                "Institution Details",
+                                "-",
+                                institution_details_data,
+                            ],  # Showing institutionDetails as is
+                            [
+                                "Institution Address Line 1",
+                                "-",
+                                institution_address.get("addressLine1", "-"),
+                            ],
+                            [
+                                "Institution Address Country",
+                                "-",
+                                institution_address.get("addressCountry", "-"),
+                            ],
+                            [
+                                "Qualification",
+                                "-",
+                                education_details_data.get("qualification", "-"),
+                            ],
+                            ["Course", "-", education_details_data.get("course", "-")],
+                            [
+                                "Graduation Date",
+                                "-",
+                                education_details_data.get("graduationDate", "-"),
+                            ],
+                            [
+                                "Verification Evidence Name",
+                                "-",
+                                verification_evidence.get("evidenceName1", "-"),
+                            ],
+                            [
+                                "Verification Evidence URL",
+                                "-",
+                                verification_evidence.get("evidenceURL1", "-"),
+                            ],
+                            [
+                                "Verification Remarks",
+                                "-",
+                                education_info.get("verificationRemarks", "-"),
+                            ],
+                        ]
+                    )
+            elif check_name == "employment":
+                employment_info = order.get("backgroundCheckDetails", {}).get(
+                    "employment", {}
+                )  # Access employment from backgroundCheckDetails
+                if employment_info:  # Check if employment_info exists
+                    candidate_details = employment_info.get("candidateDetails", {})
+                    employer_details_data = employment_info.get(
+                        "employerDetails", {}
+                    )  # Renamed to avoid conflict
+                    company_address = employer_details_data.get("companyAddress", {})
+                    hr_details = employer_details_data.get("hRDetails", {})
+                    employment_details_data = employer_details_data.get(
+                        "employmentDetails", {}
+                    )  # Renamed to avoid conflict
+                    verification_evidence = employer_details_data.get(
+                        "verificationEvidence", {}
+                    )
+
+                    check_details.extend(
                         [
-                            "State",
-                            addressInfo.get("state", "-"),
-                            addressInfo.get("state", "-"),
-                        ],
+                            [
+                                "Verification Status",
+                                "-",
+                                employer_details_data.get("verificationStatus", "-"),
+                            ],
+                            [
+                                "Employee Name",
+                                "-",
+                                candidate_details.get("employeeName", "-"),
+                            ],
+                            [
+                                "Company Name",
+                                "-",
+                                employer_details_data.get("companyName", "-"),
+                            ],
+                            [
+                                "Company Address Line 1",
+                                "-",
+                                company_address.get("addressLine1", "-"),
+                            ],
+                            [
+                                "Company Address Country",
+                                "-",
+                                company_address.get("addressCountry", "-"),
+                            ],
+                            [
+                                "Designation",
+                                "-",
+                                employment_details_data.get("designation", "-"),
+                            ],
+                            [
+                                "Employment Status",
+                                "-",
+                                employment_details_data.get("employmentStatus", "-"),
+                            ],
+                            [
+                                "Annualised Salary",
+                                "-",
+                                employment_details_data.get("annualisedSalary", "-"),
+                            ],
+                            [
+                                "Currency",
+                                "-",
+                                employment_details_data.get("currency", "-"),
+                            ],
+                            [
+                                "Tenure From Date",
+                                "-",
+                                employment_details_data.get("tenure", {}).get(
+                                    "fromDate", "-"
+                                ),
+                            ],  # Access nested 'fromDate'
+                            [
+                                "Tenure To Date",
+                                "-",
+                                employment_details_data.get("tenure", {}).get(
+                                    "toDate", "-"
+                                ),
+                            ],  # Access nested 'toDate'
+                            [
+                                "Verification Evidence Name 1",
+                                "-",
+                                verification_evidence.get("evidenceName1", "-"),
+                            ],
+                            [
+                                "Verification Evidence URL 1",
+                                "-",
+                                verification_evidence.get("evidenceURL1", "-"),
+                            ],
+                            [
+                                "Verification Evidence Name 2",
+                                "-",
+                                verification_evidence.get("evidenceName2", "-"),
+                            ],
+                            [
+                                "Verification Evidence URL 2",
+                                "-",
+                                verification_evidence.get("evidenceURL2", "-"),
+                            ],
+                            [
+                                "Verification Remarks",
+                                "-",
+                                employer_details_data.get("verificationRemarks", "-"),
+                            ],
+                        ]
+                    )
+            elif check_name == "criminal":
+                criminal_info = order.get("backgroundCheckDetails", {}).get(
+                    "criminal", {}
+                )  # Access criminal from backgroundCheckDetails
+                if criminal_info:  # Check if criminal_info exists
+                    check_details.extend(
                         [
-                            "Postal Code",
-                            addressInfo.get("postalCode", "-"),
-                            addressInfo.get("postalCode", "-"),
-                        ],
-                    ]
-                )
+                            ["Case ID", "-", criminal_info.get("caseId", "-")],
+                            ["Crime Type", "-", criminal_info.get("crimeType", "-")],
+                            [
+                                "Crime Description",
+                                "-",
+                                criminal_info.get("crimeDescription", "-"),
+                            ],
+                            ["Crime Date", "-", criminal_info.get("crimeDate", "-")],
+                            [
+                                "Crime Location",
+                                "-",
+                                criminal_info.get("crimeLocation", "-"),
+                            ],
+                            ["Status", "-", criminal_info.get("status", "-")],
+                        ]
+                    )
 
             # Style the Check details table
             check_table_style = TableStyle(
@@ -880,11 +1158,17 @@ def generate_pdf_report(order):
                     ("GRID", (0, 0), (-1, -1), 1, colors.black),
                 ]
             )
+            # Apply word wrap to check details table
+            for row in check_details:
+                for i in range(len(row)):
+                    row[i] = Paragraph(row[i], styleN)
             # Create and draw the table
             check_table = Table(check_details, colWidths=[available_width / 3.0] * 3)
             check_table.setStyle(check_table_style)
             check_table.wrapOn(p, available_width, letter[1])
-            check_table.drawOn(p, inch, 8 * inch)
+            check_table.drawOn(
+                p, inch, 6.5 * inch - check_table._height
+            )  # Adjusted Y position dynamically based on table height
             p.showPage()
 
     p.save()
