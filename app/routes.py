@@ -117,65 +117,9 @@ def save_order():
                         400,
                     )
 
-        # Now, payload_for_checks_api contains the data for the checks that should run.
-        # Here you would typically make a request to the other API:
-        # response = requests.post("other_api_url", json=payload_for_checks_api)
-        # For this example, we'll just log the payload.
-
-        # print(f"Payload for checks API: {payload_for_checks_api}")
-    #     credentials_request = [
-    #         {
-    #             "credentialTypeId": background_check_credential_type_id,
-    #             "credentialData": payload_for_checks_api,
-    #         }
-    #     ]
-    #     # print("credentials_request", credentials_request)
-
-    #     # Pass the projectScopedToken generated from AuthProvider package
-    #     configuration = affinidi_tdk_credential_issuance_client.Configuration()
-    #     configuration.api_key["ProjectTokenAuth"] = pst()
-
-    #     with affinidi_tdk_credential_issuance_client.ApiClient(
-    #         configuration
-    #     ) as api_client:
-    #         api_instance = affinidi_tdk_credential_issuance_client.IssuanceApi(
-    #             api_client
-    #         )
-
-    #         projectId = project_id
-    #         request_json = {"data": credentials_request, "claimMode": "TX_CODE"}
-    #         # print("request_json", request_json)
-
-    #         start_issuance_input = (
-    #             affinidi_tdk_credential_issuance_client.StartIssuanceInput.from_dict(
-    #                 request_json
-    #             )
-    #         )
-    #         api_response = api_instance.start_issuance(
-    #             projectId, start_issuance_input=start_issuance_input
-    #         )
-
-    #         # print("api_response", api_response)
-    #         response = api_response.to_dict()
-    #         response["vaultLink"] = (
-    #             vault_url
-    #             + f"/claim?credential_offer_uri={response['credentialOfferUri']}"
-    #         )
-    #         print("response", response)
-
     except Exception as e:
         logging.error(f"Error processing checks: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
-
-    # # Call /api/issuance/status with the given payload
-    # status_payload = {
-    #     "issuanceId": response.get("issuanceId"),
-    #     "projectId": project_id,
-    # }
-    # status_response = requests.post(
-    #     "http://127.0.0.1:5000/api/issuance/status", json=status_payload
-    # )
-    # print("Status response:", status_response.json())
 
     if not os.path.exists(CHECKS_DATA_DIR):
         os.makedirs(CHECKS_DATA_DIR)
@@ -193,19 +137,19 @@ def save_order():
             orders = []
 
         # Add backgroundCheckDetails to the order data
-        data["backgroundCheckDetails"] = payload_for_checks_api
-        # The code is assigning the `response` value to the key "issuanceResponse" in the `data`
-        # dictionary, and it is also assigning the JSON data from `status_response` to the key
-        # "issuanceState" in the `data` dictionary.
-        # data["issuanceResponse"] = response
-        # data["issuanceState"] = status_response.json()
-        orders.append(data)
+        order_data = {
+            "orderId": order_id,
+            "checks": checks_config,
+            "consent": data.get("consent", False),
+            "backgroundCheckDetails": payload_for_checks_api,
+        }
+        orders.append(order_data)
 
         # Write updated orders back to the file
         with open(orders_file, "w") as f:
             json.dump(orders, f, indent=4)
 
-        response = {"success": True}
+        response = {"success": True, "message": "Order saved successfully"}
         return jsonify(response), 200
     except Exception as e:
         logging.error(f"Error saving order: {e}")
@@ -221,44 +165,54 @@ def orders_page():
 def get_orders():
     try:
         status_filter = request.args.get("status", "all").lower()
+
         with open(DATA_FILE, "r") as f:
             orders = json.load(f)
-            check_mapping = {
-                "personalInfo": "Personal Information Verification",
-                "address": "Address Verification",
-                "education": "Education Verification",
-                "employment": "Employment Details Verification with HR",
-                "criminal": "Civil Litigation Check",
-            }
 
             filtered_orders = []
             for order in orders:
-                # Convert checks dictionary to list of human-readable values
-                if isinstance(order.get("checks"), dict):
-                    order["checks"] = [
-                        check_mapping.get(check, check)
-                        for check, value in order["checks"].items()
-                        if value
-                    ]
-
-                # Determine order status
+                # Determine order status (keep this logic)
                 order_status = (
                     "completed"
                     if order.get("issuanceState", {}).get("status") == "VC_CLAIMED"
                     else "pending"
                 )
 
-                # Apply filter
+                # Apply filter (keep this logic)
                 if status_filter == "all" or order_status == status_filter:
                     filtered_orders.append(order)
 
-            return jsonify(filtered_orders)
+            return jsonify(
+                filtered_orders
+            )  # Return the filtered orders, checks will remain as dictionaries
 
     except (FileNotFoundError, json.JSONDecodeError):
-        return jsonify([]), 200
+        return jsonify([]), 200  # Return empty list for file not found or JSON error
     except Exception as e:
-        print(f"Error: {str(e)}")
+        logging.error(f"Error fetching orders: {e}")  # Use logging for errors
         return jsonify({"error": "Internal server error"}), 500
+
+
+@app.route("/order_details/<order_id>")
+def order_details(order_id):
+    orders_file = os.path.join(CHECKS_DATA_DIR, "order.json")
+    order_detail = None
+    try:
+        if os.path.exists(orders_file) and os.path.getsize(orders_file) > 0:
+            with open(orders_file, "r") as f:
+                orders = json.load(f)
+                for order in orders:
+                    if order["orderId"] == order_id:
+                        order_detail = order
+                        break
+    except Exception as e:
+        logging.error(f"Error reading order file: {e}")
+        return jsonify({"success": False, "error": "Error fetching order details"}), 500
+
+    if order_detail:
+        return render_template("order_details.html", order=order_detail)
+    else:
+        return jsonify({"success": False, "error": "Order not found"}), 404
 
 
 # @app.route("/test")
