@@ -249,16 +249,16 @@
         <p>Your order with selected background checks has been submitted.</p>
         <p>Your Order ID is:</p>
         <div id="orderIdDisplay"></div>
-        <p>
+        <!-- <p>
           Claim your Digital Credentials using the following transaction code:
         </p>
-        <div id="responseDisplay2"></div>
+        <div id="responseDisplay2"></div> -->
         <button
           type="button"
           class="btn btn-info mt-3"
-          onclick="window.location.href='/'"
+          onclick="window.location.href='/orders'"
         >
-          Return Home
+          Order Details
         </button>
       </div>
     </div>
@@ -322,8 +322,8 @@
                 "none";
               document.getElementById("orderConfirmation").style.display =
                 "block";
-              document.getElementById("responseDisplay2").textContent =
-                data.txCode;
+              // document.getElementById("responseDisplay2").textContent =
+              // data.txCode;
             } else {
               alert("Failed to save order. Please try again.");
             }

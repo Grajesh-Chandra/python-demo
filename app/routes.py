@@ -123,58 +123,58 @@ def save_order():
         # For this example, we'll just log the payload.
 
         # print(f"Payload for checks API: {payload_for_checks_api}")
-        credentials_request = [
-            {
-                "credentialTypeId": background_check_credential_type_id,
-                "credentialData": payload_for_checks_api,
-            }
-        ]
-        # print("credentials_request", credentials_request)
+    #     credentials_request = [
+    #         {
+    #             "credentialTypeId": background_check_credential_type_id,
+    #             "credentialData": payload_for_checks_api,
+    #         }
+    #     ]
+    #     # print("credentials_request", credentials_request)
 
-        # Pass the projectScopedToken generated from AuthProvider package
-        configuration = affinidi_tdk_credential_issuance_client.Configuration()
-        configuration.api_key["ProjectTokenAuth"] = pst()
+    #     # Pass the projectScopedToken generated from AuthProvider package
+    #     configuration = affinidi_tdk_credential_issuance_client.Configuration()
+    #     configuration.api_key["ProjectTokenAuth"] = pst()
 
-        with affinidi_tdk_credential_issuance_client.ApiClient(
-            configuration
-        ) as api_client:
-            api_instance = affinidi_tdk_credential_issuance_client.IssuanceApi(
-                api_client
-            )
+    #     with affinidi_tdk_credential_issuance_client.ApiClient(
+    #         configuration
+    #     ) as api_client:
+    #         api_instance = affinidi_tdk_credential_issuance_client.IssuanceApi(
+    #             api_client
+    #         )
 
-            projectId = project_id
-            request_json = {"data": credentials_request, "claimMode": "TX_CODE"}
-            # print("request_json", request_json)
+    #         projectId = project_id
+    #         request_json = {"data": credentials_request, "claimMode": "TX_CODE"}
+    #         # print("request_json", request_json)
 
-            start_issuance_input = (
-                affinidi_tdk_credential_issuance_client.StartIssuanceInput.from_dict(
-                    request_json
-                )
-            )
-            api_response = api_instance.start_issuance(
-                projectId, start_issuance_input=start_issuance_input
-            )
+    #         start_issuance_input = (
+    #             affinidi_tdk_credential_issuance_client.StartIssuanceInput.from_dict(
+    #                 request_json
+    #             )
+    #         )
+    #         api_response = api_instance.start_issuance(
+    #             projectId, start_issuance_input=start_issuance_input
+    #         )
 
-            # print("api_response", api_response)
-            response = api_response.to_dict()
-            response["vaultLink"] = (
-                vault_url
-                + f"/claim?credential_offer_uri={response['credentialOfferUri']}"
-            )
-            print("response", response)
+    #         # print("api_response", api_response)
+    #         response = api_response.to_dict()
+    #         response["vaultLink"] = (
+    #             vault_url
+    #             + f"/claim?credential_offer_uri={response['credentialOfferUri']}"
+    #         )
+    #         print("response", response)
 
     except Exception as e:
         logging.error(f"Error processing checks: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
-    # Call /api/issuance/status with the given payload
-    status_payload = {
-        "issuanceId": response.get("issuanceId"),
-        "projectId": project_id,
-    }
-    status_response = requests.post(
-        "http://127.0.0.1:5000/api/issuance/status", json=status_payload
-    )
+    # # Call /api/issuance/status with the given payload
+    # status_payload = {
+    #     "issuanceId": response.get("issuanceId"),
+    #     "projectId": project_id,
+    # }
+    # status_response = requests.post(
+    #     "http://127.0.0.1:5000/api/issuance/status", json=status_payload
+    # )
     # print("Status response:", status_response.json())
 
     if not os.path.exists(CHECKS_DATA_DIR):
@@ -194,16 +194,19 @@ def save_order():
 
         # Add backgroundCheckDetails to the order data
         data["backgroundCheckDetails"] = payload_for_checks_api
-        data["issuanceResponse"] = response
-        data["issuanceState"] = status_response.json()
+        # The code is assigning the `response` value to the key "issuanceResponse" in the `data`
+        # dictionary, and it is also assigning the JSON data from `status_response` to the key
+        # "issuanceState" in the `data` dictionary.
+        # data["issuanceResponse"] = response
+        # data["issuanceState"] = status_response.json()
         orders.append(data)
 
         # Write updated orders back to the file
         with open(orders_file, "w") as f:
             json.dump(orders, f, indent=4)
 
-        response["success"] = True
-        return response, 200
+        response = {"success": True}
+        return jsonify(response), 200
     except Exception as e:
         logging.error(f"Error saving order: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
