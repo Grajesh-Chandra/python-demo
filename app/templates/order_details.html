@@ -37,55 +37,136 @@
         <span class="detail-value">{{ "Yes" if order.consent else "No" }}</span>
       </div>
 
-      <div class="detail-row">
-        <span class="detail-label">Background Check Details:</span>
-        {% if order.backgroundCheckDetails %}
-        <pre
-          class="detail-value"
-          style="white-space: pre-wrap; word-wrap: break-word"
-        >
-{{ order.backgroundCheckDetails|tojson(indent=4) }}</pre
-        >
-        {% else %}
-        <span class="detail-value">No background check details available.</span>
-        {% endif %}
+      <div class="detail-section">
+        <h3 class="detail-section-title">Background Check Details:</h3>
+
+        <div id="backgroundCheckDetailsTable">
+          {% if not order.backgroundCheckDetails %}
+          <span class="detail-value"
+            >No background check details available.</span
+          >
+          {% endif %}
+        </div>
       </div>
 
-      <div class="detail-row">
-        <span class="detail-label">Issuance Response:</span>
-        {% if order.issuanceResponse %}
-        <pre
-          class="detail-value"
-          style="white-space: pre-wrap; word-wrap: break-word"
-        >
-{{ order.issuanceResponse|tojson(indent=4) }}</pre
-        >
-        {% else %}
-        <span class="detail-value">No issuance response available.</span>
-        {% endif %}
+      <div class="detail-section">
+        <h3 class="detail-section-title">Issuance Response:</h3>
+        <div style="border: 1px solid red; padding: 10px; margin-bottom: 10px">
+          <p><b>Raw order.issuanceResponse Data :</b></p>
+          <pre>{{ order.issuanceResponse|tojson(indent=2) }}</pre>
+        </div>
+        <div id="issuanceResponseTable">
+          {% if not order.issuanceResponse %}
+          <span class="detail-value">No issuance response available.</span>
+          {% endif %}
+        </div>
       </div>
 
-      <div class="detail-row">
-        <span class="detail-label">Issuance State:</span>
-        {% if order.issuanceState %}
-        <pre
-          class="detail-value"
-          style="white-space: pre-wrap; word-wrap: break-word"
-        >
-{{ order.issuanceState|tojson(indent=4) }}</pre
-        >
-        {% else %}
-        <span class="detail-value">No issuance state available.</span>
-        {% endif %}
+      <div class="detail-section">
+        <h3 class="detail-section-title">Issuance State:</h3>
+        <div style="border: 1px solid red; padding: 10px; margin-bottom: 10px">
+          <p><b>Raw order.issuanceState Data :</b></p>
+          <pre>{{ order.issuanceState|tojson(indent=2) }}</pre>
+        </div>
+        <div id="issuanceStateTable">
+          {% if not order.issuanceState %}
+          <span class="detail-value">No issuance state available.</span>
+          {% endif %}
+        </div>
       </div>
 
-      <div class="text-center">
+      <div class="text-center detail-buttons">
         <button class="home-button" onclick="window.location.href='/orders'">
           <i class="fas fa-arrow-left"></i> Back to Orders
+        </button>
+        <button
+          class="edit-button"
+          onclick="alert('Edit functionality not yet implemented')"
+        >
+          <i class="fas fa-edit"></i> Edit Order
         </button>
       </div>
     </div>
     <footer>&copy; 2025 Affinidi Private Limited. All rights reserved.</footer>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+      function jsonToTable(jsonData) {
+        if (!jsonData || Object.keys(jsonData).length === 0) {
+          const span = document.createElement('span');
+          span.className = 'detail-value';
+          span.textContent = 'No data available.';
+          return span;
+        }
+
+        const table = document.createElement('table');
+        table.className = 'table detail-table';
+        const tbody = document.createElement('tbody');
+
+        for (const key in jsonData) {
+          if (jsonData.hasOwnProperty(key)) {
+            const value = jsonData[key];
+            const row = tbody.insertRow();
+            const th = document.createElement('th');
+            th.textContent = key;
+            row.appendChild(th);
+
+            const td = document.createElement('td');
+            if (typeof value === 'object' && value !== null) {
+              if (Array.isArray(value)) {
+                const ul = document.createElement('ul');
+                value.forEach(item => {
+                  const li = document.createElement('li');
+                  if (typeof item === 'object' && item !== null) {
+                    li.appendChild(jsonToTable(item));
+                  } else {
+                    li.textContent = item;
+                  }
+                  ul.appendChild(li);
+                });
+                td.appendChild(ul);
+              } else {
+                td.appendChild(jsonToTable(value));
+              }
+            } else {
+              td.textContent = value;
+            }
+            row.appendChild(td);
+          }
+        }
+
+        table.appendChild(tbody);
+        return table;
+      }
+
+      document.addEventListener('DOMContentLoaded', function() {
+        const backgroundCheckDetails = {{ order.backgroundCheckDetails|tojson|safe }};
+        const issuanceResponse = {{ order.issuanceResponse|tojson|safe }};
+        const issuanceState = {{ order.issuanceState|tojson|safe }};
+
+        // Function to render tables
+        function renderTable(data, containerId) {
+          const container = document.getElementById(containerId);
+          container.innerHTML = ''; // Clear existing content
+          if (data && Object.keys(data).length > 0) {
+            container.appendChild(jsonToTable(data));
+          } else {
+            const span = document.createElement('span');
+            span.className = 'detail-value';
+            span.textContent = containerId === 'backgroundCheckDetailsTable'
+              ? 'No background check details available.'
+              : containerId === 'issuanceResponseTable'
+                ? 'No issuance response available.'
+                : 'No issuance state available.';
+            container.appendChild(span);
+          }
+        }
+
+        // Render each section
+        renderTable(backgroundCheckDetails, 'backgroundCheckDetailsTable');
+        renderTable(issuanceResponse, 'issuanceResponseTable');
+        renderTable(issuanceState, 'issuanceStateTable');
+      });
+    </script>
   </body>
 </html>

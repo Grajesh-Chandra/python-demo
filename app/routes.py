@@ -142,6 +142,8 @@ def save_order():
             "checks": checks_config,
             "consent": data.get("consent", False),
             "backgroundCheckDetails": payload_for_checks_api,
+            "issuanceResponse": {},
+            "issuanceState": {},
         }
         orders.append(order_data)
 
