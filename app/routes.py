@@ -227,7 +227,7 @@ def update_order_details(order_id):
     try:
         if not os.path.exists(orders_file) or os.path.getsize(orders_file) == 0:
             return (
-                jsonify({"success": False, "error": "Order file not found or empty."}),
+                jsonify({"success": False, "error": "Order file not found."}),
                 404,
             )
 
@@ -261,6 +261,10 @@ def update_order_details(order_id):
                 issuance_response_data = (
                     {}
                 )  # Initialize to store responses for each check
+
+                status_response_data = (
+                    {}
+                )  # Initialize to store status responses for each check
                 for (
                     check_type,
                     check_details,
@@ -271,20 +275,34 @@ def update_order_details(order_id):
                     response = startIssuance(
                         issuance_payload
                     )  # Call startIssuance for each check
+
+                    # Call /api/issuance/status with the given payload
+                    status_payload = {
+                        "issuanceId": response.get("issuanceId"),
+                        "projectId": project_id,
+                    }
+                    status_response = requests.post(
+                        "http://127.0.0.1:5000/api/issuance/status", json=status_payload
+                    )
+                    print("Status response:", status_response.json())
+
                     print(
                         f"Issuance Response for {check_type}:", response
                     )  # Print individual responses
                     issuance_response_data[check_type] = (
                         response  # Store response against check type
                     )
+                    status_response_data[check_type] = (
+                        status_response.json()
+                    )  # Store status response against check type
 
                 orders[order_found_index][
                     "issuanceResponse"
                 ] = issuance_response_data  # Store all responses
+                orders[order_found_index]["issuanceState"] = status_response_data
 
             else:
                 orders[order_found_index]["completedAt"] = None
-                raise ValueError("Invalid case status")
 
         else:
             return (

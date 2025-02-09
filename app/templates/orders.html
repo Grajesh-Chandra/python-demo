@@ -129,7 +129,6 @@
       </div>
     </div>
 
-    <!-- Modal Dialog Box -->
     <div
       class="modal fade"
       id="statusModal"
@@ -362,6 +361,35 @@
         .addEventListener("click", () => {
           const selectedStatus =
             document.getElementById("orderStatusSelect").value;
+
+          // 1. Start Loader (Spinner Icon)
+          // Find the row for the selectedOrderId
+          const rows = document.querySelectorAll("#ordersTableBody tr");
+          let targetRow = null;
+          rows.forEach((row) => {
+            const orderIdLink = row.querySelector(".order-id-link");
+            if (orderIdLink && orderIdLink.textContent === selectedOrderId) {
+              targetRow = row;
+            }
+          });
+
+          if (targetRow) {
+            const actionCell = targetRow.cells[3]; // Action cell is the 4th cell (index 3)
+            actionCell.innerHTML = ""; // Clear existing content
+
+            // Create spinner icon
+            const orderCheckIcon = document.createElement("i");
+            orderCheckIcon.classList.add(
+              "fas",
+              "fa-spinner",
+              "order-check-icon"
+            );
+            orderCheckIcon.title = "Pending";
+            orderCheckIcon.style.color = "red";
+            actionCell.appendChild(orderCheckIcon);
+          }
+
+          // 2. Fetch API Call (Existing code, no change needed here)
           fetch(`/update_order/${selectedOrderId}`, {
             method: "POST",
             headers: {
@@ -377,14 +405,19 @@
                   document.getElementById("statusModal")
                 );
                 statusModal.hide();
+                // 3. Reload Orders Table to reflect updated status (and correct icons after successful update)
                 loadOrders(document.getElementById("orderStatusFilter").value);
               } else {
                 showSnackbar("Error updating order status: " + data.error);
+                // 3. Reload Orders Table even on error to reset the icon (or handle error icon more specifically if needed)
+                loadOrders(document.getElementById("orderStatusFilter").value);
               }
             })
             .catch((error) => {
               console.error("Fetch error:", error);
               showSnackbar("Fetch error occurred. Check console.");
+              // 3. Reload Orders Table on fetch error as well
+              loadOrders(document.getElementById("orderStatusFilter").value);
             });
         });
 
