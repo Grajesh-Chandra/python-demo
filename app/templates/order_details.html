@@ -49,26 +49,6 @@
         </div>
       </div>
 
-      <div class="detail-section">
-        <h3 class="detail-section-title">Issuance Response:</h3>
-
-        <div id="issuanceResponseTable">
-          {% if not order.issuanceResponse %}
-          <span class="detail-value">No issuance response available.</span>
-          {% endif %}
-        </div>
-      </div>
-
-      <div class="detail-section">
-        <h3 class="detail-section-title">Issuance State:</h3>
-
-        <div id="issuanceStateTable">
-          {% if not order.issuanceState %}
-          <span class="detail-value">No issuance state available.</span>
-          {% endif %}
-        </div>
-      </div>
-
       <div class="text-center detail-buttons">
         <button class="home-button" onclick="window.location.href='/orders'">
           <i class="fas fa-arrow-left"></i> Back to Orders
