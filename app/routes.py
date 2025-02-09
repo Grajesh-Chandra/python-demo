@@ -330,6 +330,53 @@ def update_order_details(order_id):
         )
 
 
+@app.route("/order_issuance_details/<order_id>")
+def order_issuance_details(order_id):
+    orders_file = os.path.join(CHECKS_DATA_DIR, "order.json")
+    order_detail = None
+
+    try:
+        if os.path.exists(orders_file) and os.path.getsize(orders_file) > 0:
+            with open(orders_file, "r") as f:
+                orders = json.load(f)
+                for order in orders:
+                    if order["orderId"] == order_id:
+                        order_detail = order
+                        break
+    except Exception as e:
+        logging.error(f"Error reading order file: {e}")
+        return jsonify({"success": False, "error": "Error fetching order details"}), 500
+
+    if order_detail:
+        checks_data = []
+        # Get all check types from issuanceResponse
+        check_types = order_detail.get("issuanceResponse", {}).keys()
+
+        for check_type in check_types:
+            issuance_response = order_detail.get("issuanceResponse", {}).get(
+                check_type, {}
+            )
+            issuance_state = order_detail.get("issuanceState", {}).get(check_type, {})
+
+            checks_data.append(
+                {
+                    "check_name": check_type.capitalize(),
+                    "vault_link": issuance_response.get("vaultLink", "N/A"),
+                    "issuance_id": issuance_response.get("issuanceId", "N/A"),
+                    "tx_code": issuance_response.get("txCode", "N/A"),
+                    "status": issuance_state.get("status", "N/A"),
+                }
+            )
+
+        return render_template(
+            "order_issuance_details.html",
+            order_id=order_id,
+            checks_data=checks_data,
+        )
+    else:
+        return jsonify({"success": False, "error": "Order not found"}), 404
+
+
 # @app.route("/test")
 # def test():
 #     return render_template("test.html")
