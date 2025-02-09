@@ -177,7 +177,7 @@ def get_orders():
                 # Determine order status (keep this logic)
                 order_status = (
                     "completed"
-                    if order.get("issuanceState", {}).get("status") == "VC_CLAIMED"
+                    if order.get("caseStatus", {}) == "Completed"
                     else "pending"
                 )
 
