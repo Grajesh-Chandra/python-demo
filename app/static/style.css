@@ -255,3 +255,43 @@ footer {
   background: #00acc1; /* Darker shade on hover */
   transform: translateY(-1px);
 }
+
+/* Add CSS for edit mode */
+.edit-mode .detail-table td {
+  padding: 0; /* Remove padding for input to fit snugly */
+}
+.edit-mode .detail-table td input {
+  width: 100%;
+  padding: 8px;
+  box-sizing: border-box;
+  border: 1px solid #ddd;
+  margin: 0; /* Reset margins for input */
+  display: block; /* Ensure input takes full width */
+}
+.edit-mode .detail-buttons .edit-button {
+  display: none; /* Hide Edit button in edit mode */
+}
+.edit-mode .detail-buttons .submit-button {
+  display: inline-block !important; /* Show Submit button in edit mode */
+}
+.submit-button {
+  display: none; /* Initially hide Submit button */
+}
+
+.submit-button-styled {
+  background-color: #28a745; /* Green background color */
+  border-color: #28a745; /* Green border color */
+  color: white; /* White text color for contrast */
+}
+
+.submit-button-styled:hover {
+  background-color: #218838; /* Darker green on hover */
+  border-color: #218838;
+}
+
+.detail-table input {
+  width: 100%;
+  padding: 4px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}

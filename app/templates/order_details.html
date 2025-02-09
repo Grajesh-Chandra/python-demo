@@ -51,10 +51,7 @@
 
       <div class="detail-section">
         <h3 class="detail-section-title">Issuance Response:</h3>
-        <div style="border: 1px solid red; padding: 10px; margin-bottom: 10px">
-          <p><b>Raw order.issuanceResponse Data :</b></p>
-          <pre>{{ order.issuanceResponse|tojson(indent=2) }}</pre>
-        </div>
+
         <div id="issuanceResponseTable">
           {% if not order.issuanceResponse %}
           <span class="detail-value">No issuance response available.</span>
@@ -64,10 +61,7 @@
 
       <div class="detail-section">
         <h3 class="detail-section-title">Issuance State:</h3>
-        <div style="border: 1px solid red; padding: 10px; margin-bottom: 10px">
-          <p><b>Raw order.issuanceState Data :</b></p>
-          <pre>{{ order.issuanceState|tojson(indent=2) }}</pre>
-        </div>
+
         <div id="issuanceStateTable">
           {% if not order.issuanceState %}
           <span class="detail-value">No issuance state available.</span>
@@ -79,11 +73,14 @@
         <button class="home-button" onclick="window.location.href='/orders'">
           <i class="fas fa-arrow-left"></i> Back to Orders
         </button>
+        <button class="edit-button" onclick="toggleEditMode()">
+          <i class="fas fa-edit"></i> Update Verification Details
+        </button>
         <button
-          class="edit-button"
-          onclick="alert('Edit functionality not yet implemented')"
+          class="submit-button home-button submit-button-styled"
+          onclick="submitEditedData()"
         >
-          <i class="fas fa-edit"></i> Edit Order
+          <i class="fas fa-check"></i> Submit Changes
         </button>
       </div>
     </div>
@@ -91,7 +88,11 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-      function jsonToTable(jsonData) {
+      let originalData = null;
+
+      function jsonToTable(jsonData, containerId, isEditable = false, parentKey = '') {
+        console.log("jsonToTable CALLED", "containerId:", containerId, "isEditable:", isEditable, "jsonData:", jsonData);
+
         if (!jsonData || Object.keys(jsonData).length === 0) {
           const span = document.createElement('span');
           span.className = 'detail-value';
@@ -112,22 +113,40 @@
             row.appendChild(th);
 
             const td = document.createElement('td');
-            if (typeof value === 'object' && value !== null) {
-              if (Array.isArray(value)) {
-                const ul = document.createElement('ul');
-                value.forEach(item => {
-                  const li = document.createElement('li');
-                  if (typeof item === 'object' && item !== null) {
-                    li.appendChild(jsonToTable(item));
-                  } else {
-                    li.textContent = item;
-                  }
-                  ul.appendChild(li);
-                });
-                td.appendChild(ul);
+            const currentKey = parentKey ? `${parentKey}.${key}` : key;
+
+            if (isEditable && containerId === 'backgroundCheckDetailsTable') {
+              if (typeof value === 'object' && value !== null) {
+                if (Array.isArray(value)) {
+                  const ul = document.createElement('ul');
+                  value.forEach((item, index) => {
+                    const li = document.createElement('li');
+                    const arrayKey = `${currentKey}[${index}]`;
+                    if (typeof item === 'object' && item !== null) {
+                      li.appendChild(jsonToTable(item, null, true, arrayKey));
+                    } else {
+                      const input = document.createElement('input');
+                      input.type = 'text';
+                      input.value = item;
+                      input.dataset.key = arrayKey;
+                      li.appendChild(input);
+                    }
+                    ul.appendChild(li);
+                  });
+                  td.appendChild(ul);
+                } else {
+                  td.appendChild(jsonToTable(value, null, true, currentKey));
+                }
               } else {
-                td.appendChild(jsonToTable(value));
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.value = value;
+                input.dataset.key = currentKey;
+                td.appendChild(input);
               }
+            } else if (typeof value === 'object' && value !== null) {
+              // Non-editable nested objects
+              td.appendChild(jsonToTable(value, null, false));
             } else {
               td.textContent = value;
             }
@@ -139,33 +158,124 @@
         return table;
       }
 
-      document.addEventListener('DOMContentLoaded', function() {
+      function toggleEditMode() {
+        console.log("toggleEditMode CALLED"); // [DEBUG LOG - TOGGLE START]
+        const validationContainer = document.querySelector('.validation-container');
+        const isEditMode = !validationContainer.classList.contains('edit-mode');
+        validationContainer.classList.toggle('edit-mode');
+
+        console.log("toggleEditMode - isEditMode:", isEditMode); // [DEBUG LOG - isEditMode Value]
+
+        if (isEditMode) {
+          originalData = { // Deeper copy
+            backgroundCheckDetails: JSON.parse(JSON.stringify({{ order.backgroundCheckDetails|tojson|safe }}))
+          };
+          console.log("toggleEditMode - Calling renderTable with isEditable: true, containerId: 'backgroundCheckDetailsTable'"); // [DEBUG LOG - renderTable TRUE call]
+          renderTable(originalData.backgroundCheckDetails, 'backgroundCheckDetailsTable', true);
+        } else {
+          console.log("toggleEditMode - Calling renderTable with isEditable: false, containerId: 'backgroundCheckDetailsTable'"); // [DEBUG LOG - renderTable FALSE call]
+          renderTable(originalData.backgroundCheckDetails, 'backgroundCheckDetailsTable', false);
+        }
+        console.log("toggleEditMode - FINISHED"); // [DEBUG LOG - TOGGLE END]
+      }
+
+      function renderTable(data, containerId, isEditable = false) {
+        console.log("renderTable CALLED", "containerId:", containerId, "isEditable:", isEditable); // [DEBUG LOG - RENDER START]
+        const container = document.getElementById(containerId);
+        container.innerHTML = '';
+        if (data && Object.keys(data).length > 0) {
+          console.log("renderTable - Data is valid, calling jsonToTable. containerId:", containerId, "isEditable:", isEditable); // [DEBUG LOG - jsonToTable CALL]
+          container.appendChild(jsonToTable(data, containerId, isEditable));
+        } else {
+          const span = document.createElement('span');
+          span.className = 'detail-value';
+          span.textContent = containerId === 'backgroundCheckDetailsTable'
+            ? 'No background check details available.'
+            : containerId === 'issuanceResponseTable'
+              ? 'No issuance response available.'
+              : 'No issuance state available.';
+          container.appendChild(span);
+        }
+        console.log("renderTable - FINISHED", "containerId:", containerId, "isEditable:", isEditable); // [DEBUG LOG - RENDER END]
+      }
+
+      function submitEditedData() {
+        const editedData = {};
+        const inputs = document.querySelectorAll('#backgroundCheckDetailsTable input');
+
+        inputs.forEach(input => {
+          const keyPath = input.dataset.key.split('.');
+          let currentLevel = editedData;
+
+          keyPath.forEach((key, index) => {
+            // Handle array indices
+            const arrayMatch = key.match(/(.+)\[(\d+)\]$/);
+            if (arrayMatch) {
+              const arrayKey = arrayMatch[1];
+              const arrayIndex = parseInt(arrayMatch[2]);
+
+              if (!currentLevel[arrayKey]) {
+                currentLevel[arrayKey] = [];
+              }
+
+              if (index === keyPath.length - 1) {
+                currentLevel[arrayKey][arrayIndex] = input.value;
+              } else {
+                if (!currentLevel[arrayKey][arrayIndex]) {
+                  currentLevel[arrayKey][arrayIndex] = {};
+                }
+                currentLevel = currentLevel[arrayKey][arrayIndex];
+              }
+            } else {
+              if (index === keyPath.length - 1) {
+                currentLevel[key] = input.value;
+              } else {
+                if (!currentLevel[key]) {
+                  currentLevel[key] = {};
+                }
+                currentLevel = currentLevel[key];
+              }
+            }
+          });
+        });
+
+        // Include the original order.backgroundCheckDetails in the editedData
+        editedData.backgroundCheckDetails = {{ order.backgroundCheckDetails|tojson|safe }};
+
+        console.log("Edited Data BEFORE fetch:", JSON.stringify(editedData, null, 2));
+
+        fetch('/update_order/' + '{{ order.orderId }}', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(editedData)
+        })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              alert("Order details updated successfully!");
+              // Update original data with new changes
+              originalData.backgroundCheckDetails = data.updatedData;
+              toggleEditMode();
+            } else {
+              alert("Error updating order details: " + data.error);
+            }
+          })
+          .catch(error => {
+            console.error("Fetch error:", error);
+            alert("Fetch error occurred. Check console.");
+          });
+      }
+
+      document.addEventListener('DOMContentLoaded', function () {
         const backgroundCheckDetails = {{ order.backgroundCheckDetails|tojson|safe }};
         const issuanceResponse = {{ order.issuanceResponse|tojson|safe }};
         const issuanceState = {{ order.issuanceState|tojson|safe }};
 
-        // Function to render tables
-        function renderTable(data, containerId) {
-          const container = document.getElementById(containerId);
-          container.innerHTML = ''; // Clear existing content
-          if (data && Object.keys(data).length > 0) {
-            container.appendChild(jsonToTable(data));
-          } else {
-            const span = document.createElement('span');
-            span.className = 'detail-value';
-            span.textContent = containerId === 'backgroundCheckDetailsTable'
-              ? 'No background check details available.'
-              : containerId === 'issuanceResponseTable'
-                ? 'No issuance response available.'
-                : 'No issuance state available.';
-            container.appendChild(span);
-          }
-        }
-
-        // Render each section
-        renderTable(backgroundCheckDetails, 'backgroundCheckDetailsTable');
-        renderTable(issuanceResponse, 'issuanceResponseTable');
-        renderTable(issuanceState, 'issuanceStateTable');
+        renderTable(backgroundCheckDetails, 'backgroundCheckDetailsTable', false);
+        renderTable(issuanceResponse, 'issuanceResponseTable', false);
+        renderTable(issuanceState, 'issuanceStateTable', false);
       });
     </script>
   </body>

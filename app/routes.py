@@ -144,6 +144,7 @@ def save_order():
             "backgroundCheckDetails": payload_for_checks_api,
             "issuanceResponse": {},
             "issuanceState": {},
+            "caseStatus": "Pending",
         }
         orders.append(order_data)
 
@@ -215,6 +216,60 @@ def order_details(order_id):
         return render_template("order_details.html", order=order_detail)
     else:
         return jsonify({"success": False, "error": "Order not found"}), 404
+
+
+@app.route("/update_order/<order_id>", methods=["POST"])
+def update_order_details(order_id):
+    orders_file = os.path.join(CHECKS_DATA_DIR, "order.json")
+    try:
+        if not os.path.exists(orders_file) or os.path.getsize(orders_file) == 0:
+            return (
+                jsonify({"success": False, "error": "Order file not found or empty."}),
+                404,
+            )
+
+        with open(orders_file, "r") as f:
+            orders = json.load(f)
+
+        order_found_index = -1
+        for index, order in enumerate(orders):
+            if order["orderId"] == order_id:
+                order_found_index = index
+                break
+
+        if order_found_index == -1:
+            return jsonify({"success": False, "error": "Order not found"}), 404
+
+        if request.json.get("backgroundCheckDetails"):
+            edited_data = request.json.get("backgroundCheckDetails")
+            orders[order_found_index]["backgroundCheckVerifiedDetails"] = edited_data
+        elif request.json.get("caseStatus"):
+            edited_data = request.json.get("caseStatus")
+            orders[order_found_index]["caseStatus"] = edited_data
+        else:
+            return (
+                jsonify(
+                    {"success": False, "error": "No valid data provided for update."}
+                ),
+                400,
+            )
+
+        with open(orders_file, "w") as f:
+            json.dump(orders, f, indent=4)  # Write updated orders back to file
+
+        return (
+            jsonify(
+                {"success": True, "message": "Order details updated successfully."}
+            ),
+            200,
+        )
+
+    except Exception as e:
+        logging.error(f"Error updating order {order_id}: {e}")
+        return (
+            jsonify({"success": False, "error": "Error updating order details."}),
+            500,
+        )
 
 
 # @app.route("/test")
