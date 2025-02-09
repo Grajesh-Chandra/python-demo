@@ -28,6 +28,8 @@ import os
 import hashlib
 import qrcode
 import datetime
+import jwt  # PyJWT library for JWT handling
+import time
 
 api_gateway_url = os.environ.get("API_GATEWAY_URL")
 token_endpoint = os.environ.get("TOKEN_ENDPOINT")
@@ -55,6 +57,7 @@ pdf_signature_type_id = os.environ.get("PDF_SIGNATURE_TYPE_ID")
 
 DATA_FILE = "orders/order.json"
 CHECKS_DATA_DIR = "orders"
+TOKEN_FILE_PATH = "orders/pst_response.jwt"
 
 
 @app.route("/create-case")
@@ -246,6 +249,43 @@ def update_order_details(order_id):
         elif request.json.get("caseStatus"):
             edited_data = request.json.get("caseStatus")
             orders[order_found_index]["caseStatus"] = edited_data
+            if edited_data == "Completed":
+                orders[order_found_index][
+                    "completedAt"
+                ] = datetime.datetime.now().isoformat()
+
+                background_check_verified_details = orders[order_found_index].get(
+                    "backgroundCheckVerifiedDetails", {}
+                )
+
+                issuance_response_data = (
+                    {}
+                )  # Initialize to store responses for each check
+                for (
+                    check_type,
+                    check_details,
+                ) in background_check_verified_details.items():
+                    issuance_payload = {
+                        check_type: check_details
+                    }  # Payload for each check type
+                    response = startIssuance(
+                        issuance_payload
+                    )  # Call startIssuance for each check
+                    print(
+                        f"Issuance Response for {check_type}:", response
+                    )  # Print individual responses
+                    issuance_response_data[check_type] = (
+                        response  # Store response against check type
+                    )
+
+                orders[order_found_index][
+                    "issuanceResponse"
+                ] = issuance_response_data  # Store all responses
+
+            else:
+                orders[order_found_index]["completedAt"] = None
+                raise ValueError("Invalid case status")
+
         else:
             return (
                 jsonify(
@@ -649,17 +689,62 @@ def verify_pdf():
 
 def pst():
     stats = {
-        "apiGatewayUrl": api_gateway_url,
+        "apiGatewayUrl": api_gateway_url,  # Assuming these are defined elsewhere
         "tokenEndpoint": token_endpoint,
         "projectId": project_id,
         "privateKey": private_key,
         "tokenId": token_id,
         "vaultUrl": vault_url,
     }
-    # print("stats", stats)
+
+    # Check if the token file exists and if it has a valid, unexpired token
+    if os.path.exists(TOKEN_FILE_PATH):
+        try:
+            with open(TOKEN_FILE_PATH, "r") as f:
+                stored_token = (
+                    f.read().strip()
+                )  # Read token from file and remove leading/trailing whitespace
+
+            if stored_token:  # Check if the file is not empty
+                decoded_token = jwt.decode(
+                    stored_token, options={"verify_signature": False}
+                )  # Decode without signature verification for expiry check
+
+                if "exp" in decoded_token and decoded_token["exp"] > time.time():
+                    print("Using stored valid token from file.")
+                    return stored_token  # Return the stored token if it's valid and not expired
+                else:
+                    print(
+                        "Stored token expired or 'exp' claim missing. Fetching new token."
+                    )
+        except (
+            FileNotFoundError,
+            jwt.PyJWTError,
+            Exception,
+        ) as e:  # Catch file errors, JWT decode errors, and other potential issues
+            print(f"Error reading or decoding stored token: {e}. Fetching new token.")
+            # In case of any error, proceed to fetch a new token
+    else:
+        print("Token file not found. Fetching new token.")
+
+    # If no valid stored token is found (or file doesn't exist or errors occurred), fetch a new one
     authProvider = affinidi_tdk_auth_provider.AuthProvider(stats)
     projectScopedToken = authProvider.fetch_project_scoped_token()
-    print("projectScopedToken", projectScopedToken)
+    print("projectScopedToken (newly fetched)", projectScopedToken)
+
+    # Store the newly fetched token to the file for future use
+    try:
+        os.makedirs(
+            os.path.dirname(TOKEN_FILE_PATH), exist_ok=True
+        )  # Ensure directory exists
+        with open(TOKEN_FILE_PATH, "w") as f:
+            f.write(projectScopedToken)
+        print(f"New token stored in {TOKEN_FILE_PATH}")
+    except IOError as e:
+        print(f"Error writing token to file {TOKEN_FILE_PATH}: {e}")
+        # Consider what to do if saving the token fails. Maybe return the token anyway, or raise an exception.
+        # For now, we'll just print an error and return the token
+
     return projectScopedToken
 
 
@@ -1240,3 +1325,46 @@ def pdf_signature_vc(pdf_hash) -> dict:  # Type hinting for clarity
         # Consider raising the exception or returning None
         raise  # Re-raise the exception for handling higher up
         # return None  # Or return None if you want to handle the error differently
+
+
+def startIssuance(payload_for_issuance_api):
+    try:
+        credentials_request = [
+            {
+                "credentialTypeId": background_check_credential_type_id,
+                "credentialData": payload_for_issuance_api,
+            }
+        ]
+        # Pass the projectScopedToken generated from AuthProvider package
+        configuration = affinidi_tdk_credential_issuance_client.Configuration()
+        configuration.api_key["ProjectTokenAuth"] = pst()
+        with affinidi_tdk_credential_issuance_client.ApiClient(
+            configuration
+        ) as api_client:
+            api_instance = affinidi_tdk_credential_issuance_client.IssuanceApi(
+                api_client
+            )
+            projectId = project_id
+            request_json = {"data": credentials_request, "claimMode": "TX_CODE"}
+            print("request_json", request_json)
+
+            start_issuance_input = (
+                affinidi_tdk_credential_issuance_client.StartIssuanceInput.from_dict(
+                    request_json
+                )
+            )
+            api_response = api_instance.start_issuance(
+                projectId, start_issuance_input=start_issuance_input
+            )
+
+            # print("api_response", api_response)
+            response = api_response.to_dict()
+            response["vaultLink"] = (
+                vault_url
+                + f"/claim?credential_offer_uri={response['credentialOfferUri']}"
+            )
+            print("response", response)
+        return response
+    except Exception as e:
+        logging.error(f"Error processing checks: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500

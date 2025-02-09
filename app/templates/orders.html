@@ -257,6 +257,7 @@
               "order-check-icon"
             );
             orderCheckIcon.title = "Pending";
+            orderCheckIcon.style.color = "red"; // Set color to red
           } else if (order.caseStatus === "In Progress") {
             orderCheckIcon.classList.add(
               "fas",
@@ -264,6 +265,7 @@
               "order-check-icon"
             );
             orderCheckIcon.title = "In Progress";
+            orderCheckIcon.style.color = "blue"; // Set color to Blue
           } else {
             orderCheckIcon.classList.add(
               "fas",
@@ -271,17 +273,22 @@
               "order-check-icon"
             );
             orderCheckIcon.title = "Completed";
+            orderCheckIcon.style.color = "green"; // Set color to green
+            orderCheckIcon.style.cursor = "default"; // Disable cursor pointer
           }
-          orderCheckIcon.addEventListener("click", () => {
-            selectedOrderId = order.orderId;
-            const orderStatusSelect =
-              document.getElementById("orderStatusSelect");
-            orderStatusSelect.value = order.caseStatus;
-            const statusModal = new bootstrap.Modal(
-              document.getElementById("statusModal")
-            );
-            statusModal.show();
-          });
+
+          if (order.caseStatus !== "Completed") {
+            orderCheckIcon.addEventListener("click", () => {
+              selectedOrderId = order.orderId;
+              const orderStatusSelect =
+                document.getElementById("orderStatusSelect");
+              orderStatusSelect.value = order.caseStatus;
+              const statusModal = new bootstrap.Modal(
+                document.getElementById("statusModal")
+              );
+              statusModal.show();
+            });
+          }
           actionCell.appendChild(orderCheckIcon);
 
           // Digital Link
