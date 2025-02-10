@@ -729,67 +729,145 @@ def issuance_status():
 
 @app.route("/api/accept-credential-status", methods=["POST"])
 def accept_credential_status():
-    data = request.get_json()
-    if not data:
-        return jsonify({"error": "No data provided"}), 400
+    issuance_id_from_request = request.json.get("issuanceId")
 
-    issuance_id = data.get("issuanceId")
-    if not issuance_id:
-        return jsonify({"error": "issuanceId is required"}), 400
+    if not issuance_id_from_request:
+        return (
+            jsonify(
+                {"success": False, "error": "Missing 'issuanceId' in request body"}
+            ),
+            400,
+        )
+
+    orders_file = os.path.join(CHECKS_DATA_DIR, "order.json")
+
+    if not os.path.exists(orders_file) or os.path.getsize(orders_file) == 0:
+        return (
+            jsonify({"success": False, "error": "Order file not found."}),
+            404,
+        )
 
     try:
-        with open(DATA_FILE, "r") as f:
-            try:
-                orders = json.load(f)
-            except json.JSONDecodeError:
-                logging.error("Error decoding order.json. File might be corrupted.")
-                return jsonify({"error": "Invalid order data"}), 500
-
-        updated = False
-        for order in orders:
-            if order["issuanceResponse"]["issuanceId"] == issuance_id:
-                if "issuanceState" in order:
-                    order["issuanceState"].update(data)
-                else:
-                    order["issuanceState"] = data
-                updated = True
-
-                if data.get("status") == "VC_CLAIMED":
-                    issued_credentials_response = issued_credentials()
-                    if (
-                        issued_credentials_response
-                        and issued_credentials_response[1] == 200
-                    ):
-                        issued_credentials_data = issued_credentials_response[0]
-                        order["issuedCredentials"] = (
-                            issued_credentials_data  # Update IN PLACE
-                        )
-                break
-
-        if not updated:
-            return jsonify({"error": "No order with issuanceId exists"}), 404
-
-        with open(DATA_FILE, "w") as f:
-            json.dump(orders, f, indent=4)  # Write ONCE after ALL updates
-
-        return jsonify({"success": True, "message": "Order updated successfully"}), 200
-
-    except Exception as e:
-        logging.error(f"Error updating order: {e}")
-        return jsonify({"error": str(e)}), 500
-
-
-@app.route("/api/issued-credentials", methods=["POST"])
-def issued_credentials():
-    try:
-        with open(os.path.join(CHECKS_DATA_DIR, "issuedCredentials.json"), "r") as f:
-            issued_credentials = json.load(f)
-        # print("issued_credentials", issued_credentials)
-        return issued_credentials, 200
-    except FileNotFoundError:
-        return jsonify({"error": "issuedCredentials.json file not found"}), 404
+        with open(orders_file, "r") as f:
+            orders = json.load(f)
     except json.JSONDecodeError:
-        return jsonify({"error": "Invalid JSON in issuedCredentials.json file"}), 500
+        return (
+            jsonify(
+                {"success": False, "error": "Error reading order file, invalid JSON."}
+            ),
+            500,
+        )
+    except Exception as e:
+        return (
+            jsonify({"success": False, "error": f"Error reading order file: {str(e)}"}),
+            500,
+        )
+
+    order_found_index = -1
+    check_type_found = None
+    order_id_found = None  # to construct path for issuedCredentials.json
+
+    # Find the order and check_type based on issuanceId
+    for index, order in enumerate(orders):
+        if "issuanceState" in order:
+            for check_type, issuance_data in order["issuanceState"].items():
+                if issuance_data.get("issuanceId") == issuance_id_from_request:
+                    order_found_index = index
+                    check_type_found = check_type
+                    order_id_found = order["orderId"]  # store orderId to construct path
+                    break  # break inner loop once found
+            if order_found_index != -1:
+                break  # break outer loop once order is found
+
+    if order_found_index == -1:
+        return (
+            jsonify({"success": False, "error": "Issuance ID not found in any order"}),
+            404,
+        )
+    print("Issuance ID found in order:", order_id_found, check_type_found)
+    issued_credentials_file_path = os.path.join(
+        CHECKS_DATA_DIR, "issuedCredentials.json"
+    )  # construct path
+
+    issued_credentials_data = None
+    try:
+        if os.path.exists(
+            issued_credentials_file_path
+        ):  # Check if file exists before reading
+            with open(issued_credentials_file_path, "r") as f:
+                issued_credentials_data = json.load(f)
+        else:
+            logging.warning(
+                f"issuedCredentials.json not found at path: {issued_credentials_file_path}"
+            )  # log if file not found
+            issued_credentials_data = {}  # Initialize to empty dict if file not found
+    except json.JSONDecodeError as e:
+        logging.error(f"Error reading issuedCredentials.json, invalid JSON: {e}")
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": "Error reading issued credentials file, invalid JSON.",
+                }
+            ),
+            500,
+        )
+    except Exception as e:
+        logging.error(f"Error reading issuedCredentials.json: {e}")
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": f"Error reading issued credentials file: {str(e)}",
+                }
+            ),
+            500,
+        )
+
+    if (
+        issued_credentials_data
+    ):  # Proceed only if data is loaded (or initialized as empty dict)
+        if "IssuedCredentials" not in orders[order_found_index]:
+            orders[order_found_index]["IssuedCredentials"] = {}
+
+        orders[order_found_index][
+            "IssuedCredentials"
+        ] = issued_credentials_data  # Assign data to check_type
+
+        try:
+            with open(orders_file, "w") as f:
+                json.dump(orders, f, indent=4)
+            logging.info(
+                f"Successfully updated order.json with IssuedCredentials for order_id: {order_id_found}, check_type: {check_type_found}"
+            )
+        except Exception as e:
+            logging.error(
+                f"Error writing to order file to update IssuedCredentials: {e}"
+            )
+            return (
+                jsonify({"success": False, "error": "Error updating order details"}),
+                500,
+            )
+
+        return (
+            jsonify(
+                {
+                    "success": True,
+                    "message": f"Order details updated with IssuedCredentials for check type '{check_type_found}'",
+                }
+            ),
+            200,
+        )
+    else:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "message": "No issued credentials data found to update.",
+                }
+            ),
+            200,
+        )  # Return success even if no data, as update itself was successful
 
 
 def get_file_content_buffer(credential):

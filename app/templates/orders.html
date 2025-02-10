@@ -316,7 +316,12 @@
           secureTrustIcon.classList.add("fas", "fa-file-pdf", "pdf-icon");
           secureTrustIcon.title = "SecureTrust Verified";
 
-          if (order.issuanceState?.status === "VC_CLAIMED") {
+          const allStatusesClaimed = Object.values(
+            order.issuanceState || {}
+          ).every((state) => state.status === "VC_CLAIMED");
+
+          if (allStatusesClaimed) {
+            console.log("All issuance statuses are VC_CLAIMED");
             secureTrustIcon.addEventListener("click", () => {
               window.open("/generate_secure_pdf/" + order.orderId, "_blank");
             });
