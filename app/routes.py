@@ -22,6 +22,7 @@ import uuid
 import json
 from io import BytesIO
 import base64
+import io
 import affinidi_tdk_credential_verification_client
 import requests
 import os
@@ -668,11 +669,20 @@ def generate_secure_pdf(order_id):
     print("pdf_hash_with_qr", pdf_hash_with_qr)  # Hash including QR code
 
     # --- Add the attachments (including the signature which we will generate NOW) ---
-    issued_credentials = order.get("issuedCredentials")
+    issued_credentials = order.get("IssuedCredentials")
     # print("=====issued_credentials=======", issued_credentials)
     if issued_credentials:
-        json_buffer = get_file_content_buffer(issued_credentials)
-        pdf_writer.add_attachment("issuedCredentials.json", json_buffer.getbuffer())
+        credentials_data = issued_credentials
+        if isinstance(credentials_data, dict):
+            for key, value in credentials_data.items():
+                filename = f"{key}.json"
+                json_content = json.dumps(value).encode("utf-8")
+                json_buffer = io.BytesIO(json_content)
+                pdf_writer.add_attachment(filename, json_buffer.getbuffer())
+        #   json_buffer = get_file_content_buffer(issued_credentials)
+        #   pdf_writer.add_attachment("issuedCredentials.json", json_buffer.getbuffer())
+        else:
+            print("No issued credentials found")
 
     pdf_signature = pdf_signature_vc(pdf_hash_with_qr)  # Sign the initial hash
     print("pdf_signature", pdf_signature)
