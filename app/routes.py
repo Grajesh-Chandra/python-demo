@@ -366,6 +366,7 @@ def order_issuance_details(order_id):
                 "http://127.0.0.1:5000/api/issuance/status", json=status_payload
             )
             issuance_state = status_response.json()
+            print(f"Issuance state for {check_type}: {issuance_state}")
             # Update the status in the order.json for that issuanceId
             for order in orders:
                 if order["orderId"] == order_id:
@@ -374,9 +375,7 @@ def order_issuance_details(order_id):
                     order["issuanceState"][check_type] = issuance_state
                     break
 
-            issuance_state_new = order_detail.get("issuanceState", {}).get(
-                check_type, {}
-            )
+            issuance_state = order_detail.get("issuanceState", {}).get(check_type, {})
 
             checks_data.append(
                 {
@@ -384,8 +383,20 @@ def order_issuance_details(order_id):
                     "vault_link": issuance_response.get("vaultLink", "N/A"),
                     "issuance_id": issuance_response.get("issuanceId", "N/A"),
                     "tx_code": issuance_response.get("txCode", "N/A"),
-                    "status": issuance_state_new.get("status", "N/A"),
+                    "status": issuance_state.get("status", "N/A"),
                 }
+            )
+        try:  # Try to write back to order.json
+            with open(orders_file, "w") as f:
+                json.dump(orders, f, indent=4)
+            logging.info(
+                f"Successfully updated order.json with issuanceState for order_id: {order_id}"
+            )  # Log successful write
+        except Exception as e:  # Catch any writing errors
+            logging.error(f"Error writing to order file to update issuanceState: {e}")
+            return (
+                jsonify({"success": False, "error": "Error updating order details"}),
+                500,
             )
 
         return render_template(
