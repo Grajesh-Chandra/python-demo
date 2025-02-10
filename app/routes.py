@@ -58,6 +58,7 @@ pdf_signature_type_id = os.environ.get("PDF_SIGNATURE_TYPE_ID")
 DATA_FILE = "orders/order.json"
 CHECKS_DATA_DIR = "orders"
 TOKEN_FILE_PATH = "orders/pst_response.jwt"
+ISSUANCE_STATUS_URL = "http://127.0.0.1:5000/api/issuance/status"  # Or configurable URL
 
 
 @app.route("/create-case")
@@ -348,6 +349,7 @@ def order_issuance_details(order_id):
         return jsonify({"success": False, "error": "Error fetching order details"}), 500
 
     if order_detail:
+
         checks_data = []
         # Get all check types from issuanceResponse
         check_types = order_detail.get("issuanceResponse", {}).keys()
@@ -356,7 +358,25 @@ def order_issuance_details(order_id):
             issuance_response = order_detail.get("issuanceResponse", {}).get(
                 check_type, {}
             )
-            issuance_state = order_detail.get("issuanceState", {}).get(check_type, {})
+            status_payload = {
+                "issuanceId": issuance_response.get("issuanceId"),
+                "projectId": project_id,
+            }
+            status_response = requests.post(
+                "http://127.0.0.1:5000/api/issuance/status", json=status_payload
+            )
+            issuance_state = status_response.json()
+            # Update the status in the order.json for that issuanceId
+            for order in orders:
+                if order["orderId"] == order_id:
+                    if "issuanceState" not in order:
+                        order["issuanceState"] = {}
+                    order["issuanceState"][check_type] = issuance_state
+                    break
+
+            issuance_state_new = order_detail.get("issuanceState", {}).get(
+                check_type, {}
+            )
 
             checks_data.append(
                 {
@@ -364,7 +384,7 @@ def order_issuance_details(order_id):
                     "vault_link": issuance_response.get("vaultLink", "N/A"),
                     "issuance_id": issuance_response.get("issuanceId", "N/A"),
                     "tx_code": issuance_response.get("txCode", "N/A"),
-                    "status": issuance_state.get("status", "N/A"),
+                    "status": issuance_state_new.get("status", "N/A"),
                 }
             )
 
@@ -375,6 +395,180 @@ def order_issuance_details(order_id):
         )
     else:
         return jsonify({"success": False, "error": "Order not found"}), 404
+
+
+@app.route("/reissue_credentials/<order_id>", methods=["POST"])
+def reissue_credentials(order_id):
+    orders_file = os.path.join(CHECKS_DATA_DIR, "order.json")
+    print("Reissuing credentials for order:", order_id)
+    if not os.path.exists(orders_file) or os.path.getsize(orders_file) == 0:
+        return (
+            jsonify({"success": False, "error": "Order file not found."}),
+            404,
+        )
+
+    try:
+        with open(orders_file, "r") as f:
+            orders = json.load(f)
+    except json.JSONDecodeError:
+        return (
+            jsonify(
+                {"success": False, "error": "Error reading order file, invalid JSON."}
+            ),
+            500,  # Internal Server Error
+        )
+    except Exception as e:
+        return (
+            jsonify({"success": False, "error": f"Error reading order file: {str(e)}"}),
+            500,  # Internal Server Error
+        )
+
+    order_found_index = -1
+    for index, order in enumerate(orders):
+        if order["orderId"] == order_id:
+            order_found_index = index
+            break
+
+    if order_found_index == -1:
+        return jsonify({"success": False, "error": "Order not found"}), 404
+
+    if request.json.get("checkType") is not None:
+
+        check_type_to_process = request.json.get("checkType")
+
+        edited_data = orders[order_found_index]["caseStatus"]
+        print(f"Edited data: {edited_data}")
+
+        if edited_data == "Completed":
+
+            background_check_verified_details = orders[order_found_index].get(
+                "backgroundCheckVerifiedDetails", {}
+            )
+
+            if check_type_to_process not in background_check_verified_details:
+                return (
+                    jsonify(
+                        {
+                            "success": False,
+                            "error": f"Check type '{check_type_to_process}' not found in backgroundCheckVerifiedDetails.",
+                        }
+                    ),
+                    400,
+                )
+
+            check_details = background_check_verified_details.get(check_type_to_process)
+            issuance_response_data = {}
+            status_response_data = {}
+
+            issuance_payload = {check_type_to_process: check_details}
+            print(f"Issuance Payload for {check_type_to_process}: {issuance_payload}")
+            try:
+                issuance_response = startIssuance(issuance_payload)
+                issuance_response_data[check_type_to_process] = issuance_response
+                print(
+                    f"Issuance Response for {check_type_to_process}: {issuance_response}"
+                )
+                if issuance_response and issuance_response.get("issuanceId"):
+                    status_payload = {
+                        "issuanceId": issuance_response.get("issuanceId"),
+                        "projectId": project_id,
+                    }
+                    try:
+                        status_response = requests.post(
+                            ISSUANCE_STATUS_URL, json=status_payload
+                        )
+                        status_response.raise_for_status()
+                        status_response_data[check_type_to_process] = (
+                            status_response.json()
+                        )
+                        print(
+                            f"Status response for {check_type_to_process}: {status_response.json()}"
+                        )
+                    except requests.exceptions.HTTPError as e:
+                        status_response_data[check_type_to_process] = {
+                            "error": f"HTTP error from status API: {str(e)}"
+                        }
+                        print(
+                            f"HTTP error for {check_type_to_process} status check: {e}"
+                        )
+                    except requests.exceptions.RequestException as e:
+                        status_response_data[check_type_to_process] = {
+                            "error": f"Request error for status API: {str(e)}"
+                        }
+                        print(
+                            f"Request error for {check_type_to_process} status check: {e}"
+                        )
+                else:
+                    issuance_response_data[check_type_to_process] = {
+                        "error": "startIssuance did not return issuanceId"
+                    }
+                    status_response_data[check_type_to_process] = {
+                        "error": "Issuance ID not available to check status."
+                    }
+                    print(
+                        f"Error: startIssuance did not return issuanceId for {check_type_to_process}"
+                    )
+
+            except Exception as e:
+                issuance_response_data[check_type_to_process] = {
+                    "error": f"Error calling startIssuance: {str(e)}"
+                }
+                status_response_data[check_type_to_process] = {
+                    "error": "Issuance initiation failed, status not checked."
+                }
+                print(
+                    f"Exception calling startIssuance for {check_type_to_process}: {e}"
+                )
+
+            # Store issuance response and status for the specific check type
+            if "issuanceResponse" not in orders[order_found_index]:
+                orders[order_found_index]["issuanceResponse"] = {}
+            if "issuanceState" not in orders[order_found_index]:
+                orders[order_found_index]["issuanceState"] = {}
+
+            orders[order_found_index]["issuanceResponse"][check_type_to_process] = (
+                issuance_response_data.get(check_type_to_process, {})
+            )
+            orders[order_found_index]["issuanceState"][check_type_to_process] = (
+                status_response_data.get(check_type_to_process, {})
+            )
+
+        elif edited_data != "Completed":
+            orders[order_found_index]["completedAt"] = None
+
+        try:
+            with open(orders_file, "w") as f:
+                json.dump(orders, f, indent=4)
+        except Exception as e:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": f"Error writing to order file: {str(e)}",
+                    }
+                ),
+                500,  # Internal Server Error
+            )
+
+        return (
+            jsonify(
+                {
+                    "success": True,
+                    "message": f"Order details updated successfully for check type '{check_type_to_process}'.",
+                }
+            ),
+            200,
+        )
+    else:
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": "Both 'caseStatus' and 'checkType' are required in the request body for update.",
+                }
+            ),
+            400,
+        )
 
 
 # @app.route("/test")

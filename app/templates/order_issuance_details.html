@@ -45,6 +45,15 @@
       .vault-link {
         word-break: break-all;
       }
+      .reissue-btn {
+        margin-top: 1rem;
+        width: 100%;
+      }
+      .loader-small {
+        width: 20px;
+        height: 20px;
+        border-width: 3px;
+      }
     </style>
   </head>
   <body>
@@ -90,6 +99,15 @@
 
                 <dt class="col-sm-4">TX Code:</dt>
                 <dd class="col-sm-8">{{ check.tx_code }}</dd>
+                {% if check.status != 'VC_CLAIMED' %}
+                <button
+                  id="reissue-btn-{{ check.check_name.lower() }}"
+                  class="btn btn-warning reissue-btn"
+                  onclick="reissueCredentials('{{ order_id }}', '{{ check.check_name.lower() }}')"
+                >
+                  <i class="fas fa-sync-alt"></i> Reissue Credentials
+                </button>
+                {% endif %}
               </dl>
             </div>
           </div>
@@ -111,5 +129,45 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      async function reissueCredentials(orderId, checkType) {
+        const btn = document.getElementById(`reissue-btn-${checkType}`);
+
+        const originalText = btn.innerHTML;
+
+        try {
+          btn.innerHTML = `
+                <span class="spinner-border spinner-border-sm loader-small" role="status"></span>
+                Reissuing...
+            `;
+          btn.disabled = true;
+
+          const response = await fetch(`/reissue_credentials/${orderId}`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              checkType: checkType,
+            }),
+          });
+
+          const data = await response.json();
+
+          if (!response.ok || !data.success) {
+            throw new Error(data.error || "Failed to reissue credentials");
+          }
+
+          // Refresh the page to show updated data
+          window.location.reload();
+        } catch (error) {
+          console.error("Reissue error:", error);
+          alert(error.message);
+        } finally {
+          btn.innerHTML = originalText;
+          btn.disabled = false;
+        }
+      }
+    </script>
   </body>
 </html>
