@@ -481,10 +481,10 @@
         }
       }
 
-      function displayResults(data) {
+      function displayResults(response_data) {
         // Determine overall validation status
         let overallStatus = "Valid";
-        for (const item of data) {
+        for (const item of response_data.overall_results) {
           if (item.result === "Invalid") {
             overallStatus = "Invalid";
             break;
@@ -516,73 +516,102 @@
         const popupContent = document.createElement("div");
         popupContent.className = "popup-content";
 
-        const tableContainer = document.createElement("div"); // Table container
-        tableContainer.className = "result-table-container";
-
-        const table = document.createElement("table");
-        table.className = "result-table";
-        // Table Header
-        const thead = document.createElement("thead");
-        thead.innerHTML = `
+        // Overall Results Table
+        const overallResultsContainer = document.createElement("div");
+        overallResultsContainer.innerHTML = "<h3>Overall Results</h3>";
+        const overallTableContainer = document.createElement("div"); // Table container
+        overallTableContainer.className = "result-table-container";
+        const overallTable = document.createElement("table");
+        overallTable.className = "result-table";
+        const overallThead = document.createElement("thead");
+        overallThead.innerHTML = `
                   <tr>
                       <th>Property</th>
                       <th>Value</th>
                       <th>Status</th>
                   </tr>
               `;
-
-        // Table Body
-        const tbody = document.createElement("tbody");
-        data.forEach((item) => {
+        const overallTbody = document.createElement("tbody");
+        response_data.overall_results.forEach((item) => {
           const row = document.createElement("tr");
+          row.innerHTML = `
+                      <td>${item.key}</td>
+                      <td class="value-cell">${item.value}</td>
+                      <td><span class="${
+                        item.result === "Valid"
+                          ? "valid-badge"
+                          : "invalid-badge"
+                      }">${item.result}</span></td>
+                  `;
+          overallTbody.appendChild(row);
+        });
+        overallTable.append(overallThead, overallTbody);
+        overallTableContainer.appendChild(overallTable);
+        overallResultsContainer.appendChild(overallTableContainer);
+        popupContent.appendChild(overallResultsContainer);
 
-          // Property Cell
-          const propCell = document.createElement("td");
-          propCell.textContent = item.key;
-
-          // Value Cell
+        // Attachment Results Table
+        const attachmentResultsContainer = document.createElement("div");
+        attachmentResultsContainer.innerHTML =
+          '<h3 style="margin-top: 20px;">Attachment Results</h3>';
+        const attachmentTableContainer = document.createElement("div");
+        attachmentTableContainer.className = "result-table-container";
+        const attachmentTable = document.createElement("table");
+        attachmentTable.className = "result-table";
+        const attachmentThead = document.createElement("thead");
+        attachmentThead.innerHTML = `
+                  <tr>
+                      <th>Filename</th>
+                      <th>Attachment Valid</th>
+                      <th>VC Valid</th>
+                      <th>Message</th>
+                      <th>Details</th>
+                  </tr>
+              `;
+        const attachmentTbody = document.createElement("tbody");
+        response_data.attachment_results.forEach((item) => {
+          const row = document.createElement("tr");
           const valueCell = document.createElement("td");
           valueCell.className = "value-cell";
 
-          if (typeof item.value === "object") {
-            const toggleBtn = document.createElement("button");
-            toggleBtn.className = "toggle-button";
-            toggleBtn.textContent = "Show Details";
+          const toggleBtn = document.createElement("button");
+          toggleBtn.className = "toggle-button";
+          toggleBtn.textContent = "Show Details";
 
-            const jsonContent = document.createElement("pre");
-            jsonContent.className = "json-content";
-            jsonContent.textContent = JSON.stringify(item.value, null, 2);
+          const jsonContent = document.createElement("pre");
+          jsonContent.className = "json-content";
+          jsonContent.textContent = JSON.stringify(item.vc_value, null, 2);
 
-            toggleBtn.onclick = () => {
-              jsonContent.style.display =
-                jsonContent.style.display === "none" ? "block" : "none";
-              toggleBtn.textContent =
-                jsonContent.style.display === "none"
-                  ? "Show Details"
-                  : "Hide Details";
-            };
+          toggleBtn.onclick = () => {
+            jsonContent.style.display =
+              jsonContent.style.display === "none" ? "block" : "none";
+            toggleBtn.textContent =
+              jsonContent.style.display === "none"
+                ? "Show Details"
+                : "Hide Details";
+          };
+          valueCell.innerHTML = "";
+          valueCell.append(toggleBtn, jsonContent);
 
-            valueCell.innerHTML = "";
-            valueCell.append(toggleBtn, jsonContent);
-          } else {
-            valueCell.textContent = item.value;
-          }
-
-          // Status Cell
-          const statusCell = document.createElement("td");
-          const badge = document.createElement("span");
-          badge.className =
-            item.result === "Valid" ? "valid-badge" : "invalid-badge";
-          badge.textContent = item.result;
-          statusCell.appendChild(badge);
-
-          row.append(propCell, valueCell, statusCell);
-          tbody.appendChild(row);
+          row.innerHTML = `
+                      <td>${item.filename}</td>
+                      <td><span class="${
+                        item.attachment_valid ? "valid-badge" : "invalid-badge"
+                      }">${
+            item.attachment_valid ? "Valid" : "Invalid"
+          }</span></td>
+                      <td><span class="${
+                        item.vc_valid ? "valid-badge" : "invalid-badge"
+                      }">${item.vc_valid ? "Valid" : "Invalid"}</span></td>
+                      <td class="value-cell">${item.attachment_message}</td>
+                      `;
+          row.appendChild(valueCell);
+          attachmentTbody.appendChild(row);
         });
-
-        table.append(thead, tbody);
-        tableContainer.appendChild(table);
-        popupContent.appendChild(tableContainer); // Append table to popup content
+        attachmentTable.append(attachmentThead, attachmentTbody);
+        attachmentTableContainer.appendChild(attachmentTable);
+        attachmentResultsContainer.appendChild(attachmentTableContainer);
+        popupContent.appendChild(attachmentResultsContainer);
 
         const closeButton = document.createElement("button");
         closeButton.className = "popup-close-btn";

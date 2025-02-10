@@ -913,35 +913,29 @@ def verify_pdf():
             "result": "Invalid",
         },
         {
-            "key": "PDFSignature VC Verification",
-            "value": "Not Verified",
-            "result": "Invalid",
+            "key": "Attachment Verification Summary",  # General summary for attachments
+            "value": "No attachments processed",
+            "result": "Pending",  # Initial status, updated later
         },
         {
-            "key": "PDFSignature Attachment",
+            "key": "PDF Hash",
             "value": "Not Verified",
             "result": "Invalid",
-        },
-        {
-            "key": "IssuedCredentials VC Verification",
-            "value": "Not Verified",
-            "result": "Invalid",
-        },
-        {
-            "key": "IssuedCredentials Attachment",
-            "value": "Not Verified",
-            "result": "Invalid",
-        },
-        {"key": "PDF Hash", "value": "Not Verified", "result": "Invalid"},
+        },  # Hash status in overall results
     ]
 
-    pdf_signature_valid = False
-    issued_credentials_valid = False
     hash_match = False
-    signature_data = None
-    issued_credentials = None
+    signature_data = (
+        None  # To specifically store signature data from "PDFSignature.json"
+    )
     calculated_hash = None
     expected_hash = None
+
+    attachment_results = []  # List to store results for each attachment
+    attachments_processed_count = 0  # Counter for processed attachments for summary
+    pdf_signature_attachment_processed = (
+        False  # Flag for "PDFSignature.json" processing status
+    )
 
     try:
         if "report_pdf" not in request.files:
@@ -954,70 +948,90 @@ def verify_pdf():
         pdf_buffer = BytesIO(pdf_file.read())
         pdf_reader = PdfReader(pdf_buffer)
 
-        # 1. Extract and Verify Signature and Issued Credentials
+        # 1. Iterate through Attachments and Verify
         for filename, data in pdf_reader.attachments.items():
-            if filename == "PDFSignature.json":
+            attachment_result = {  # Initialize result for each attachment
+                "filename": filename,
+                "attachment_valid": False,
+                "attachment_processed": False,
+                "vc_valid": False,
+                "vc_value": "Not Verified",
+                "attachment_message": "Not Processed",
+                "attachment_type": "Attachment",  # Generic type, can be refined based on filename if needed
+            }
+            attachment_results.append(
+                attachment_result
+            )  # Append new result dict to list
+            attachment_result["attachment_processed"] = (
+                True  # Mark as processed as loop started for it.
+            )
+            attachments_processed_count += 1  # Increment counter
+
+            try:
+                attachment_data_str = "".join([item.decode("utf-8") for item in data])
                 try:
-                    signature_data = json.loads(
-                        "".join([item.decode("utf-8") for item in data])
-                    )
-                    results[2]["value"] = "PDFSignature.json attached"
-                    results[2]["result"] = "Valid"
+                    attachment_json = json.loads(attachment_data_str)
+                    attachment_result["attachment_message"] = "Attachment is valid JSON"
+                    attachment_result["attachment_valid"] = True
 
-                    signature_data_vc = signature_data.get("signedCredential")
-                    verification_results = verification(signature_data_vc)
-                    if verification_results.get("isValid") == True:
-                        pdf_signature_valid = True
-                        results[1]["value"] = signature_data_vc
-                        results[1]["result"] = "Valid"
+                    # Check for "PDFSignature.json" specifically to extract signature data for hash verification
+                    if filename == "PDFSignature.json":
+                        pdf_signature_attachment_processed = True  # Mark as processed
+                        signature_data = attachment_json.get(
+                            "signedCredential"
+                        )  # Extract signature data if it's "PDFSignature.json"
+
+                    # Attempt to find and verify VC within JSON (assuming 'signedCredential' key) in all attachments
+                    vc_data_from_attachment = attachment_json.get("signedCredential")
+                    if vc_data_from_attachment:
+                        verification_results = verification(vc_data_from_attachment)
+                        if verification_results.get("isValid") == True:
+                            attachment_result["vc_valid"] = True
+                            attachment_result["vc_value"] = vc_data_from_attachment
+                        else:
+                            attachment_result["vc_value"] = vc_data_from_attachment
+                        # VC verification status is now in attachment_result
+
                     else:
-                        results[1]["value"] = signature_data_vc
-                        results[1]["result"] = "Invalid"
+                        attachment_result["attachment_message"] = (
+                            "Attachment is JSON, but 'signedCredential' not found"
+                        )
 
-                except (json.JSONDecodeError, UnicodeDecodeError):
-                    results[2]["value"] = "Invalid PDFSignature.json Exception"
-                    results[2]["result"] = "Invalid"
-            elif filename == "issuedCredentials.json":
-                try:
-                    issued_credentials = json.loads(
-                        "".join([item.decode("utf-8") for item in data])
+                except json.JSONDecodeError:
+                    attachment_result["attachment_message"] = (
+                        "Attachment is not valid JSON"
                     )
-                    results[4]["value"] = "issuedCredentials.json attached"
-                    results[4]["result"] = "Valid"
+                    # If not JSON, could be other type of attachment, handle accordingly if needed
 
-                    issued_credentials_vc = issued_credentials.get("signedCredential")
-                    verification_results = verification(issued_credentials_vc)
-                    if verification_results.get("isValid") == True:
-                        issued_credentials_valid = True
-                        results[3]["value"] = issued_credentials_vc
-                        results[3]["result"] = "Valid"
-                    else:
-                        results[3]["value"] = issued_credentials_vc
-                        results[3]["result"] = "Invalid"
+            except UnicodeDecodeError as e:
+                attachment_result["attachment_message"] = (
+                    f"Attachment Unicode Decode Error: {e}"
+                )
 
-                except (json.JSONDecodeError, UnicodeDecodeError):
-                    results[4]["value"] = "Invalid issuedCredentials.json Exception"
-                    results[4]["result"] = "Invalid"
+        # Update Attachment Summary in overall_results
+        if attachments_processed_count > 0:
+            results[1][
+                "value"
+            ] = f"{attachments_processed_count} attachment(s) processed"
+            results[1][
+                "result"
+            ] = "Valid"  # Or "Pending" or base this on individual attachment results if needed
+        else:
+            results[1]["value"] = "No attachments found"
+            results[1]["result"] = "Valid"  # Or "No Attachments" -  adjust as needed
 
-        if not signature_data:
-            results[2]["value"] = "Missing PDFSignature.json"
-            results[2]["result"] = "Invalid"
-
-        if not issued_credentials:
-            results[4]["value"] = "Missing issuedCredentials.json"
-            results[4]["result"] = "Invalid"
-
+        # Hash Verification - Now specifically looking for signature data from "PDFSignature.json"
         if (
-            signature_data and pdf_signature_valid
-        ):  # only proceed if signature data exists and is valid
-            expected_hash = (
-                signature_data.get("signedCredential", {})
-                .get("credentialSubject", {})
-                .get("hashWithoutAttachments")
+            pdf_signature_attachment_processed and signature_data
+        ):  # Proceed only if "PDFSignature.json" was processed AND signature data was extracted
+            expected_hash = signature_data.get("credentialSubject", {}).get(
+                "hashWithoutAttachments"
             )
             if not expected_hash:
-                results[5]["value"] = "Hash not found in signature"
-                results[5]["result"] = "Invalid"
+                results[2][
+                    "value"
+                ] = "Hash not found in signature data from PDFSignature.json"
+                results[2]["result"] = "Invalid"
             else:
                 # 2. Calculate the Hash of the PDF (excluding attachments)
                 calculated_hash = hash_pdf_content_excluding_attachments(pdf_reader)
@@ -1025,17 +1039,29 @@ def verify_pdf():
                 # 3. Verify the Hash
                 if calculated_hash == expected_hash:
                     hash_match = True
-                    results[5][
+                    results[2][
                         "value"
                     ] = "No Change in Content of the PDF, Hash Details Match"
-                    results[5]["result"] = "Valid"
+                    results[2]["result"] = "Valid"
                 else:
-                    results[5][
+                    results[2][
                         "value"
                     ] = "Content of the PDF is tempered with, Hash does not match"
-                    results[5]["result"] = "Invalid"
+                    results[2]["result"] = "Invalid"
+        else:  # "PDFSignature.json" not processed or no signature data extracted
+            results[2][
+                "value"
+            ] = "PDFSignature.json not found or invalid, cannot verify hash"
+            results[2][
+                "result"
+            ] = "Invalid"  # Or "Skipped" if hash verification is optional without signature.
 
-        return jsonify(results), 200
+        response_data = {
+            "overall_results": results,  # Overall status - simplified
+            "attachment_results": attachment_results,  # Detailed attachment results
+        }
+        print("response_data", response_data)
+        return jsonify(response_data), 200
 
     except Exception as e:
         logging.exception("Error verifying PDF:")
