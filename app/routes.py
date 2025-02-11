@@ -985,12 +985,12 @@ def verify_pdf():
                     )
                     attachment_result["attachment_valid"] = True
                     signature_data = attachment_json.get(
-                        "signedCredential"
+                        "credential"
                     )  # Extract signature data
 
                     # Extract expected attachments from "hashWithAttachment"
                     hash_with_attachment_str = (
-                        attachment_json.get("signedCredential", {})
+                        attachment_json.get("credential", {})
                         .get("credentialSubject", {})
                         .get("hashWithAttachment")
                     )
@@ -1011,7 +1011,7 @@ def verify_pdf():
 
                     else:
                         attachment_result["attachment_message"] = (
-                            "PDFSignature.json is JSON, but 'signedCredential' not found"
+                            "PDFSignature.json is JSON, but 'credential' not found"
                         )
                         overall_verification_valid = False  # Overall verification fails if signedCredential is not found - NEW
 
@@ -1070,7 +1070,7 @@ def verify_pdf():
                     attachment_result["attachment_valid"] = True
 
                     # Attempt to find and verify VC within JSON (assuming 'signedCredential' key)
-                    vc_data_from_attachment = attachment_json.get("signedCredential")
+                    vc_data_from_attachment = attachment_json.get("credential")
                     if vc_data_from_attachment:
                         verification_results = verification(vc_data_from_attachment)
                         if verification_results.get("isValid") == True:
@@ -1082,7 +1082,7 @@ def verify_pdf():
 
                     else:
                         attachment_result["attachment_message"] = (
-                            "Attachment is JSON, but 'signedCredential' not found"
+                            "Attachment is JSON, but 'credential' not found"
                         )
                         overall_verification_valid = False  # Overall verification fails if signedCredential not found in attachment - NEW
 
@@ -1832,7 +1832,10 @@ def pdf_signature_vc(pdf_hash, attachment) -> dict:  # Type hinting for clarity
     try:
         response = requests.post(url, headers=headers, json=body)
         response.raise_for_status()  # Raise an exception for bad status codes (4xx or 5xx)
-        return response.json()
+        response_data = response.json()
+        if "signedCredential" in response_data:
+            response_data["credential"] = response_data.pop("signedCredential")
+        return response_data
     except requests.exceptions.RequestException as e:
         print(f"Error signing credential: {e}")  # Log the error
         # Consider raising the exception or returning None
