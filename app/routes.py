@@ -55,7 +55,7 @@ holder_did = os.environ.get("HOLDER_DID")
 pdf_signature_json_context = os.environ.get("PDF_SIGNATURE_JSON")
 pdf_signature_jsonld_context = os.environ.get("PDF_SIGNATURE_JSONLD")
 pdf_signature_type_id = os.environ.get("PDF_SIGNATURE_TYPE_ID")
-
+configuration_id = os.environ.get("CONFIGURATION_ID")
 DATA_FILE = "orders/order.json"
 CHECKS_DATA_DIR = "orders"
 TOKEN_FILE_PATH = "orders/pst_response.jwt"
@@ -380,7 +380,7 @@ def order_issuance_details(order_id):
 
             checks_data.append(
                 {
-                    "check_name": check_type.capitalize(),
+                    "check_name": check_type,
                     "vault_link": issuance_response.get("vaultLink", "N/A"),
                     "issuance_id": issuance_response.get("issuanceId", "N/A"),
                     "tx_code": issuance_response.get("txCode", "N/A"),
@@ -746,12 +746,18 @@ def issuance_status():
 
 @app.route("/api/accept-credential-status", methods=["POST"])
 def accept_credential_status():
-    issuance_id_from_request = request.json.get("issuanceId")
+    print("Accepting credential status")
+    print("Request data:", request.json)
+    print("Request content type:", request.content_type)
 
-    if not issuance_id_from_request:
+    issuance_id_from_request = request.json.get("issuanceId")
+    configuration_id_from_request = request.json.get("configurationId")
+    print("Request data:", request.json)
+
+    if not issuance_id_from_request and configuration_id_from_request:
         return (
             jsonify(
-                {"success": False, "error": "Missing 'issuanceId' in request body"}
+                {"success": False, "error": "Missing Required field in request body"}
             ),
             400,
         )
@@ -802,42 +808,23 @@ def accept_credential_status():
             404,
         )
     print("Issuance ID found in order:", order_id_found, check_type_found)
-    issued_credentials_file_path = os.path.join(
-        CHECKS_DATA_DIR, "issuedCredentials.json"
-    )  # construct path
 
-    issued_credentials_data = None
     try:
-        if os.path.exists(
-            issued_credentials_file_path
-        ):  # Check if file exists before reading
-            with open(issued_credentials_file_path, "r") as f:
-                issued_credentials_data = json.load(f)
-        else:
-            logging.warning(
-                f"issuedCredentials.json not found at path: {issued_credentials_file_path}"
-            )  # log if file not found
-            issued_credentials_data = {}  # Initialize to empty dict if file not found
-    except json.JSONDecodeError as e:
-        logging.error(f"Error reading issuedCredentials.json, invalid JSON: {e}")
+        url = f"{api_gateway_url}/cis/v1/{project_id}/configurations/{configuration_id_from_request}/issuances/{issuance_id_from_request}/credentials"
+        headers = {
+            "Authorization": f"Bearer {pst()}",
+            "Content-Type": "application/json",
+        }
+
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        issued_credentials_data = response.json()
+        print("Issued credentials data:", issued_credentials_data)
+
+    except requests.exceptions.RequestException as e:
+        logging.error(f"Error fetching issued credentials: {e}")
         return (
-            jsonify(
-                {
-                    "success": False,
-                    "error": "Error reading issued credentials file, invalid JSON.",
-                }
-            ),
-            500,
-        )
-    except Exception as e:
-        logging.error(f"Error reading issuedCredentials.json: {e}")
-        return (
-            jsonify(
-                {
-                    "success": False,
-                    "error": f"Error reading issued credentials file: {str(e)}",
-                }
-            ),
+            jsonify({"success": False, "error": "Error fetching issued credentials"}),
             500,
         )
 
@@ -847,8 +834,8 @@ def accept_credential_status():
         if "IssuedCredentials" not in orders[order_found_index]:
             orders[order_found_index]["IssuedCredentials"] = {}
 
-        orders[order_found_index][
-            "IssuedCredentials"
+        orders[order_found_index]["IssuedCredentials"][
+            check_type
         ] = issued_credentials_data  # Assign data to check_type
 
         try:

@@ -38,6 +38,10 @@
         background-color: #ff6961;
         color: darkred;
       }
+      .status-OFFER_DELIVERED {
+        background-color: rgb(255, 97, 194);
+        color: darkred;
+      }
       .check-card {
         margin-bottom: 1.5rem;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -101,9 +105,9 @@
                 <dd class="col-sm-8">{{ check.tx_code }}</dd>
                 {% if check.status != 'VC_CLAIMED' %}
                 <button
-                  id="reissue-btn-{{ check.check_name.lower() }}"
+                  id="reissue-btn-{{ check.check_name }}"
                   class="btn btn-warning reissue-btn"
-                  onclick="reissueCredentials('{{ order_id }}', '{{ check.check_name.lower() }}')"
+                  onclick="reissueCredentials('{{ order_id }}', '{{ check.check_name }}')"
                 >
                   <i class="fas fa-sync-alt"></i> Reissue Credentials
                 </button>
