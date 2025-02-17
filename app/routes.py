@@ -59,7 +59,7 @@ configuration_id = os.environ.get("CONFIGURATION_ID")
 DATA_FILE = "orders/order.json"
 CHECKS_DATA_DIR = "orders"
 TOKEN_FILE_PATH = "orders/pst_response.jwt"
-ISSUANCE_STATUS_URL = "http://127.0.0.1:5000/api/issuance/status"  # Or configurable URL
+ISSUANCE_STATUS_URL = "http://127.0.0.1:8010/api/issuance/status"  # Or configurable URL
 
 
 @app.route("/create-case")
@@ -277,14 +277,15 @@ def update_order_details(order_id):
                     response = startIssuance(
                         issuance_payload
                     )  # Call startIssuance for each check
-
+                    print(f"Issuance Payload for {check_type}:", issuance_payload)
                     # Call /api/issuance/status with the given payload
                     status_payload = {
                         "issuanceId": response.get("issuanceId"),
                         "projectId": project_id,
                     }
                     status_response = requests.post(
-                        "http://127.0.0.1:5000/api/issuance/status", json=status_payload
+                        ISSUANCE_STATUS_URL,
+                        json=status_payload,
                     )
                     print("Status response:", status_response.json())
 
@@ -363,9 +364,7 @@ def order_issuance_details(order_id):
                 "issuanceId": issuance_response.get("issuanceId"),
                 "projectId": project_id,
             }
-            status_response = requests.post(
-                "http://127.0.0.1:5000/api/issuance/status", json=status_payload
-            )
+            status_response = requests.post(ISSUANCE_STATUS_URL, json=status_payload)
             issuance_state = status_response.json()
             print(f"Issuance state for {check_type}: {issuance_state}")
             # Update the status in the order.json for that issuanceId
@@ -641,7 +640,7 @@ def generate_secure_pdf(order_id):
     print("pdf_hash_excluding_attachments (initial)", pdf_hash_excluding_attachments)
 
     # --- NOW add the QR code page ---
-    url = "http://127.0.0.1:5000/verify"
+    url = "http://127.0.0.1:8010/verify"
     qr_buffer = generate_qr_code(url)  # url same as before
 
     qr_reader = ImageReader(qr_buffer)
