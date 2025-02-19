@@ -67,6 +67,11 @@ def case():
     return render_template("case.html")
 
 
+@app.route("/claim-completed")
+def completed():
+    return render_template("completed.html")
+
+
 @app.route("/checks")
 def checks():
     return render_template("checks.html")

@@ -88,9 +88,10 @@
                 <dd class="col-sm-8">
                   {% if check.vault_link != "N/A" %}
                   <a
-                    href="{{ check.vault_link }}"
                     target="_blank"
                     class="vault-link"
+                    href="{{ check.vault_link }}&return_uri=https%3A%2F%2Fpreferably-in-teal.ngrok-free.app%2Fclaim-completed"
+                    onclick="window.open('{{ check.vault_link }}&return_uri=https%3A%2F%2Fpreferably-in-teal.ngrok-free.app%2Fclaim-completed', 'popup', 'width=600,height=600,right=1000'); return true;"
                   >
                     Claim Your Credentials In Affinidi Vault
                     <i class="fas fa-external-link-alt fa-sm"></i>
