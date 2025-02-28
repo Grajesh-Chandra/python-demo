@@ -1,0 +1,46 @@
+{
+  "candidateDetails": {
+    "employeeName": "Grajesh Chandra",
+    "phoneNumber": "7666009585",
+    "email": "asfsa@dsfdsf",
+    "gender": "male"
+  },
+  "employerDetails": {
+    "companyName": "Affinidi",
+    "companyAddress": {
+      "addressLine1": "My way",
+      "addressLine2": "Highway",
+      "postalCode": "560087",
+      "addressRegion": "Karnataka",
+      "addressCountry": "India"
+    },
+    "hRDetails": {
+      "hRfirstName": "Testing",
+      "hRLastName": "HR",
+      "hREmail": "hr@affinidi.com",
+      "hRDesignation": "Lead HR",
+      "hRContactNumber1": "+911234567789",
+      "hRContactNumber2": "9:00-6:00 PM"
+    },
+    "employmentDetails": {
+      "designation": "Testing",
+      "employmentStatus": "Fulltime",
+      "annualisedSalary": "10000",
+      "currency": "INR",
+      "tenure": {
+        "fromDate": "05-2022",
+        "toDate": "05-2050"
+      },
+      "reasonForLeaving": "Resignation",
+      "eligibleForRehire": "Yes"
+    },
+    "verificationStatus": "Completed",
+    "verificationEvidence": {
+      "evidenceName1": "letter",
+      "evidenceURL1": "http://localhost",
+      "evidenceName2": "mail",
+      "evidenceURL2": "http://localhost1"
+    },
+    "verificationRemarks": "Done"
+  }
+}
