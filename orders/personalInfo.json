@@ -1,0 +1,24 @@
+{
+  "PIname": {
+    "givenName": "Grajesh",
+    "familyName": "Chandra",
+    "nickname": "Grajesh Testing"
+  },
+  "birthdate": "01-01-1990",
+  "birthCountry": "India",
+  "citizenship": "Indian",
+  "phoneNumber": "7666009585",
+  "nationalIdentification": {
+    "idNumber1": "pan",
+    "idType1": "askjd13212432d"
+  },
+  "email": "grajesh.c@affinidi.com",
+  "gender": "male",
+  "maritalStatus": "married",
+  "verificationStatus": "Completed",
+  "verificationEvidence": {
+    "evidenceName1": "letter",
+    "evidenceURL1": "http://localhost"
+  },
+  "verificationRemarks": "Done"
+}

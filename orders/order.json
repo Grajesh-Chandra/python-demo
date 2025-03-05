@@ -1,0 +1,166 @@
+[
+    {
+        "orderId": "m7od5b5s-Z2IS7J",
+        "checks": {
+            "personalInfo": true,
+            "address": true,
+            "education": true,
+            "employment": true,
+            "criminal": true
+        },
+        "consent": true,
+        "backgroundCheckDetails": {
+            "personalInfo": {
+                "PIname": {
+                    "givenName": "Grajesh",
+                    "familyName": "Chandra",
+                    "nickname": "Grajesh Testing"
+                },
+                "birthdate": "01-01-1990",
+                "birthCountry": "India",
+                "citizenship": "Indian",
+                "phoneNumber": "7666009585",
+                "nationalIdentification": {
+                    "idNumber1": "pan",
+                    "idType1": "askjd13212432d"
+                },
+                "email": "grajesh.c@affinidi.com",
+                "gender": "male",
+                "maritalStatus": "married",
+                "verificationStatus": "Completed",
+                "verificationEvidence": {
+                    "evidenceName1": "letter",
+                    "evidenceURL1": "http://localhost"
+                },
+                "verificationRemarks": "Done"
+            },
+            "address": {
+                "address": {
+                    "addressLine1": "Varthur, Gunjur",
+                    "addressLine2": "B305, Candeur Landmark, Tower Eiffel",
+                    "postalCode": "560087",
+                    "addressRegion": "Karnataka",
+                    "addressCountry": "India"
+                },
+                "ownerDetails": {
+                    "ownerName": "TestOwner",
+                    "ownerContactDetails1": "+912325435634"
+                },
+                "neighbourDetails": {
+                    "neighbourName": "Test Neighbour",
+                    "neighbourContactDetails1": "+912325435634"
+                },
+                "stayDetails": {
+                    "fromDate": "01-01-2000",
+                    "toDate": "01-01-2020"
+                },
+                "verificationStatus": "Completed",
+                "verificationEvidence": {
+                    "evidenceName1": "Letter",
+                    "evidenceURL1": "http://localhost"
+                },
+                "verificationRemarks": "done"
+            },
+            "education": {
+                "candidateDetails": {
+                    "studentName": "Grajesh Chandra",
+                    "phoneNumber": "7666009585",
+                    "email": "grajesh.c@affinidi.com",
+                    "gender": "male"
+                },
+                "institutionDetails": "Affinidi",
+                "institutionAddress": {
+                    "addressLine1": "Varthur, Gunjur",
+                    "addressLine2": "B305, Candeur Landmark, Tower Eiffel",
+                    "postalCode": "560087",
+                    "addressRegion": "Karnataka",
+                    "addressCountry": "India"
+                },
+                "institutionContact1": "+91 1234567890",
+                "institutionContact2": "+91 1234567890",
+                "institutionEmail": "test@affinidi.com",
+                "institutionWebsiteURL": "affinidi.com",
+                "educationDetails": {
+                    "qualification": "Graduation",
+                    "course": "MBA",
+                    "graduationDate": "12-08-2013",
+                    "dateAttendedFrom": "12-08-2011",
+                    "dateAttendedTo": "12-07-2013",
+                    "educationRegistrationID": "admins1223454356"
+                },
+                "verificationStatus": "Verified",
+                "verificationEvidence": {
+                    "evidenceName1": "Degree",
+                    "evidenceURL1": "http://localhost"
+                },
+                "verificationRemarks": "completed"
+            },
+            "employment": {
+                "candidateDetails": {
+                    "employeeName": "Grajesh Chandra",
+                    "phoneNumber": "7666009585",
+                    "email": "asfsa@dsfdsf",
+                    "gender": "male"
+                },
+                "employerDetails": {
+                    "companyName": "Affinidi",
+                    "companyAddress": {
+                        "addressLine1": "My way",
+                        "addressLine2": "Highway",
+                        "postalCode": "560087",
+                        "addressRegion": "Karnataka",
+                        "addressCountry": "India"
+                    },
+                    "hRDetails": {
+                        "hRfirstName": "Testing",
+                        "hRLastName": "HR",
+                        "hREmail": "hr@affinidi.com",
+                        "hRDesignation": "Lead HR",
+                        "hRContactNumber1": "+911234567789",
+                        "hRContactNumber2": "9:00-6:00 PM"
+                    },
+                    "employmentDetails": {
+                        "designation": "Testing",
+                        "employmentStatus": "Fulltime",
+                        "annualisedSalary": "10000",
+                        "currency": "INR",
+                        "tenure": {
+                            "fromDate": "05-2022",
+                            "toDate": "05-2050"
+                        },
+                        "reasonForLeaving": "Resignation",
+                        "eligibleForRehire": "Yes"
+                    },
+                    "verificationStatus": "Completed",
+                    "verificationEvidence": {
+                        "evidenceName1": "letter",
+                        "evidenceURL1": "http://localhost",
+                        "evidenceName2": "mail",
+                        "evidenceURL2": "http://localhost1"
+                    },
+                    "verificationRemarks": "Done"
+                }
+            },
+            "criminal": {
+                "caseId": "123456",
+                "crimeType": "Theft",
+                "crimeDescription": "super chor",
+                "crimeDate": "25-jan-2020",
+                "crimeLocation": "Bangalore",
+                "status": "closed"
+            }
+        },
+        "issuanceResponse": {
+            "credentialOfferUri": "https://97dde52f-e99c-420e-885a-3cc3032e73d9.apse1.issuance.affinidi.io/offers/50eb8693-54cb-4329-aa9a-631653d41039",
+            "txCode": "906192",
+            "issuanceId": "50eb8693-54cb-4329-aa9a-631653d41039",
+            "expiresIn": 420,
+            "vaultLink": "https://vault.affinidi.com/claim?credential_offer_uri=https://97dde52f-e99c-420e-885a-3cc3032e73d9.apse1.issuance.affinidi.io/offers/50eb8693-54cb-4329-aa9a-631653d41039"
+        },
+        "issuanceState": {
+            "issuanceId": "50eb8693-54cb-4329-aa9a-631653d41039",
+            "status": "INIT",
+            "configurationId": "c7bc2916-2a40-4db5-8101-03b64f2a538e"
+        }
+    }
+]

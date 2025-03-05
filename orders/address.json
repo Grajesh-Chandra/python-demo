@@ -1,0 +1,27 @@
+{
+  "address": {
+    "addressLine1": "Varthur, Gunjur",
+    "addressLine2": "B305, Candeur Landmark, Tower Eiffel",
+    "postalCode": "560087",
+    "addressRegion": "Karnataka",
+    "addressCountry": "India"
+  },
+  "ownerDetails": {
+    "ownerName": "TestOwner",
+    "ownerContactDetails1": "+912325435634"
+  },
+  "neighbourDetails": {
+    "neighbourName": "Test Neighbour",
+    "neighbourContactDetails1": "+912325435634"
+  },
+  "stayDetails": {
+    "fromDate": "01-01-2000",
+    "toDate": "01-01-2020"
+  },
+  "verificationStatus": "Completed",
+  "verificationEvidence": {
+    "evidenceName1": "Letter",
+    "evidenceURL1": "http://localhost"
+  },
+  "verificationRemarks": "done"
+}

@@ -1,0 +1,34 @@
+{
+  "candidateDetails": {
+    "studentName": "Grajesh Chandra",
+    "phoneNumber": "7666009585",
+    "email": "grajesh.c@affinidi.com",
+    "gender": "male"
+  },
+  "institutionDetails": "Affinidi",
+  "institutionAddress": {
+    "addressLine1": "Varthur, Gunjur",
+    "addressLine2": "B305, Candeur Landmark, Tower Eiffel",
+    "postalCode": "560087",
+    "addressRegion": "Karnataka",
+    "addressCountry": "India"
+  },
+  "institutionContact1": "+91 1234567890",
+  "institutionContact2": "+91 1234567890",
+  "institutionEmail": "test@affinidi.com",
+  "institutionWebsiteURL": "affinidi.com",
+  "educationDetails": {
+    "qualification": "Graduation",
+    "course": "MBA",
+    "graduationDate": "12-08-2013",
+    "dateAttendedFrom": "12-08-2011",
+    "dateAttendedTo": "12-07-2013",
+    "educationRegistrationID": "admins1223454356"
+  },
+  "verificationStatus": "Verified",
+  "verificationEvidence": {
+    "evidenceName1": "Degree",
+    "evidenceURL1": "http://localhost"
+  },
+  "verificationRemarks": "completed"
+}
