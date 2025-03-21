@@ -359,55 +359,246 @@
       .overlay.show {
         display: block; /* Show overlay when popup is active */
       }
+
+      /* Initially hide the validation content */
+      #validationContent {
+        display: none;
+      }
+
+      /* Style for the dummy payment section */
+      #dummyPaymentHeader {
+        text-align: center;
+        margin-bottom: 1.5rem;
+      }
+
+      #dummyPaymentHeader h1 {
+        color: #1a237e;
+        font-weight: 600;
+        font-size: 1.8rem;
+        margin-bottom: 0.5rem;
+      }
+
+      #dummyPaymentContent {
+        margin-top: 1rem;
+        text-align: center;
+      }
+
+      .dummy-payment-option {
+        background-color: #f8f9fb;
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        width: 80%;
+        max-width: 400px;
+        margin-left: auto;
+        margin-right: auto;
+        text-align: left;
+      }
+
+      .dummy-payment-option h4 {
+        color: #3f51b5;
+        margin-top: 0;
+        margin-bottom: 0.5rem;
+        font-size: 1.1rem;
+      }
+
+      .dummy-payment-option button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+      }
+
+      .dummy-payment-option button:hover {
+        background-color: #0056b3;
+      }
+
+      .dummy-pay-button {
+        background-color:rgb(37, 93, 39); /* Green */
+        border: none;
+        color: white;
+        padding: 0.75rem 2rem;
+        text-align: center;
+        text-decoration: none;
+        display: block; /* Change to block to allow margin auto */
+        font-size: 16px;
+        margin-top: 1.5rem;
+        cursor: pointer;
+        border-radius: 6px;
+        margin-left: auto; /* Add left margin auto */
+        margin-right: auto; /* Add right margin auto */
+        width: fit-content; /* Adjust width to content */
+      }
+
+      .dummy-pay-button:hover {
+        background-color: #45a049;
+      }
+
+      .dummy-spinner {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #3f51b5;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 1rem auto;
+        display: none; /* Hide the spinner by default */
+      }
+
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+
+      /* Styles for the card payment form */
+      #cardPaymentForm {
+        margin-top: 1rem;
+        padding: 1rem;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        background-color: #fff;
+        display: none; /* Initially hidden */
+      }
+
+      #cardPaymentForm label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: bold;
+        color: #555;
+      }
+
+      #cardPaymentForm input[type="text"],
+      #cardPaymentForm input[type="number"] {
+        width: calc(100% - 12px);
+        padding: 0.5rem;
+        margin-bottom: 1rem;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+      }
+
+      #cardPaymentForm .form-row {
+        display: flex;
+        gap: 1rem;
+      }
+
+      #cardPaymentForm .form-row > div {
+        flex: 1;
+      }
+
+      #cardPaymentForm button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 1rem;
+        margin-top: 1rem;
+      }
+
+      #cardPaymentForm button:hover {
+        background-color: #0056b3;
+      }
     </style>
   </head>
   <body>
     {% include 'header.html' %}
     <div class="validation-container">
-      <div class="validation-header">
-        <h1>Validate SecureTrust® PDF</h1>
-        <p style="color: #666; margin-top: 0.5rem">
-          Verify your document's authenticity
-        </p>
+      <div id="dummyPayment">
+        <div id="dummyPaymentHeader">
+          <h1>Secure Payment</h1>
+          <p style="color: #666; margin-top: 0.5rem">
+            Choose a payment method to proceed with verification.
+          </p>
+        </div>
+        <div id="dummyPaymentContent">
+          <div class="dummy-payment-option" id="cardPaymentOption">
+            <h4>Pay with Card</h4>
+            <p>Enter your credit or debit card details.</p>
+            <button id="continueCardPayment" class="btn btn-primary btn-sm">Continue to Card Payment</button>
+            <div id="cardPaymentForm">
+              <label for="cardNumber">Card Number</label>
+              <input type="text" id="cardNumber" placeholder="XXXX-XXXX-XXXX-XXXX" />
+
+              <div class="form-row">
+                <div>
+                  <label for="expiryDate">Expiry Date</label>
+                  <input type="text" id="expiryDate" placeholder="MM/YY" />
+                </div>
+                <div>
+                  <label for="cvv">CVV</label>
+                  <input type="number" id="cvv" placeholder="123" />
+                </div>
+              </div>
+
+              <label for="cardHolderName">Name on Card</label>
+              <input type="text" id="cardHolderName" placeholder="John Doe" />
+
+              <button id="payWithCardButton" type="button">Pay Now</button>
+            </div>
+          </div>
+          <div class="dummy-payment-option">
+            <h4>Other Payment Options</h4>
+            <p>Explore other ways to pay.</p>
+            <button class="btn btn-outline-secondary btn-sm">View More Options</button>
+          </div>
+          <button id="payButton" class="dummy-pay-button" style="display: none;">Payment Successful - Proceed to Verification</button>
+          <div class="dummy-spinner"></div>
+        </div>
       </div>
 
-      <form id="uploadForm">
-        <div class="upload-section" id="dropZone">
-          <input
-            type="file"
-            id="report_pdf"
-            class="file-input"
-            accept="application/pdf"
-          />
-          <button
-            type="button"
-            class="upload-button"
-            onclick="document.getElementById('report_pdf').click()"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-              <polyline points="17 8 12 3 7 8"></polyline>
-              <line x1="12" y1="3" x2="12" y2="15"></line>
-            </svg>
-            Upload from your computer
-          </button>
-          <div class="drag-drop-text">
-            or drag & drop your SecureTrust PDF here
-          </div>
+      <div id="validationContent">
+        <div class="validation-header">
+          <h1>Validate SecureTrust® PDF</h1>
+          <p style="color: #666; margin-top: 0.5rem">
+            Verify your document's authenticity
+          </p>
         </div>
-      </form>
 
-      <div id="responseArea"></div>
+        <form id="uploadForm">
+          <div class="upload-section" id="dropZone">
+            <input
+              type="file"
+              id="report_pdf"
+              class="file-input"
+              accept="application/pdf"
+            />
+            <button
+              type="button"
+              class="upload-button"
+              onclick="document.getElementById('report_pdf').click()"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
+              Upload from your computer
+            </button>
+            <div class="drag-drop-text">
+              or drag & drop your SecureTrust PDF here
+            </div>
+          </div>
+        </form>
+
+        <div id="responseArea"></div>
+      </div>
     </div>
 
     <div id="loadingOverlay">
@@ -418,20 +609,43 @@
     <div class="overlay" id="validationPopupOverlay"></div>
 
     <script>
+      const dummyPaymentDiv = document.getElementById('dummyPayment');
+      const validationContentDiv = document.getElementById('validationContent');
+      const payButton = document.getElementById('payButton');
       const dropZone = document.getElementById("dropZone");
       const fileInput = document.getElementById("report_pdf");
       const loadingOverlay = document.getElementById("loadingOverlay");
       const responseArea = document.getElementById("responseArea");
+      const continueCardPaymentButton = document.getElementById('continueCardPayment');
+      const cardPaymentForm = document.getElementById('cardPaymentForm');
+      const payWithCardButton = document.getElementById('payWithCardButton');
 
-      // Update the messages array
-      const messages = [
-        "Checking PDF Attachment...",
-        "Verifying PDF Signature Credentials...",
-        "Verifying Background Check Credentials...",
-        "Finalizing Secure Proof Verification...",
-      ];
+      // Initially show the dummy payment and hide the validation content
+      dummyPaymentDiv.style.display = 'block';
+      validationContentDiv.style.display = 'none';
+      payButton.style.display = 'none'; // Initially hide the final "Payment Successful" button
 
-      // Drag and drop handlers
+      // Event listener for "Continue to Card Payment"
+      continueCardPaymentButton.addEventListener('click', () => {
+        continueCardPaymentButton.style.display = 'none';
+        cardPaymentForm.style.display = 'block';
+      });
+
+      // Event listener for "Pay Now" on the card form
+      payWithCardButton.addEventListener('click', () => {
+        // Simulate payment processing (you can add a spinner here if you want)
+        // For this dummy logic, we'll just proceed to the next step
+        cardPaymentForm.style.display = 'none';
+        payButton.style.display = 'block'; // Show the final "Payment Successful" button
+      });
+
+      // Event listener for the final "Payment Successful" button
+      payButton.addEventListener('click', () => {
+        dummyPaymentDiv.style.display = 'none';
+        validationContentDiv.style.display = 'block';
+      });
+
+      // Drag and drop handlers (rest of your existing script)
       dropZone.addEventListener("dragover", (e) => {
         e.preventDefault();
         dropZone.classList.add("dragover");
@@ -674,4 +888,3 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   </body>
 </html>
-```
