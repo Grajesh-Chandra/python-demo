@@ -592,6 +592,42 @@ def reissue_credentials(order_id):
 #     return render_template("test.html")
 
 
+@app.route("/delete_order/<order_id>", methods=["DELETE"])
+def delete_order(order_id):
+    orders_file = os.path.join(CHECKS_DATA_DIR, "order.json")
+    try:
+        if not os.path.exists(orders_file) or os.path.getsize(orders_file) == 0:
+            return (
+                jsonify({"success": False, "error": "Order file not found."}),
+                404,
+            )
+
+        with open(orders_file, "r") as f:
+            orders = json.load(f)
+
+        order_found_index = -1
+        for index, order in enumerate(orders):
+            if order["orderId"] == order_id:
+                order_found_index = index
+                break
+
+        if order_found_index == -1:
+            return jsonify({"success": False, "error": "Order not found"}), 404
+
+        orders.pop(order_found_index)
+
+        with open(orders_file, "w") as f:
+            json.dump(orders, f, indent=4)
+
+        return jsonify({"success": True, "message": "Order deleted successfully."}), 200
+
+    except Exception as e:
+        return (
+            jsonify({"success": False, "error": f"Error deleting order: {str(e)}"}),
+            500,
+        )
+
+
 @app.route("/generate_pdf/<order_id>")
 def generate_pdf(order_id):
     try:
