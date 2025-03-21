@@ -172,3 +172,4 @@ cython_debug/
 .DS_Store
 orders/pst_response.jwt
 test.html
+orders/pdf*
