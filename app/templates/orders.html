@@ -380,8 +380,18 @@
           const secureTrustCell = row.insertCell();
           const secureTrustIcon = document.createElement("i");
           secureTrustIcon.classList.add("fas", "fa-file-pdf", "pdf-icon");
-          secureTrustIcon.style.color = "black";
+
           secureTrustIcon.title = "SecureTrust Verified";
+          secureTrustIcon.style.cursor = "pointer"; // Set cursor to pointer
+          secureTrustIcon.style.marginLeft = "5px"; // Add margin to the left
+          secureTrustIcon.style.fontSize = "1.2em"; // Increase icon size
+          secureTrustIcon.style.display = "inline-block"; // Ensure it displays inline
+          secureTrustIcon.style.verticalAlign = "middle"; // Align vertically
+          secureTrustIcon.style.width = "100px"; // Set width
+          secureTrustIcon.style.height = "20px"; // Set height
+          secureTrustIcon.style.lineHeight = "20px"; // Set line height
+          secureTrustIcon.style.textAlign = "center"; // Center text
+          secureTrustIcon.style.borderRadius = "5px"; // Add border radius
 
           if (Object.keys(order.issuanceState || {}).length === 0) {
             secureTrustIcon.classList.add("greyed-out");
@@ -393,6 +403,7 @@
 
             if (allStatusesClaimed) {
               console.log("All issuance statuses are VC_CLAIMED");
+              secureTrustIcon.style.color = "red"; // Set color to red
               secureTrustIcon.addEventListener("click", () => {
                 window.open("/generate_secure_pdf/" + order.orderId, "_blank");
               });
