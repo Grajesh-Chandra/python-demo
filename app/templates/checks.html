@@ -281,7 +281,6 @@
         color: #2e7d32;
         margin: 1rem 0;
       }
-
     </style>
   </head>
   <body>
@@ -295,15 +294,29 @@
             <label for="personalInfo">Personal Information Checks </label>
             <input type="checkbox" id="personalInfo" name="personalInfo" />
           </div>
-          <div class="option-container" id="personalInfo0ptions" style="display: none;">
+          <div
+            class="option-container"
+            id="personalInfo0ptions"
+            style="display: none"
+          >
             <div class="option-selector">
-              <input type="radio" name="personalInfoOption" value="upload" id="personalInfoUploadOption" />
+              <input
+                type="radio"
+                name="personalInfoOption"
+                value="upload"
+                id="personalInfoUploadOption"
+              />
               <label for="personalInfoUploadOption">Upload Document</label>
             </div>
             <div class="option-content" id="personalInfoUploadContent">
               <div class="upload-labels">
-                <label class="form-label">*** Upload Supporting Document </label>
-                <label class="form-label">*** Incase of Recertification Upload Secure Final Report</label>
+                <label class="form-label"
+                  >*** Upload Supporting Document
+                </label>
+                <label class="form-label"
+                  >*** Incase of Recertification Upload Secure Final
+                  Report</label
+                >
               </div>
               <div class="upload-area">
                 <div class="custom-file-input">
@@ -321,34 +334,74 @@
                   >Allowed formats: PDF, DOC, JPG, PNG (Max 5MB)</small
                 >
               </div>
-              <button type="button" class="btn btn-primary process-button" id="processPersonalInfoUpload" style="display: none;">Process File</button>
+              <button
+                type="button"
+                class="btn btn-primary process-button"
+                id="processPersonalInfoUpload"
+                style="display: none"
+              >
+                Process File
+              </button>
               <div id="personalInfoUploadResult" class="process-result"></div>
             </div>
 
             <div class="option-selector">
-              <input type="radio" name="personalInfoOption" value="orderId" id="personalInfoOrderIdOption" />
+              <input
+                type="radio"
+                name="personalInfoOption"
+                value="orderId"
+                id="personalInfoOrderIdOption"
+              />
               <label for="personalInfoOrderIdOption">Enter Order ID</label>
             </div>
             <div class="option-content" id="personalInfoOrderIdContent">
-              <label class="form-label">*** Share your orderId which have Personal Info Check done</label>
+              <label class="form-label"
+                >*** Share your orderId which have Personal Info Check
+                done</label
+              >
               <div class="upload-area">
                 <div class="custom-file-input">
-                  <input type="text" id="personalInfoOrderId" class="form-control" placeholder="Enter Order ID" />
+                  <input
+                    type="text"
+                    id="personalInfoOrderId"
+                    class="form-control"
+                    placeholder="Enter Order ID"
+                  />
                 </div>
                 <small class="text-muted"
                   >Previous Order Placed with Personal Check Done</small
                 >
               </div>
-              <button type="button" class="btn btn-primary process-button" id="processPersonalInfoOrderId" style="display: none;">Process Order ID</button>
+              <button
+                type="button"
+                class="btn btn-primary process-button"
+                id="processPersonalInfoOrderId"
+                style="display: none"
+              >
+                Process Order ID
+              </button>
               <div id="personalInfoOrderIdResult" class="process-result"></div>
             </div>
 
             <div class="option-selector">
-              <input type="radio" name="personalInfoOption" value="trigger" id="personalInfoTriggerOption" />
-              <label for="personalInfoTriggerOption">Share your Digital Credentials</label>
+              <input
+                type="radio"
+                name="personalInfoOption"
+                value="trigger"
+                id="personalInfoTriggerOption"
+              />
+              <label for="personalInfoTriggerOption"
+                >Share your Digital Credentials</label
+              >
             </div>
             <div class="option-content" id="personalInfoTriggerContent">
-              <button type="button" class="btn btn-primary process-button" id="processPersonalInfoTrigger">Process Credentials</button>
+              <button
+                type="button"
+                class="btn btn-primary process-button"
+                id="processPersonalInfoTrigger"
+              >
+                Process Credentials
+              </button>
               <div id="personalInfoTriggerResult" class="process-result"></div>
             </div>
           </div>
@@ -359,15 +412,27 @@
             <label for="address">Address Checks</label>
             <input type="checkbox" id="address" name="address" />
           </div>
-          <div class="option-container" id="address0ptions" style="display: none;">
+          <div
+            class="option-container"
+            id="address0ptions"
+            style="display: none"
+          >
             <div class="option-selector">
-              <input type="radio" name="addressOption" value="upload" id="addressUploadOption" />
+              <input
+                type="radio"
+                name="addressOption"
+                value="upload"
+                id="addressUploadOption"
+              />
               <label for="addressUploadOption">Upload Document</label>
             </div>
             <div class="option-content" id="addressUploadContent">
               <div class="upload-labels">
                 <label class="form-label">*** Upload Supporting Document</label>
-                <label class="form-label">*** Incase of Recertification Upload Secure Final Report</label>
+                <label class="form-label"
+                  >*** Incase of Recertification Upload Secure Final
+                  Report</label
+                >
               </div>
               <div class="upload-area">
                 <div class="custom-file-input">
@@ -385,34 +450,71 @@
                   >Allowed formats: PDF, DOC, JPG, PNG (Max 5MB)</small
                 >
               </div>
-              <button type="button" class="btn btn-primary process-button" id="processAddressUpload" style="display: none;">Process File</button>
+              <button
+                type="button"
+                class="btn btn-primary process-button"
+                id="processAddressUpload"
+                style="display: none"
+              >
+                Process File
+              </button>
               <div id="addressUploadResult" class="process-result"></div>
             </div>
 
             <div class="option-selector">
-              <input type="radio" name="addressOption" value="orderId" id="addressOrderIdOption" />
+              <input
+                type="radio"
+                name="addressOption"
+                value="orderId"
+                id="addressOrderIdOption"
+              />
               <label for="addressOrderIdOption">Enter Order ID</label>
             </div>
             <div class="option-content" id="addressOrderIdContent">
-              <label class="form-label">*** Share your orderId which have Address Check done</label>
+              <label class="form-label"
+                >*** Share your orderId which have Address Check done</label
+              >
               <div class="upload-area">
                 <div class="custom-file-input">
-                  <input type="text" id="addressOrderId" class="form-control" placeholder="Enter Order ID" />
+                  <input
+                    type="text"
+                    id="addressOrderId"
+                    class="form-control"
+                    placeholder="Enter Order ID"
+                  />
                 </div>
                 <small class="text-muted"
                   >Previous Order Placed with Address Check Done</small
                 >
               </div>
-              <button type="button" class="btn btn-primary process-button" id="processAddressOrderId" style="display: none;">Process Order ID</button>
+              <button
+                type="button"
+                class="btn btn-primary process-button"
+                id="processAddressOrderId"
+                style="display: none"
+              >
+                Process Order ID
+              </button>
               <div id="addressOrderIdResult" class="process-result"></div>
             </div>
 
             <div class="option-selector">
-              <input type="radio" name="addressOption" value="trigger" id="addressTriggerOption" />
+              <input
+                type="radio"
+                name="addressOption"
+                value="trigger"
+                id="addressTriggerOption"
+              />
               <label for="addressTriggerOption">Trigger Request</label>
             </div>
             <div class="option-content" id="addressTriggerContent">
-              <button type="button" class="btn btn-primary process-button" id="processAddressTrigger">Request Address Check</button>
+              <button
+                type="button"
+                class="btn btn-primary process-button"
+                id="processAddressTrigger"
+              >
+                Request Address Check
+              </button>
               <div id="addressTriggerResult" class="process-result"></div>
             </div>
           </div>
@@ -423,15 +525,27 @@
             <label for="education">Education Checks</label>
             <input type="checkbox" id="education" name="education" />
           </div>
-          <div class="option-container" id="education0ptions" style="display: none;">
+          <div
+            class="option-container"
+            id="education0ptions"
+            style="display: none"
+          >
             <div class="option-selector">
-              <input type="radio" name="educationOption" value="upload" id="educationUploadOption" />
+              <input
+                type="radio"
+                name="educationOption"
+                value="upload"
+                id="educationUploadOption"
+              />
               <label for="educationUploadOption">Upload Document</label>
             </div>
             <div class="option-content" id="educationUploadContent">
               <div class="upload-labels">
                 <label class="form-label">*** Upload Supporting Document</label>
-                <label class="form-label">*** Incase of Recertification Upload Secure Final Report</label>
+                <label class="form-label"
+                  >*** Incase of Recertification Upload Secure Final
+                  Report</label
+                >
               </div>
               <div class="upload-area">
                 <div class="custom-file-input">
@@ -449,34 +563,71 @@
                   >Allowed formats: PDF, DOC, JPG, PNG (Max 5MB)</small
                 >
               </div>
-              <button type="button" class="btn btn-primary process-button" id="processEducationUpload" style="display: none;">Process File</button>
+              <button
+                type="button"
+                class="btn btn-primary process-button"
+                id="processEducationUpload"
+                style="display: none"
+              >
+                Process File
+              </button>
               <div id="educationUploadResult" class="process-result"></div>
             </div>
 
             <div class="option-selector">
-              <input type="radio" name="educationOption" value="orderId" id="educationOrderIdOption" />
+              <input
+                type="radio"
+                name="educationOption"
+                value="orderId"
+                id="educationOrderIdOption"
+              />
               <label for="educationOrderIdOption">Enter Order ID</label>
             </div>
             <div class="option-content" id="educationOrderIdContent">
-              <label class="form-label">*** Share your orderId which have Education Check done</label>
+              <label class="form-label"
+                >*** Share your orderId which have Education Check done</label
+              >
               <div class="upload-area">
                 <div class="custom-file-input">
-                  <input type="text" id="educationOrderId" class="form-control" placeholder="Enter Order ID" />
+                  <input
+                    type="text"
+                    id="educationOrderId"
+                    class="form-control"
+                    placeholder="Enter Order ID"
+                  />
                 </div>
                 <small class="text-muted"
                   >Previous Order Placed with Education Check Done</small
                 >
               </div>
-              <button type="button" class="btn btn-primary process-button" id="processEducationOrderId" style="display: none;">Process Order ID</button>
+              <button
+                type="button"
+                class="btn btn-primary process-button"
+                id="processEducationOrderId"
+                style="display: none"
+              >
+                Process Order ID
+              </button>
               <div id="educationOrderIdResult" class="process-result"></div>
             </div>
 
             <div class="option-selector">
-              <input type="radio" name="educationOption" value="trigger" id="educationTriggerOption" />
+              <input
+                type="radio"
+                name="educationOption"
+                value="trigger"
+                id="educationTriggerOption"
+              />
               <label for="educationTriggerOption">Trigger Request</label>
             </div>
             <div class="option-content" id="educationTriggerContent">
-              <button type="button" class="btn btn-primary process-button" id="processEducationTrigger">Request Education Check</button>
+              <button
+                type="button"
+                class="btn btn-primary process-button"
+                id="processEducationTrigger"
+              >
+                Request Education Check
+              </button>
               <div id="educationTriggerResult" class="process-result"></div>
             </div>
           </div>
@@ -487,15 +638,27 @@
             <label for="employment">Employment Checks</label>
             <input type="checkbox" id="employment" name="employment" />
           </div>
-          <div class="option-container" id="employment0ptions" style="display: none;">
+          <div
+            class="option-container"
+            id="employment0ptions"
+            style="display: none"
+          >
             <div class="option-selector">
-              <input type="radio" name="employmentOption" value="upload" id="employmentUploadOption" />
+              <input
+                type="radio"
+                name="employmentOption"
+                value="upload"
+                id="employmentUploadOption"
+              />
               <label for="employmentUploadOption">Upload Document</label>
             </div>
             <div class="option-content" id="employmentUploadContent">
               <div class="upload-labels">
                 <label class="form-label">*** Upload Supporting Document</label>
-                <label class="form-label">*** Incase of Recertification Upload Secure Final Report</label>
+                <label class="form-label"
+                  >*** Incase of Recertification Upload Secure Final
+                  Report</label
+                >
               </div>
               <div class="upload-area">
                 <div class="custom-file-input">
@@ -513,34 +676,71 @@
                   >Allowed formats: PDF, DOC, JPG, PNG (Max 5MB)</small
                 >
               </div>
-              <button type="button" class="btn btn-primary process-button" id="processEmploymentUpload" style="display: none;">Process File</button>
+              <button
+                type="button"
+                class="btn btn-primary process-button"
+                id="processEmploymentUpload"
+                style="display: none"
+              >
+                Process File
+              </button>
               <div id="employmentUploadResult" class="process-result"></div>
             </div>
 
             <div class="option-selector">
-              <input type="radio" name="employmentOption" value="orderId" id="employmentOrderIdOption" />
+              <input
+                type="radio"
+                name="employmentOption"
+                value="orderId"
+                id="employmentOrderIdOption"
+              />
               <label for="employmentOrderIdOption">Enter Order ID</label>
             </div>
             <div class="option-content" id="employmentOrderIdContent">
-              <label class="form-label">*** Share your orderId which have Employment Check done</label>
+              <label class="form-label"
+                >*** Share your orderId which have Employment Check done</label
+              >
               <div class="upload-area">
                 <div class="custom-file-input">
-                  <input type="text" id="employmentOrderId" class="form-control" placeholder="Enter Order ID" />
+                  <input
+                    type="text"
+                    id="employmentOrderId"
+                    class="form-control"
+                    placeholder="Enter Order ID"
+                  />
                 </div>
                 <small class="text-muted"
                   >Previous Order Placed with Employment Check Done</small
                 >
               </div>
-              <button type="button" class="btn btn-primary process-button" id="processEmploymentOrderId" style="display: none;">Process Order ID</button>
+              <button
+                type="button"
+                class="btn btn-primary process-button"
+                id="processEmploymentOrderId"
+                style="display: none"
+              >
+                Process Order ID
+              </button>
               <div id="employmentOrderIdResult" class="process-result"></div>
             </div>
 
             <div class="option-selector">
-              <input type="radio" name="employmentOption" value="trigger" id="employmentTriggerOption" />
+              <input
+                type="radio"
+                name="employmentOption"
+                value="trigger"
+                id="employmentTriggerOption"
+              />
               <label for="employmentTriggerOption">Trigger Request</label>
             </div>
             <div class="option-content" id="employmentTriggerContent">
-              <button type="button" class="btn btn-primary process-button" id="processEmploymentTrigger">Request Employment Check</button>
+              <button
+                type="button"
+                class="btn btn-primary process-button"
+                id="processEmploymentTrigger"
+              >
+                Request Employment Check
+              </button>
               <div id="employmentTriggerResult" class="process-result"></div>
             </div>
           </div>
@@ -551,15 +751,27 @@
             <label for="criminality">Civil Litigation Checks</label>
             <input type="checkbox" id="criminality" name="criminality" />
           </div>
-          <div class="option-container" id="criminality0ptions" style="display: none;">
+          <div
+            class="option-container"
+            id="criminality0ptions"
+            style="display: none"
+          >
             <div class="option-selector">
-              <input type="radio" name="criminalityOption" value="upload" id="criminalityUploadOption" />
+              <input
+                type="radio"
+                name="criminalityOption"
+                value="upload"
+                id="criminalityUploadOption"
+              />
               <label for="criminalityUploadOption">Upload Document</label>
             </div>
             <div class="option-content" id="criminalityUploadContent">
               <div class="upload-labels">
                 <label class="form-label">*** Upload Supporting Document</label>
-                <label class="form-label">*** Incase of Recertification Upload Secure Final Report</label>
+                <label class="form-label"
+                  >*** Incase of Recertification Upload Secure Final
+                  Report</label
+                >
               </div>
               <div class="upload-area">
                 <div class="custom-file-input">
@@ -577,34 +789,72 @@
                   >Allowed formats: PDF, DOC, JPG, PNG (Max 5MB)</small
                 >
               </div>
-              <button type="button" class="btn btn-primary process-button" id="processCriminalityUpload" style="display: none;">Process File</button>
+              <button
+                type="button"
+                class="btn btn-primary process-button"
+                id="processCriminalityUpload"
+                style="display: none"
+              >
+                Process File
+              </button>
               <div id="criminalityUploadResult" class="process-result"></div>
             </div>
 
             <div class="option-selector">
-              <input type="radio" name="criminalityOption" value="orderId" id="criminalityOrderIdOption" />
+              <input
+                type="radio"
+                name="criminalityOption"
+                value="orderId"
+                id="criminalityOrderIdOption"
+              />
               <label for="criminalityOrderIdOption">Enter Order ID</label>
             </div>
             <div class="option-content" id="criminalityOrderIdContent">
-              <label class="form-label">*** Share your orderId which have Civil Litigation Check done</label>
+              <label class="form-label"
+                >*** Share your orderId which have Civil Litigation Check
+                done</label
+              >
               <div class="upload-area">
                 <div class="custom-file-input">
-                  <input type="text" id="criminalityOrderId" class="form-control" placeholder="Enter Order ID" />
+                  <input
+                    type="text"
+                    id="criminalityOrderId"
+                    class="form-control"
+                    placeholder="Enter Order ID"
+                  />
                 </div>
                 <small class="text-muted"
                   >Previous Order Placed with Civil Litigation Check Done</small
                 >
               </div>
-              <button type="button" class="btn btn-primary process-button" id="processCriminalityOrderId" style="display: none;">Process Order ID</button>
+              <button
+                type="button"
+                class="btn btn-primary process-button"
+                id="processCriminalityOrderId"
+                style="display: none"
+              >
+                Process Order ID
+              </button>
               <div id="criminalityOrderIdResult" class="process-result"></div>
             </div>
 
             <div class="option-selector">
-              <input type="radio" name="criminalityOption" value="trigger" id="criminalityTriggerOption" />
+              <input
+                type="radio"
+                name="criminalityOption"
+                value="trigger"
+                id="criminalityTriggerOption"
+              />
               <label for="criminalityTriggerOption">Trigger Request</label>
             </div>
             <div class="option-content" id="criminalityTriggerContent">
-              <button type="button" class="btn btn-primary process-button" id="processCriminalityTrigger">Request Civil Litigation Check</button>
+              <button
+                type="button"
+                class="btn btn-primary process-button"
+                id="processCriminalityTrigger"
+              >
+                Request Civil Litigation Check
+              </button>
               <div id="criminalityTriggerResult" class="process-result"></div>
             </div>
           </div>
@@ -632,7 +882,7 @@
         </div>
       </form>
 
-      <div id="orderConfirmation" style="display: none;">
+      <div id="orderConfirmation" style="display: none">
         <h3>Thank you!</h3>
         <p>Your order with selected background checks has been submitted.</p>
         <p>Your Order ID is:</p>
@@ -647,16 +897,20 @@
       </div>
     </div>
 
-    <div id="loadingOverlay" style="display: none;">
+    <div id="loadingOverlay" style="display: none">
       <div class="loader"></div>
       <div class="message">Processing...</div>
     </div>
 
     <script>
-      document.addEventListener('DOMContentLoaded', function() {
+      document.addEventListener("DOMContentLoaded", function () {
         const submitButton = document.getElementById("submitChecks");
-        const backgroundCheckForm = document.getElementById("backgroundCheckForm");
-        const checkTypeCheckboxes = Array.from(document.querySelectorAll('input[type="checkbox"]')).filter(checkbox => checkbox.name !== "consent");
+        const backgroundCheckForm = document.getElementById(
+          "backgroundCheckForm"
+        );
+        const checkTypeCheckboxes = Array.from(
+          document.querySelectorAll('input[type="checkbox"]')
+        ).filter((checkbox) => checkbox.name !== "consent");
         const processResults = {}; // To track processing status for each checklist
 
         function updateSubmitButtonState() {
@@ -765,12 +1019,14 @@
         // Function to validate if all selected checklists have a file uploaded (for upload option)
         function validateFileUploads() {
           let allFilesUploaded = true;
-          checkTypeCheckboxes.forEach(checkbox => {
+          checkTypeCheckboxes.forEach((checkbox) => {
             if (checkbox.checked) {
               const checkId = checkbox.id;
-              const personalInfoOption = document.querySelector(`input[name="${checkId}Option"]:checked`);
-              if (personalInfoOption && personalInfoOption.value === 'upload') {
-                const fileInput = document.getElementById(checkId + 'Doc');
+              const personalInfoOption = document.querySelector(
+                `input[name="${checkId}Option"]:checked`
+              );
+              if (personalInfoOption && personalInfoOption.value === "upload") {
+                const fileInput = document.getElementById(checkId + "Doc");
                 if (!fileInput || fileInput.files.length === 0) {
                   allFilesUploaded = false;
                 }
@@ -781,9 +1037,14 @@
         }
 
         // Initialize option visibility on page load
-        checkTypeCheckboxes.forEach(checkbox => {
-          const optionsContainer = document.getElementById(checkbox.id + "0ptions");
-          console.log(`Checkbox ID: ${checkbox.id}, Options Container:`, optionsContainer);
+        checkTypeCheckboxes.forEach((checkbox) => {
+          const optionsContainer = document.getElementById(
+            checkbox.id + "0ptions"
+          );
+          console.log(
+            `Checkbox ID: ${checkbox.id}, Options Container:`,
+            optionsContainer
+          );
           if (!checkbox.checked && optionsContainer) {
             optionsContainer.style.display = "none";
           } else if (checkbox.checked && optionsContainer) {
@@ -799,47 +1060,68 @@
             if (checkbox.checked) {
               optionsContainer.style.display = "flex";
               // Initially select the first radio button and show its content
-              const firstRadio = optionsContainer.querySelector('input[type="radio"]');
+              const firstRadio = optionsContainer.querySelector(
+                'input[type="radio"]'
+              );
               if (firstRadio) {
                 firstRadio.checked = true;
                 // Assuming you have a function to handle radio button changes
-                const event = new Event('change'); // Create a new change event
-                firstRadio.dispatchEvent(event);    // Dispatch it to trigger the handler
+                const event = new Event("change"); // Create a new change event
+                firstRadio.dispatchEvent(event); // Dispatch it to trigger the handler
               }
               processResults[checkId] = false; // Reset processing status
             } else {
               optionsContainer.style.display = "none";
               // Reset radio selection and content visibility on uncheck
-              const radioButtons = optionsContainer.querySelectorAll('input[type="radio"]');
+              const radioButtons = optionsContainer.querySelectorAll(
+                'input[type="radio"]'
+              );
               radioButtons.forEach((radio, index) => {
                 radio.checked = index === 0; // Select the first radio button by default
               });
-              const optionContents = optionsContainer.querySelectorAll('.option-content');
+              const optionContents =
+                optionsContainer.querySelectorAll(".option-content");
               optionContents.forEach((content, index) => {
-                content.classList.toggle('active', index === 0); // Show the first content by default
+                content.classList.toggle("active", index === 0); // Show the first content by default
               });
               // Clear any input values or selections
-              const fileInput = optionsContainer.querySelector('input[type="file"]');
+              const fileInput =
+                optionsContainer.querySelector('input[type="file"]');
               if (fileInput) {
                 fileInput.value = "";
-                fileInput.parentNode.querySelector(".file-name").textContent = "No file chosen";
-                const processButton = document.getElementById(`process${checkId.charAt(0).toUpperCase() + checkId.slice(1)}Upload`);
+                fileInput.parentNode.querySelector(".file-name").textContent =
+                  "No file chosen";
+                const processButton = document.getElementById(
+                  `process${
+                    checkId.charAt(0).toUpperCase() + checkId.slice(1)
+                  }Upload`
+                );
                 if (processButton) processButton.style.display = "none";
-                document.getElementById(`${checkId}UploadResult`).textContent = "";
+                document.getElementById(`${checkId}UploadResult`).textContent =
+                  "";
               }
-              const orderIdInput = optionsContainer.querySelector('input[type="text"]');
+              const orderIdInput =
+                optionsContainer.querySelector('input[type="text"]');
               if (orderIdInput) {
                 orderIdInput.value = "";
-                const processButton = document.getElementById(`process${checkId.charAt(0).toUpperCase() + checkId.slice(1)}OrderId`);
+                const processButton = document.getElementById(
+                  `process${
+                    checkId.charAt(0).toUpperCase() + checkId.slice(1)
+                  }OrderId`
+                );
                 if (processButton) processButton.style.display = "none";
-                document.getElementById(`${checkId}OrderIdResult`).textContent = "";
+                document.getElementById(`${checkId}OrderIdResult`).textContent =
+                  "";
               }
-              document.getElementById(`${checkId}TriggerResult`).textContent = "";
+              document.getElementById(`${checkId}TriggerResult`).textContent =
+                "";
               processResults[checkId] = false;
             }
             updateSubmitButtonState();
           } else {
-            console.error(`Could not find options container for checkbox with id: ${checkId}`);
+            console.error(
+              `Could not find options container for checkbox with id: ${checkId}`
+            );
           }
         }
 
@@ -851,51 +1133,89 @@
         });
 
         // Handle radio button changes to show/hide process button and content
-        document.querySelectorAll('.option-container input[type="radio"]').forEach(radio => {
-          radio.addEventListener('change', function() {
-            const containerId = radio.closest('.option-container').id;
-            const checkId = containerId.replace('0ptions', '');
-            const uploadProcessButton = document.getElementById(`process${checkId.charAt(0).toUpperCase() + checkId.slice(1)}Upload`);
-            const orderIdProcessButton = document.getElementById(`process${checkId.charAt(0).toUpperCase() + checkId.slice(1)}OrderId`);
-            const triggerProcessButton = document.getElementById(`process${checkId.charAt(0).toUpperCase() + checkId.slice(1)}Trigger`);
+        document
+          .querySelectorAll('.option-container input[type="radio"]')
+          .forEach((radio) => {
+            radio.addEventListener("change", function () {
+              const containerId = radio.closest(".option-container").id;
+              const checkId = containerId.replace("0ptions", "");
+              const uploadProcessButton = document.getElementById(
+                `process${
+                  checkId.charAt(0).toUpperCase() + checkId.slice(1)
+                }Upload`
+              );
+              const orderIdProcessButton = document.getElementById(
+                `process${
+                  checkId.charAt(0).toUpperCase() + checkId.slice(1)
+                }OrderId`
+              );
+              const triggerProcessButton = document.getElementById(
+                `process${
+                  checkId.charAt(0).toUpperCase() + checkId.slice(1)
+                }Trigger`
+              );
 
-            const uploadContent = document.getElementById(checkId + 'UploadContent');
-            const orderIdContent = document.getElementById(checkId + 'OrderIdContent');
-            const triggerContent = document.getElementById(checkId + 'TriggerContent');
+              const uploadContent = document.getElementById(
+                checkId + "UploadContent"
+              );
+              const orderIdContent = document.getElementById(
+                checkId + "OrderIdContent"
+              );
+              const triggerContent = document.getElementById(
+                checkId + "TriggerContent"
+              );
 
-            // Hide all content divs
-            uploadContent.classList.remove('active');
-            orderIdContent.classList.remove('active');
-            triggerContent.classList.remove('active');
+              // Hide all content divs
+              uploadContent.classList.remove("active");
+              orderIdContent.classList.remove("active");
+              triggerContent.classList.remove("active");
 
-            if (radio.value === 'upload') {
-              uploadProcessButton.style.display = document.getElementById(checkId + 'Doc').files.length > 0 ? 'inline-block' : 'none';
-              orderIdProcessButton.style.display = 'none';
-              triggerProcessButton.style.display = 'none';
-              uploadContent.classList.add('active');
-            } else if (radio.value === 'orderId') {
-              orderIdProcessButton.style.display = document.getElementById(checkId + 'OrderId').value.trim() !== '' ? 'inline-block' : 'none';
-              uploadProcessButton.style.display = 'none';
-              triggerProcessButton.style.display = 'none';
-              orderIdContent.classList.add('active');
-            } else if (radio.value === 'trigger') {
-              triggerProcessButton.style.display = 'inline-block';
-              uploadProcessButton.style.display = 'none';
-              orderIdProcessButton.style.display = 'none';
-              triggerContent.classList.add('active');
-            }
-            updateSubmitButtonState();
+              if (radio.value === "upload") {
+                uploadProcessButton.style.display =
+                  document.getElementById(checkId + "Doc").files.length > 0
+                    ? "inline-block"
+                    : "none";
+                orderIdProcessButton.style.display = "none";
+                triggerProcessButton.style.display = "none";
+                uploadContent.classList.add("active");
+              } else if (radio.value === "orderId") {
+                orderIdProcessButton.style.display =
+                  document.getElementById(checkId + "OrderId").value.trim() !==
+                  ""
+                    ? "inline-block"
+                    : "none";
+                uploadProcessButton.style.display = "none";
+                triggerProcessButton.style.display = "none";
+                orderIdContent.classList.add("active");
+              } else if (radio.value === "trigger") {
+                triggerProcessButton.style.display = "inline-block";
+                uploadProcessButton.style.display = "none";
+                orderIdProcessButton.style.display = "none";
+                triggerContent.classList.add("active");
+              }
+              updateSubmitButtonState();
+            });
           });
-        });
 
-        // File Input Handling - Display file name and show process button
+        // File Input Handling - Display file name, show process button, and reset process status
         document.querySelectorAll('input[type="file"]').forEach((input) => {
           input.addEventListener("change", function (e) {
             const fileName = this.files[0]?.name || "No file chosen";
             this.parentNode.querySelector(".file-name").textContent = fileName;
-            const checkId = this.id.replace('Doc', '');
-            const processButton = document.getElementById(`process${checkId.charAt(0).toUpperCase() + checkId.slice(1)}Upload`);
-            processButton.style.display = 'inline-block';
+            const checkId = this.id.replace("Doc", "");
+            const processButton = document.getElementById(
+              `process${
+                checkId.charAt(0).toUpperCase() + checkId.slice(1)
+              }Upload`
+            );
+            if (processButton) {
+              processButton.style.display = "inline-block";
+            }
+            const resultDiv = document.getElementById(`${checkId}UploadResult`);
+            if (resultDiv) {
+              resultDiv.textContent = ""; // Clear any previous result message
+            }
+            processResults[checkId] = false; // Reset the processing status for this check
             updateSubmitButtonState();
           });
         });
@@ -903,105 +1223,133 @@
         // Order ID Input Handling - Show process button on input
         document.querySelectorAll('input[type="text"]').forEach((input) => {
           input.addEventListener("input", function (e) {
-            const checkId = this.id.replace('OrderId', '');
-            const processButton = document.getElementById(`process${checkId.charAt(0).toUpperCase() + checkId.slice(1)}OrderId`);
-            processButton.style.display = this.value.trim() !== '' ? 'inline-block' : 'none';
+            const checkId = this.id.replace("OrderId", "");
+            const processButton = document.getElementById(
+              `process${
+                checkId.charAt(0).toUpperCase() + checkId.slice(1)
+              }OrderId`
+            );
+            processButton.style.display =
+              this.value.trim() !== "" ? "inline-block" : "none";
             updateSubmitButtonState();
           });
         });
 
         // Event listeners for the "Process" buttons (keeping the API call logic)
-        document.querySelectorAll('.process-button').forEach(button => {
-          button.addEventListener('click', function() {
-            const checkTypeFull = this.id.replace('process', '');
-            let checkType = '';
-            if (checkTypeFull.includes('PersonalInfo')) {
-              checkType = 'personalInfo';
-            } else if (checkTypeFull.includes('Address')) {
-              checkType = 'address';
-            } else if (checkTypeFull.includes('Education')) {
-              checkType = 'education';
-            } else if (checkTypeFull.includes('Employment')) {
-              checkType = 'employment';
-            } else if (checkTypeFull.includes('Criminality')) {
-              checkType = 'criminality';
+        document.querySelectorAll(".process-button").forEach((button) => {
+          button.addEventListener("click", function () {
+            const checkTypeFull = this.id.replace("process", "");
+            let checkType = "";
+            if (checkTypeFull.includes("PersonalInfo")) {
+              checkType = "personalInfo";
+            } else if (checkTypeFull.includes("Address")) {
+              checkType = "address";
+            } else if (checkTypeFull.includes("Education")) {
+              checkType = "education";
+            } else if (checkTypeFull.includes("Employment")) {
+              checkType = "employment";
+            } else if (checkTypeFull.includes("Criminality")) {
+              checkType = "criminality";
             }
-            const optionPart = checkTypeFull.replace(checkType.charAt(0).toUpperCase() + checkType.slice(1), '');
-            let option = '';
-            if (optionPart.includes('Upload')) {
-              option = 'upload';
-            } else if (optionPart.includes('OrderId')) {
-              option = 'orderId';
-            } else if (optionPart.includes('Trigger')) {
-              option = 'trigger';
+            const optionPart = checkTypeFull.replace(
+              checkType.charAt(0).toUpperCase() + checkType.slice(1),
+              ""
+            );
+            let option = "";
+            if (optionPart.includes("Upload")) {
+              option = "upload";
+            } else if (optionPart.includes("OrderId")) {
+              option = "orderId";
+            } else if (optionPart.includes("Trigger")) {
+              option = "trigger";
             }
-            const resultDivId = `${checkType}${option.charAt(0).toUpperCase() + option.slice(1)}Result`;
+            const resultDivId = `${checkType}${
+              option.charAt(0).toUpperCase() + option.slice(1)
+            }Result`;
             const resultDiv = document.getElementById(resultDivId);
             const processButton = this; // Store the button element
 
-            console.log("Processing request for:", checkType, "with option:", option);
+            console.log(
+              "Processing request for:",
+              checkType,
+              "with option:",
+              option
+            );
             console.log("resultDivId:", resultDivId);
             console.log("resultDiv:", resultDiv);
 
             if (resultDiv) {
-              resultDiv.textContent = 'Processing...';
+              resultDiv.textContent = "Processing...";
               const loadingOverlay = document.getElementById("loadingOverlay");
               loadingOverlay.style.display = "flex";
 
-              let apiUrl = '';
+              let apiUrl = "";
               let requestData = {};
 
-              if (option === 'upload') {
+              if (option === "upload") {
                 apiUrl = `/api/process-upload?checkType=${checkType}`;
                 requestData = new FormData();
                 const fileInputId = `${checkType}Doc`;
                 const fileInput = document.getElementById(fileInputId);
                 if (fileInput && fileInput.files.length > 0) {
-                  requestData.append('file', fileInput.files[0]);
+                  requestData.append("file", fileInput.files[0]);
                 } else {
                   console.error("No file selected for upload.");
-                  resultDiv.textContent = 'Error: No file selected.';
+                  resultDiv.textContent = "Error: No file selected.";
                   loadingOverlay.style.display = "none";
                   return;
                 }
-              } else if (option === 'orderId') {
+              } else if (option === "orderId") {
                 apiUrl = `/api/process-orderid?checkType=${checkType}`;
                 const orderIdInputId = `${checkType}OrderId`;
                 const orderId = document.getElementById(orderIdInputId).value;
                 requestData = { orderId: orderId };
-              } else if (option === 'trigger') {
+              } else if (option === "trigger") {
                 apiUrl = `/api/process-iota-trigger?checkType=${checkType}`;
                 requestData = {}; // Add any necessary data for trigger
               }
 
               if (apiUrl) {
                 fetch(apiUrl, {
-                  method: 'POST',
-                  headers: option === 'upload' ? {} : { 'Content-Type': 'application/json' },
-                  body: option === 'upload' ? requestData : JSON.stringify(requestData),
+                  method: "POST",
+                  headers:
+                    option === "upload"
+                      ? {}
+                      : { "Content-Type": "application/json" },
+                  body:
+                    option === "upload"
+                      ? requestData
+                      : JSON.stringify(requestData),
                 })
-                .then(response => response.json())
-                .then(data => {
-                  loadingOverlay.style.display = "none";
-                  if (data.success) {
-                    resultDiv.textContent = `Success: ${data.message || 'Processed successfully.'}`;
-                    processResults[checkType] = true;
-                    processButton.style.display = 'none'; // Hide the process button on success
-                  } else {
-                    resultDiv.textContent = `Failure: ${data.error || 'Processing failed.'}`;
+                  .then((response) => response.json())
+                  .then((data) => {
+                    loadingOverlay.style.display = "none";
+                    if (data.success) {
+                      resultDiv.textContent = `Success: ${
+                        data.message || "Processed successfully."
+                      }`;
+                      processResults[checkType] = true;
+                      processButton.style.display = "none"; // Hide the process button on success
+                    } else {
+                      resultDiv.textContent = `Failure: ${
+                        data.error || "Processing failed."
+                      }`;
+                      processResults[checkType] = false;
+                      processButton.style.display = "none"; // Hide the process button on failure
+                    }
+                    updateSubmitButtonState();
+                  })
+                  .catch((error) => {
+                    loadingOverlay.style.display = "none";
+                    console.error(
+                      `Error processing ${checkType} (${option}):`,
+                      error
+                    );
+                    resultDiv.textContent = `Error: An error occurred.`;
                     processResults[checkType] = false;
-                    processButton.style.display = 'none'; // Hide the process button on failure
-                  }
-                  updateSubmitButtonState();
-                })
-                .catch(error => {
-                  loadingOverlay.style.display = "none";
-                  console.error(`Error processing ${checkType} (${option}):`, error);
-                  resultDiv.textContent = `Error: An error occurred.`;
-                  processResults[checkType] = false;
-                  processButton.style.display = 'none'; // Hide the process button on error
-                  updateSubmitButtonState();
-                });
+                    processButton.style.display = "none"; // Hide the process button on error
+                    updateSubmitButtonState();
+                  });
               } else {
                 loadingOverlay.style.display = "none";
                 resultDiv.textContent = `Error: API endpoint not defined for ${checkType} (${option}).`;

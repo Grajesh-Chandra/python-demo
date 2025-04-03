@@ -730,7 +730,7 @@ def generate_secure_pdf(order_id):
             print("No issued credentials found")
     print(all_attachments)
     pdf_signature = pdf_signature_vc(
-        pdf_hash_with_qr, all_attachments
+        pdf_hash_with_qr, all_attachments, order_id
     )  # Sign the initial hash
     print("pdf_signature", pdf_signature)
     if pdf_signature:
@@ -1000,6 +1000,7 @@ def verify_pdf():
         # First process PDFSignature.json if it exists - to get expected attachments list
         if "PDFSignature.json" in pdf_reader.attachments:
             signature_attachment_data = pdf_reader.attachments["PDFSignature.json"]
+
             attachment_result = {  # Initialize result for PDFSignature.json
                 "filename": "PDFSignature.json",
                 "attachment_valid": False,
@@ -1828,7 +1829,7 @@ def generate_pdf_report(order):
 
 
 # @app.route("/api/generate_pdf_signature_vc", methods=["POST"])
-def pdf_signature_vc(pdf_hash, attachment) -> dict:  # Type hinting for clarity
+def pdf_signature_vc(pdf_hash, attachment, order_id) -> dict:  # Type hinting for clarity
     """Generates a signed verifiable credential (VC) for a given PDF hash.
 
     Args:
@@ -1864,6 +1865,7 @@ def pdf_signature_vc(pdf_hash, attachment) -> dict:  # Type hinting for clarity
                 "@type": ["VerifiableCredential", pdf_signature_type_id],
                 "hashWithoutAttachments": pdf_hash,
                 "hashWithAttachment": attachment,  # Placeholder for now
+                "orderId": order_id,
             },
             "expiresAt": expires_at_str,
         }
@@ -1925,18 +1927,232 @@ def startIssuance(payload_for_issuance_api):
         logging.error(f"Error processing checks: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
+
+def update_check_type_file(check_type, credential_subject):
+    file_path = os.path.join(CHECKS_DATA_DIR, f"{check_type}.json")
+    # Ensure the directory exists
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+    # Check if the file exists
+    if not os.path.exists(file_path):
+        return False
+        # Create the file if it doesn't exist (you might want to handle this differently)
+        # with open(file_path, "w") as f:
+        #     json.dump({}, f) # Or some default content
+
+    # Write the credential subject to the file
+    try:
+        with open(file_path, "w") as f:
+            json.dump(credential_subject, f, indent=4)
+        print(f"Updated file at {file_path} with: {credential_subject}")
+        return True
+    except Exception as e:
+        print(f"Error updating file at {file_path}: {e}")
+        return False
+
+
 @app.route("/api/process-upload", methods=["POST"])
 def process_upload():
+    check_type = request.args.get("checkType")  # Get checkType from query parameters
+    response_data = {
+        "success": False,
+        "error": None,
+        "message": None,
+        "checkType": check_type,
+    }
+    status_code = 400  # Default to error status
+
+    if not check_type:
+        response_data["error"] = "Missing CheckType"
+        return jsonify(response_data), status_code
+
     if "file" not in request.files:
-        return jsonify({"success": False, "error": "No file part"}), 400
+        response_data["error"] = "No file part"
+        return jsonify(response_data), status_code
+
     file = request.files["file"]
     if file.filename == "":
-        return jsonify({"success": False, "error": "No selected file"}), 400
+        response_data["error"] = "No selected file"
+        return jsonify(response_data), status_code
+
     if file:
         if file.content_type == "application/pdf":
-            return jsonify({"success": True, "message": "PDF file uploaded successfully"}), 200
-        else:
-            return jsonify({"success": False, "error": "Invalid file type. Only PDF files are allowed."}), 400
-    else:
-        return jsonify({"success": False, "error": "File upload failed"}), 500
+            try:
+                pdf_buffer = BytesIO(file.read())
+                pdf_reader = PdfReader(pdf_buffer)
+                signature_processed = False
+                signature_valid = False
+                attachments = list(
+                    pdf_reader.attachments.keys()
+                )  # Convert keys to a list
 
+                # First process PDFSignature.json if it exists
+                if "PDFSignature.json" in attachments:
+                    signature_processed = True
+                    signature_attachment_data = pdf_reader.attachments[
+                        "PDFSignature.json"
+                    ]
+                    signature_data_str = "".join(
+                        [item.decode("utf-8") for item in signature_attachment_data]
+                    )
+                    try:
+                        attachment_json = json.loads(signature_data_str)
+                        signature_data = attachment_json.get(
+                            "credential"
+                        )  # Extract signature data
+
+                        if signature_data:
+                            verification_results = verification(signature_data)
+                            if verification_results.get("isValid") == True:
+                                response_data["message"] = (
+                                    "Initial Secure Trust PDF verification successful."
+                                )
+                                status_code = 200
+                                signature_valid = True
+
+                                # Extract "hashwithAttachment" from credentialsSubject
+                                attachment_checktype_expected = signature_data.get(
+                                    "credentialSubject", {}
+                                ).get("hashWithAttachment")
+
+                                print(
+                                    f"Expected CheckType attachment: {attachment_checktype_expected}"
+                                )
+
+                                # Check if attachment_checktype_expected contains check_type
+                                found_check_type_attachment = False
+                                if isinstance(attachment_checktype_expected, str):
+                                    attachment_list = [
+                                        item.strip()
+                                        for item in attachment_checktype_expected.split(
+                                            ","
+                                        )
+                                    ]
+                                    if any(
+                                        item.startswith(check_type)
+                                        for item in attachment_list
+                                    ):
+                                        found_check_type_attachment = True
+                                        print(
+                                            f"Expected CheckType found in hashWithAttachment: {check_type}"
+                                        )
+
+                                if found_check_type_attachment:
+                                    if f"{check_type}.json" in attachments:
+                                        print(
+                                            f"Found attachment with name: {check_type}.json"
+                                        )
+                                        check_type_attachment_data = (
+                                            pdf_reader.attachments[f"{check_type}.json"]
+                                        )
+                                        check_type_data_str = "".join(
+                                            [
+                                                item.decode("utf-8")
+                                                for item in check_type_attachment_data
+                                            ]
+                                        )
+                                        try:
+                                            check_type_attachment_json = json.loads(
+                                                check_type_data_str
+                                            )
+                                            check_type_credentials = (
+                                                check_type_attachment_json.get(
+                                                    "credential"
+                                                )
+                                            )
+                                            if check_type_credentials:
+                                                verification_result_checktype = (
+                                                    verification(check_type_credentials)
+                                                )
+                                                if (
+                                                    verification_result_checktype.get(
+                                                        "isValid"
+                                                    )
+                                                    == True
+                                                ):
+                                                    credential_subject = (
+                                                        check_type_credentials.get(
+                                                            "credentialSubject"
+                                                        )
+                                                    )
+                                                    if credential_subject:
+                                                        if update_check_type_file(
+                                                            check_type,
+                                                            credential_subject,
+                                                        ):
+                                                            response_data["message"] = (
+                                                                "Secure Trust PDF verified, CheckType attachment found and verified, order file updated."
+                                                            )
+                                                            response_data["success"] = (
+                                                                True
+                                                            )
+                                                            status_code = 200
+                                                        else:
+                                                            response_data["error"] = (
+                                                                "Secure Trust PDF verified, CheckType attachment found and verified, but failed to update order file."
+                                                            )
+                                                            response_data["success"] = (
+                                                                True  # Still considered successful in terms of document processing
+                                                            )
+                                                            status_code = 200
+                                                    else:
+                                                        response_data["error"] = (
+                                                            "Secure Trust PDF verified, CheckType attachment found and verified, but missing credentialSubject in signature."
+                                                        )
+                                                        status_code = 400
+                                                else:
+                                                    response_data["error"] = (
+                                                        "Secure Trust PDF verified, CheckType attachment found but failed verification."
+                                                    )
+                                                    status_code = 400
+                                            else:
+                                                response_data["error"] = (
+                                                    f"Secure Trust PDF verified, CheckType attachment found but missing 'credentials'."
+                                                )
+                                                status_code = 400
+                                        except json.JSONDecodeError:
+                                            response_data["error"] = (
+                                                f"Error decoding JSON from {check_type} attachment."
+                                            )
+                                            status_code = 400
+                                    else:
+                                        response_data["error"] = (
+                                            "PDF is tempered with the content: CheckType attachment not found."
+                                        )
+                                        status_code = 400
+                                else:
+                                    response_data["error"] = (
+                                        f"Expected CheckType '{check_type}' not listed in hashWithAttachment."
+                                    )
+                                    status_code = 400
+
+                            else:
+                                response_data["error"] = (
+                                    "This is not a Valid Secure Trust PDF."
+                                )
+                        else:
+                            response_data["error"] = (
+                                "Missing 'credential' in PDFSignature.json."
+                            )
+                    except json.JSONDecodeError:
+                        response_data["error"] = (
+                            "Invalid JSON format in PDFSignature.json."
+                        )
+                else:
+                    response_data["success"] = True
+                    response_data["message"] = (
+                        "This is not a valid secure trust pdf but it will be considered as supporting document for verification"
+                    )
+                    status_code = 200
+
+            except Exception as e:
+                response_data["error"] = f"Error processing PDF: {str(e)}"
+                status_code = 500
+
+        else:
+            response_data["error"] = "Invalid file type. Only PDF files are allowed."
+
+    else:
+        response_data["error"] = "File upload failed"
+        status_code = 500
+
+    return jsonify(response_data), status_code
