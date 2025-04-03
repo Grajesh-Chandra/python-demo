@@ -1924,3 +1924,19 @@ def startIssuance(payload_for_issuance_api):
     except Exception as e:
         logging.error(f"Error processing checks: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route("/api/process-upload", methods=["POST"])
+def process_upload():
+    if "file" not in request.files:
+        return jsonify({"success": False, "error": "No file part"}), 400
+    file = request.files["file"]
+    if file.filename == "":
+        return jsonify({"success": False, "error": "No selected file"}), 400
+    if file:
+        if file.content_type == "application/pdf":
+            return jsonify({"success": True, "message": "PDF file uploaded successfully"}), 200
+        else:
+            return jsonify({"success": False, "error": "Invalid file type. Only PDF files are allowed."}), 400
+    else:
+        return jsonify({"success": False, "error": "File upload failed"}), 500
+

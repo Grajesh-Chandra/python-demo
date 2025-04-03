@@ -53,40 +53,88 @@
       }
       .form-group {
         margin-bottom: 1.5rem;
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
       }
       .check-row {
         display: flex;
         align-items: center;
         gap: 1rem;
+        margin-bottom: 0.75rem;
       }
-      label {
+      .check-row label {
         font-weight: 500;
         color: #3f51b5;
-        flex: 0 0 200px;
+        flex: 0 0 220px; /* Adjust width as needed */
       }
-      input[type="checkbox"] {
+      .check-row input[type="checkbox"] {
         width: 20px;
         height: 20px;
         accent-color: #3f51b5;
         cursor: pointer;
       }
-      .upload-section {
-        margin-left: 200px;
+
+      .option-container {
+        margin-left: 220px; /* Align with the label */
         padding-left: 1rem;
+        display: none;
+        flex-direction: column;
+        gap: 0.75rem;
       }
+
+      .option-selector {
+        display: flex;
+        gap: 0.75rem;
+        align-items: center;
+      }
+
+      .option-selector input[type="radio"] {
+        accent-color: #3f51b5;
+        cursor: pointer;
+      }
+
+      .option-selector label {
+        font-weight: 400;
+        color: #3f51b5;
+        margin-bottom: 0; /* Reset label margin */
+        flex: none; /* Remove flex to allow proper spacing */
+      }
+
+      .option-content {
+        display: none;
+        margin-top: 0.5rem;
+        flex-direction: column;
+        gap: 0.5rem;
+        padding-left: 1.5rem; /* Indent the content */
+      }
+
+      .option-content.active {
+        display: flex;
+      }
+
       .upload-area {
-        border: 2px dashed #3f51b5;
-        border-radius: 8px;
+        border: 1px solid #ced4da; /* More subtle border */
+        border-radius: 6px;
         padding: 1rem;
         background-color: #f8f9fb;
         transition: all 0.2s ease;
       }
       .upload-area:hover {
-        background-color: #f0f1fa;
+        background-color: #e9ecef;
       }
+
+      .upload-labels {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 0.5rem;
+      }
+
+      .upload-labels label {
+        font-size: 0.9rem;
+        color: #6c757d;
+        font-weight: 500;
+        margin-bottom: 0.2rem;
+        flex: none; /* Remove flex */
+      }
+
       .custom-file-input {
         display: flex;
         align-items: center;
@@ -99,10 +147,11 @@
         background-color: #3f51b5;
         color: white;
         border: none;
-        padding: 0.5rem 1.5rem;
-        border-radius: 6px;
+        padding: 0.5rem 1rem; /* Slightly smaller button */
+        border-radius: 4px;
         cursor: pointer;
         transition: all 0.2s ease;
+        font-size: 0.9rem;
       }
       .file-upload-btn:hover {
         background-color: #303f9f;
@@ -110,18 +159,25 @@
       .file-name {
         color: #666;
         font-size: 0.9rem;
-        max-width: 200px;
+        max-width: 250px;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
       }
-      .required-asterisk {
-        color: #d32f2f;
-        margin-left: 3px;
+      .process-button {
+        margin-top: 1rem;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        font-size: 0.9rem;
+      }
+      .process-result {
+        margin-top: 0.5rem;
+        font-weight: bold;
+        font-size: 0.9rem;
       }
       .btn {
-        padding: 0.75rem 2rem;
-        border-radius: 6px;
+        padding: 0.75rem 1.5rem; /* Adjust button padding */
+        border-radius: 4px;
         font-weight: 500;
         transition: all 0.2s ease;
       }
@@ -136,25 +192,11 @@
       }
       .btn-warning {
         background-color: #fff;
-        border: 2px solid #3f51b5;
+        border: 1px solid #3f51b5;
         color: #3f51b5;
       }
       .btn-warning:hover {
         background-color: #f8f9fb;
-      }
-      #orderConfirmation {
-        display: none;
-        margin-top: 2rem;
-        padding: 2rem;
-        background: #e8f5e9;
-        border-radius: 8px;
-        text-align: center;
-      }
-      #orderIdDisplay {
-        font-size: 1.5rem;
-        font-weight: 600;
-        color: #2e7d32;
-        margin: 1rem 0;
       }
       .consent-container {
         display: flex;
@@ -215,14 +257,31 @@
         .check-row {
           flex-wrap: wrap;
         }
-        .upload-section {
-          margin-left: 0;
-          width: 100%;
-        }
-        label {
+        .check-row label {
           flex: 1 1 100%;
+          margin-bottom: 0.25rem;
+        }
+        .option-container {
+          margin-left: 0;
+          padding-left: 0;
         }
       }
+
+      #orderConfirmation {
+        display: none;
+        margin-top: 2rem;
+        padding: 2rem;
+        background: #e8f5e9;
+        border-radius: 8px;
+        text-align: center;
+      }
+      #orderIdDisplay {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #2e7d32;
+        margin: 1rem 0;
+      }
+
     </style>
   </head>
   <body>
@@ -236,23 +295,61 @@
             <label for="personalInfo">Personal Information Checks </label>
             <input type="checkbox" id="personalInfo" name="personalInfo" />
           </div>
-          <div class="upload-section">
-            <label class="form-label">Upload Supporting Document</label>
-            <div class="upload-area">
-              <div class="custom-file-input">
-                <input
-                  type="file"
-                  id="personalInfoDoc"
-                  accept=".pdf,.doc,.docx,.jpg,.png"
-                />
-                <label for="personalInfoDoc" class="file-upload-btn"
-                  >Choose File</label
-                >
-                <span class="file-name">No file chosen</span>
+          <div class="option-container" id="personalInfo0ptions" style="display: none;">
+            <div class="option-selector">
+              <input type="radio" name="personalInfoOption" value="upload" id="personalInfoUploadOption" />
+              <label for="personalInfoUploadOption">Upload Document</label>
+            </div>
+            <div class="option-content" id="personalInfoUploadContent">
+              <div class="upload-labels">
+                <label class="form-label">*** Upload Supporting Document </label>
+                <label class="form-label">*** Incase of Recertification Upload Secure Final Report</label>
               </div>
-              <small class="text-muted"
-                >Allowed formats: PDF, DOC, JPG, PNG (Max 5MB)</small
-              >
+              <div class="upload-area">
+                <div class="custom-file-input">
+                  <input
+                    type="file"
+                    id="personalInfoDoc"
+                    accept=".pdf,.doc,.docx,.jpg,.png"
+                  />
+                  <label for="personalInfoDoc" class="file-upload-btn"
+                    >Choose File</label
+                  >
+                  <span class="file-name">No file chosen</span>
+                </div>
+                <small class="text-muted"
+                  >Allowed formats: PDF, DOC, JPG, PNG (Max 5MB)</small
+                >
+              </div>
+              <button type="button" class="btn btn-primary process-button" id="processPersonalInfoUpload" style="display: none;">Process File</button>
+              <div id="personalInfoUploadResult" class="process-result"></div>
+            </div>
+
+            <div class="option-selector">
+              <input type="radio" name="personalInfoOption" value="orderId" id="personalInfoOrderIdOption" />
+              <label for="personalInfoOrderIdOption">Enter Order ID</label>
+            </div>
+            <div class="option-content" id="personalInfoOrderIdContent">
+              <label class="form-label">*** Share your orderId which have Personal Info Check done</label>
+              <div class="upload-area">
+                <div class="custom-file-input">
+                  <input type="text" id="personalInfoOrderId" class="form-control" placeholder="Enter Order ID" />
+                </div>
+                <small class="text-muted"
+                  >Previous Order Placed with Personal Check Done</small
+                >
+              </div>
+              <button type="button" class="btn btn-primary process-button" id="processPersonalInfoOrderId" style="display: none;">Process Order ID</button>
+              <div id="personalInfoOrderIdResult" class="process-result"></div>
+            </div>
+
+            <div class="option-selector">
+              <input type="radio" name="personalInfoOption" value="trigger" id="personalInfoTriggerOption" />
+              <label for="personalInfoTriggerOption">Share your Digital Credentials</label>
+            </div>
+            <div class="option-content" id="personalInfoTriggerContent">
+              <button type="button" class="btn btn-primary process-button" id="processPersonalInfoTrigger">Process Credentials</button>
+              <div id="personalInfoTriggerResult" class="process-result"></div>
             </div>
           </div>
         </div>
@@ -262,23 +359,61 @@
             <label for="address">Address Checks</label>
             <input type="checkbox" id="address" name="address" />
           </div>
-          <div class="upload-section">
-            <label class="form-label">Upload Supporting Document</label>
-            <div class="upload-area">
-              <div class="custom-file-input">
-                <input
-                  type="file"
-                  id="addressDoc"
-                  accept=".pdf,.doc,.docx,.jpg,.png"
-                />
-                <label for="addressDoc" class="file-upload-btn"
-                  >Choose File</label
-                >
-                <span class="file-name">No file chosen</span>
+          <div class="option-container" id="address0ptions" style="display: none;">
+            <div class="option-selector">
+              <input type="radio" name="addressOption" value="upload" id="addressUploadOption" />
+              <label for="addressUploadOption">Upload Document</label>
+            </div>
+            <div class="option-content" id="addressUploadContent">
+              <div class="upload-labels">
+                <label class="form-label">*** Upload Supporting Document</label>
+                <label class="form-label">*** Incase of Recertification Upload Secure Final Report</label>
               </div>
-              <small class="text-muted"
-                >Allowed formats: PDF, DOC, JPG, PNG (Max 5MB)</small
-              >
+              <div class="upload-area">
+                <div class="custom-file-input">
+                  <input
+                    type="file"
+                    id="addressDoc"
+                    accept=".pdf,.doc,.docx,.jpg,.png"
+                  />
+                  <label for="addressDoc" class="file-upload-btn"
+                    >Choose File</label
+                  >
+                  <span class="file-name">No file chosen</span>
+                </div>
+                <small class="text-muted"
+                  >Allowed formats: PDF, DOC, JPG, PNG (Max 5MB)</small
+                >
+              </div>
+              <button type="button" class="btn btn-primary process-button" id="processAddressUpload" style="display: none;">Process File</button>
+              <div id="addressUploadResult" class="process-result"></div>
+            </div>
+
+            <div class="option-selector">
+              <input type="radio" name="addressOption" value="orderId" id="addressOrderIdOption" />
+              <label for="addressOrderIdOption">Enter Order ID</label>
+            </div>
+            <div class="option-content" id="addressOrderIdContent">
+              <label class="form-label">*** Share your orderId which have Address Check done</label>
+              <div class="upload-area">
+                <div class="custom-file-input">
+                  <input type="text" id="addressOrderId" class="form-control" placeholder="Enter Order ID" />
+                </div>
+                <small class="text-muted"
+                  >Previous Order Placed with Address Check Done</small
+                >
+              </div>
+              <button type="button" class="btn btn-primary process-button" id="processAddressOrderId" style="display: none;">Process Order ID</button>
+              <div id="addressOrderIdResult" class="process-result"></div>
+            </div>
+
+            <div class="option-selector">
+              <input type="radio" name="addressOption" value="trigger" id="addressTriggerOption" />
+              <label for="addressTriggerOption">Trigger Request</label>
+            </div>
+            <div class="option-content" id="addressTriggerContent">
+              <button type="button" class="btn btn-primary process-button" id="processAddressTrigger">Request Address Check</button>
+              <div id="addressTriggerResult" class="process-result"></div>
             </div>
           </div>
         </div>
@@ -288,23 +423,61 @@
             <label for="education">Education Checks</label>
             <input type="checkbox" id="education" name="education" />
           </div>
-          <div class="upload-section">
-            <label class="form-label">Upload Supporting Document</label>
-            <div class="upload-area">
-              <div class="custom-file-input">
-                <input
-                  type="file"
-                  id="educationDoc"
-                  accept=".pdf,.doc,.docx,.jpg,.png"
-                />
-                <label for="educationDoc" class="file-upload-btn"
-                  >Choose File</label
-                >
-                <span class="file-name">No file chosen</span>
+          <div class="option-container" id="education0ptions" style="display: none;">
+            <div class="option-selector">
+              <input type="radio" name="educationOption" value="upload" id="educationUploadOption" />
+              <label for="educationUploadOption">Upload Document</label>
+            </div>
+            <div class="option-content" id="educationUploadContent">
+              <div class="upload-labels">
+                <label class="form-label">*** Upload Supporting Document</label>
+                <label class="form-label">*** Incase of Recertification Upload Secure Final Report</label>
               </div>
-              <small class="text-muted"
-                >Allowed formats: PDF, DOC, JPG, PNG (Max 5MB)</small
-              >
+              <div class="upload-area">
+                <div class="custom-file-input">
+                  <input
+                    type="file"
+                    id="educationDoc"
+                    accept=".pdf,.doc,.docx,.jpg,.png"
+                  />
+                  <label for="educationDoc" class="file-upload-btn"
+                    >Choose File</label
+                  >
+                  <span class="file-name">No file chosen</span>
+                </div>
+                <small class="text-muted"
+                  >Allowed formats: PDF, DOC, JPG, PNG (Max 5MB)</small
+                >
+              </div>
+              <button type="button" class="btn btn-primary process-button" id="processEducationUpload" style="display: none;">Process File</button>
+              <div id="educationUploadResult" class="process-result"></div>
+            </div>
+
+            <div class="option-selector">
+              <input type="radio" name="educationOption" value="orderId" id="educationOrderIdOption" />
+              <label for="educationOrderIdOption">Enter Order ID</label>
+            </div>
+            <div class="option-content" id="educationOrderIdContent">
+              <label class="form-label">*** Share your orderId which have Education Check done</label>
+              <div class="upload-area">
+                <div class="custom-file-input">
+                  <input type="text" id="educationOrderId" class="form-control" placeholder="Enter Order ID" />
+                </div>
+                <small class="text-muted"
+                  >Previous Order Placed with Education Check Done</small
+                >
+              </div>
+              <button type="button" class="btn btn-primary process-button" id="processEducationOrderId" style="display: none;">Process Order ID</button>
+              <div id="educationOrderIdResult" class="process-result"></div>
+            </div>
+
+            <div class="option-selector">
+              <input type="radio" name="educationOption" value="trigger" id="educationTriggerOption" />
+              <label for="educationTriggerOption">Trigger Request</label>
+            </div>
+            <div class="option-content" id="educationTriggerContent">
+              <button type="button" class="btn btn-primary process-button" id="processEducationTrigger">Request Education Check</button>
+              <div id="educationTriggerResult" class="process-result"></div>
             </div>
           </div>
         </div>
@@ -314,23 +487,61 @@
             <label for="employment">Employment Checks</label>
             <input type="checkbox" id="employment" name="employment" />
           </div>
-          <div class="upload-section">
-            <label class="form-label">Upload Supporting Document</label>
-            <div class="upload-area">
-              <div class="custom-file-input">
-                <input
-                  type="file"
-                  id="employmentDoc"
-                  accept=".pdf,.doc,.docx,.jpg,.png"
-                />
-                <label for="employmentDoc" class="file-upload-btn"
-                  >Choose File</label
-                >
-                <span class="file-name">No file chosen</span>
+          <div class="option-container" id="employment0ptions" style="display: none;">
+            <div class="option-selector">
+              <input type="radio" name="employmentOption" value="upload" id="employmentUploadOption" />
+              <label for="employmentUploadOption">Upload Document</label>
+            </div>
+            <div class="option-content" id="employmentUploadContent">
+              <div class="upload-labels">
+                <label class="form-label">*** Upload Supporting Document</label>
+                <label class="form-label">*** Incase of Recertification Upload Secure Final Report</label>
               </div>
-              <small class="text-muted"
-                >Allowed formats: PDF, DOC, JPG, PNG (Max 5MB)</small
-              >
+              <div class="upload-area">
+                <div class="custom-file-input">
+                  <input
+                    type="file"
+                    id="employmentDoc"
+                    accept=".pdf,.doc,.docx,.jpg,.png"
+                  />
+                  <label for="employmentDoc" class="file-upload-btn"
+                    >Choose File</label
+                  >
+                  <span class="file-name">No file chosen</span>
+                </div>
+                <small class="text-muted"
+                  >Allowed formats: PDF, DOC, JPG, PNG (Max 5MB)</small
+                >
+              </div>
+              <button type="button" class="btn btn-primary process-button" id="processEmploymentUpload" style="display: none;">Process File</button>
+              <div id="employmentUploadResult" class="process-result"></div>
+            </div>
+
+            <div class="option-selector">
+              <input type="radio" name="employmentOption" value="orderId" id="employmentOrderIdOption" />
+              <label for="employmentOrderIdOption">Enter Order ID</label>
+            </div>
+            <div class="option-content" id="employmentOrderIdContent">
+              <label class="form-label">*** Share your orderId which have Employment Check done</label>
+              <div class="upload-area">
+                <div class="custom-file-input">
+                  <input type="text" id="employmentOrderId" class="form-control" placeholder="Enter Order ID" />
+                </div>
+                <small class="text-muted"
+                  >Previous Order Placed with Employment Check Done</small
+                >
+              </div>
+              <button type="button" class="btn btn-primary process-button" id="processEmploymentOrderId" style="display: none;">Process Order ID</button>
+              <div id="employmentOrderIdResult" class="process-result"></div>
+            </div>
+
+            <div class="option-selector">
+              <input type="radio" name="employmentOption" value="trigger" id="employmentTriggerOption" />
+              <label for="employmentTriggerOption">Trigger Request</label>
+            </div>
+            <div class="option-content" id="employmentTriggerContent">
+              <button type="button" class="btn btn-primary process-button" id="processEmploymentTrigger">Request Employment Check</button>
+              <div id="employmentTriggerResult" class="process-result"></div>
             </div>
           </div>
         </div>
@@ -340,23 +551,61 @@
             <label for="criminality">Civil Litigation Checks</label>
             <input type="checkbox" id="criminality" name="criminality" />
           </div>
-          <div class="upload-section">
-            <label class="form-label">Upload Supporting Document</label>
-            <div class="upload-area">
-              <div class="custom-file-input">
-                <input
-                  type="file"
-                  id="criminalityDoc"
-                  accept=".pdf,.doc,.docx,.jpg,.png"
-                />
-                <label for="criminalityDoc" class="file-upload-btn"
-                  >Choose File</label
-                >
-                <span class="file-name">No file chosen</span>
+          <div class="option-container" id="criminality0ptions" style="display: none;">
+            <div class="option-selector">
+              <input type="radio" name="criminalityOption" value="upload" id="criminalityUploadOption" />
+              <label for="criminalityUploadOption">Upload Document</label>
+            </div>
+            <div class="option-content" id="criminalityUploadContent">
+              <div class="upload-labels">
+                <label class="form-label">*** Upload Supporting Document</label>
+                <label class="form-label">*** Incase of Recertification Upload Secure Final Report</label>
               </div>
-              <small class="text-muted"
-                >Allowed formats: PDF, DOC, JPG, PNG (Max 5MB)</small
-              >
+              <div class="upload-area">
+                <div class="custom-file-input">
+                  <input
+                    type="file"
+                    id="criminalityDoc"
+                    accept=".pdf,.doc,.docx,.jpg,.png"
+                  />
+                  <label for="criminalityDoc" class="file-upload-btn"
+                    >Choose File</label
+                  >
+                  <span class="file-name">No file chosen</span>
+                </div>
+                <small class="text-muted"
+                  >Allowed formats: PDF, DOC, JPG, PNG (Max 5MB)</small
+                >
+              </div>
+              <button type="button" class="btn btn-primary process-button" id="processCriminalityUpload" style="display: none;">Process File</button>
+              <div id="criminalityUploadResult" class="process-result"></div>
+            </div>
+
+            <div class="option-selector">
+              <input type="radio" name="criminalityOption" value="orderId" id="criminalityOrderIdOption" />
+              <label for="criminalityOrderIdOption">Enter Order ID</label>
+            </div>
+            <div class="option-content" id="criminalityOrderIdContent">
+              <label class="form-label">*** Share your orderId which have Civil Litigation Check done</label>
+              <div class="upload-area">
+                <div class="custom-file-input">
+                  <input type="text" id="criminalityOrderId" class="form-control" placeholder="Enter Order ID" />
+                </div>
+                <small class="text-muted"
+                  >Previous Order Placed with Civil Litigation Check Done</small
+                >
+              </div>
+              <button type="button" class="btn btn-primary process-button" id="processCriminalityOrderId" style="display: none;">Process Order ID</button>
+              <div id="criminalityOrderIdResult" class="process-result"></div>
+            </div>
+
+            <div class="option-selector">
+              <input type="radio" name="criminalityOption" value="trigger" id="criminalityTriggerOption" />
+              <label for="criminalityTriggerOption">Trigger Request</label>
+            </div>
+            <div class="option-content" id="criminalityTriggerContent">
+              <button type="button" class="btn btn-primary process-button" id="processCriminalityTrigger">Request Civil Litigation Check</button>
+              <div id="criminalityTriggerResult" class="process-result"></div>
             </div>
           </div>
         </div>
@@ -383,7 +632,7 @@
         </div>
       </form>
 
-      <div id="orderConfirmation">
+      <div id="orderConfirmation" style="display: none;">
         <h3>Thank you!</h3>
         <p>Your order with selected background checks has been submitted.</p>
         <p>Your Order ID is:</p>
@@ -398,214 +647,373 @@
       </div>
     </div>
 
-    <div id="loadingOverlay">
+    <div id="loadingOverlay" style="display: none;">
       <div class="loader"></div>
-      <div class="message">Creating Order...</div>
+      <div class="message">Processing...</div>
     </div>
 
     <script>
-      const submitButton = document.getElementById("submitChecks");
-      const backgroundCheckForm = document.getElementById(
-        "backgroundCheckForm"
-      );
+      document.addEventListener('DOMContentLoaded', function() {
+        const submitButton = document.getElementById("submitChecks");
+        const backgroundCheckForm = document.getElementById("backgroundCheckForm");
+        const checkTypeCheckboxes = Array.from(document.querySelectorAll('input[type="checkbox"]')).filter(checkbox => checkbox.name !== "consent");
+        const processResults = {}; // To track processing status for each checklist
 
-      // File Input Handling - Display file name
-      document.querySelectorAll('input[type="file"]').forEach((input) => {
-        input.addEventListener("change", function (e) {
-          const fileName = this.files[0]?.name || "No file chosen";
-          this.parentNode.querySelector(".file-name").textContent = fileName;
-          updateSubmitButtonState(); // Update submit button state on file input change
-        });
-      });
+        function updateSubmitButtonState() {
+          const consentCheckbox = document.getElementById("consent");
+          const filesUploaded = validateFileUploads();
+          console.log("updateSubmitButtonState called:");
+          console.log(
+            "  Consent checked:",
+            consentCheckbox.checked,
+            " - Files Uploaded:",
+            filesUploaded
+          );
+          submitButton.disabled = !(consentCheckbox.checked && filesUploaded);
+          console.log("  Submit button disabled:", submitButton.disabled);
+        }
 
-      // Checkbox Handling - Make file input required/not and update UI
-      const checkTypeCheckboxes = Array.from(
-        document.querySelectorAll('input[type="checkbox"]')
-      ).filter((checkbox) => checkbox.name !== "consent");
+        // Add event listener to consent checkbox to update submit button state
+        document
+          .getElementById("consent")
+          .addEventListener("change", updateSubmitButtonState);
 
-      checkTypeCheckboxes.forEach((checkbox) => {
-        checkbox.addEventListener("change", function () {
-          const fileInput =
-            this.closest(".form-group").querySelector('input[type="file"]');
-          fileInput.required = this.checked;
-          fileInput.disabled = !this.checked;
-          fileInput.closest(".upload-area").style.opacity = this.checked
-            ? 1
-            : 0.6;
-          if (!this.checked) {
-            fileInput.value = "";
-            fileInput.parentNode.querySelector(".file-name").textContent =
-              "No file chosen";
-          }
-          updateSubmitButtonState(); // Update submit button state on checkbox change
-        });
-      });
+        // Initial state setup: disable submit button at start
+        updateSubmitButtonState();
 
-      // Function to validate if documents are uploaded for selected checks
-      function validateFileUploads() {
-        let isValid = true;
-        const checks = {
-          // Map check type checkboxes to their corresponding file input IDs
-          personalInfo: "personalInfoDoc",
-          address: "addressDoc",
-          education: "educationDoc",
-          employment: "employmentDoc",
-          criminality: "criminalityDoc",
-        };
+        // Form Submission
+        document
+          .getElementById("submitChecks")
+          .addEventListener("click", function (event) {
+            event.preventDefault();
+            console.log("Submit button clicked!");
 
-        console.log("--- validateFileUploads() START ---"); // START LOG
-
-        for (const checkType in checks) {
-          const checkbox = document.getElementById(checkType);
-          const fileInputId = checks[checkType];
-          const fileInput = document.getElementById(fileInputId);
-
-          console.log(`  Checking ${checkType}:`); // Check type being validated
-
-          if (checkbox.checked) {
-            // If the check type is selected
-            console.log(`    Checkbox "${checkType}" is CHECKED.`);
-            if (!fileInput.files[0]) {
-              // ... then check if a file is uploaded
-              isValid = false;
-              console.log(
-                `    ❌ Validation FAILED for ${checkType}: No file uploaded for input ID "${fileInputId}".`
-              ); // Detailed failure log
-              // No break here - let's log all validations
-            } else {
-              console.log(
-                `    ✅ Validation PASSED for ${checkType}: File uploaded for input ID "${fileInputId}".`
-              ); // Detailed success log
+            // Validate consent (already validated in button state, but double check here)
+            const consentCheckbox = document.getElementById("consent");
+            if (!consentCheckbox.checked) {
+              alert("Please provide your consent to proceed.");
+              return;
             }
+
+            // Validate files
+            if (!validateFileUploads()) {
+              alert("Please upload all required supporting documents.");
+              return;
+            }
+
+            // Generate Order ID
+            const orderId = generateOrderId();
+            document.getElementById("orderIdDisplay").textContent = orderId;
+
+            const formData = {
+              orderId: orderId,
+              checks: {
+                personalInfo: document.getElementById("personalInfo").checked,
+                address: document.getElementById("address").checked,
+                education: document.getElementById("education").checked,
+                employment: document.getElementById("employment").checked,
+                criminal: document.getElementById("criminality").checked,
+              },
+              consent: document.getElementById("consent").checked,
+            };
+            // Show loading overlay
+            const loadingOverlay = document.getElementById("loadingOverlay");
+            loadingOverlay.style.display = "flex";
+
+            // Submit data
+            fetch("/save-order", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(formData),
+            })
+              .then((response) => response.json())
+              .then((data) => {
+                loadingOverlay.style.display = "none";
+                if (data.success) {
+                  document.getElementById("backgroundCheckForm").style.display =
+                    "none";
+                  document.getElementById("orderConfirmation").style.display =
+                    "block";
+                } else {
+                  alert("Failed to save order. Please try again.");
+                }
+              })
+              .catch((error) => {
+                loadingOverlay.style.display = "none";
+                console.error("Error:", error);
+                alert("An error occurred. Please try again.");
+              });
+          });
+
+        // Generate Order ID
+        function generateOrderId() {
+          const timestamp = Date.now().toString(36);
+          const random = Math.random().toString(36).substring(2, 8);
+          return timestamp + "-" + random.toUpperCase();
+        }
+
+        // Go Back Button - Corrected Event Listener
+        document
+          .getElementById("goBackButton")
+          .addEventListener("click", function () {
+            console.log("Go Back button clicked!");
+            window.history.back();
+          });
+
+        // Function to validate if all selected checklists have a file uploaded (for upload option)
+        function validateFileUploads() {
+          let allFilesUploaded = true;
+          checkTypeCheckboxes.forEach(checkbox => {
+            if (checkbox.checked) {
+              const checkId = checkbox.id;
+              const personalInfoOption = document.querySelector(`input[name="${checkId}Option"]:checked`);
+              if (personalInfoOption && personalInfoOption.value === 'upload') {
+                const fileInput = document.getElementById(checkId + 'Doc');
+                if (!fileInput || fileInput.files.length === 0) {
+                  allFilesUploaded = false;
+                }
+              }
+            }
+          });
+          return allFilesUploaded;
+        }
+
+        // Initialize option visibility on page load
+        checkTypeCheckboxes.forEach(checkbox => {
+          const optionsContainer = document.getElementById(checkbox.id + "0ptions");
+          console.log(`Checkbox ID: ${checkbox.id}, Options Container:`, optionsContainer);
+          if (!checkbox.checked && optionsContainer) {
+            optionsContainer.style.display = "none";
+          } else if (checkbox.checked && optionsContainer) {
+            optionsContainer.style.display = "flex"; // Ensure it's visible if checked on load (for testing)
+          }
+        });
+
+        function handleCheckboxChange(checkbox) {
+          const checkId = checkbox.id;
+          const optionsContainer = document.getElementById(checkId + "0ptions"); // Using '0' as per your HTML
+
+          if (optionsContainer) {
+            if (checkbox.checked) {
+              optionsContainer.style.display = "flex";
+              // Initially select the first radio button and show its content
+              const firstRadio = optionsContainer.querySelector('input[type="radio"]');
+              if (firstRadio) {
+                firstRadio.checked = true;
+                // Assuming you have a function to handle radio button changes
+                const event = new Event('change'); // Create a new change event
+                firstRadio.dispatchEvent(event);    // Dispatch it to trigger the handler
+              }
+              processResults[checkId] = false; // Reset processing status
+            } else {
+              optionsContainer.style.display = "none";
+              // Reset radio selection and content visibility on uncheck
+              const radioButtons = optionsContainer.querySelectorAll('input[type="radio"]');
+              radioButtons.forEach((radio, index) => {
+                radio.checked = index === 0; // Select the first radio button by default
+              });
+              const optionContents = optionsContainer.querySelectorAll('.option-content');
+              optionContents.forEach((content, index) => {
+                content.classList.toggle('active', index === 0); // Show the first content by default
+              });
+              // Clear any input values or selections
+              const fileInput = optionsContainer.querySelector('input[type="file"]');
+              if (fileInput) {
+                fileInput.value = "";
+                fileInput.parentNode.querySelector(".file-name").textContent = "No file chosen";
+                const processButton = document.getElementById(`process${checkId.charAt(0).toUpperCase() + checkId.slice(1)}Upload`);
+                if (processButton) processButton.style.display = "none";
+                document.getElementById(`${checkId}UploadResult`).textContent = "";
+              }
+              const orderIdInput = optionsContainer.querySelector('input[type="text"]');
+              if (orderIdInput) {
+                orderIdInput.value = "";
+                const processButton = document.getElementById(`process${checkId.charAt(0).toUpperCase() + checkId.slice(1)}OrderId`);
+                if (processButton) processButton.style.display = "none";
+                document.getElementById(`${checkId}OrderIdResult`).textContent = "";
+              }
+              document.getElementById(`${checkId}TriggerResult`).textContent = "";
+              processResults[checkId] = false;
+            }
+            updateSubmitButtonState();
           } else {
-            console.log(
-              `    Checkbox "${checkType}" is NOT checked - skipping file validation.`
-            ); // Log when check is skipped
+            console.error(`Could not find options container for checkbox with id: ${checkId}`);
           }
         }
 
-        console.log("validateFileUploads returns:", isValid); // Final validation result
-        console.log("--- validateFileUploads() END ---"); // END LOG
-        return isValid;
-      }
+        // Add event listeners to checkboxes
+        checkTypeCheckboxes.forEach((checkbox) => {
+          checkbox.addEventListener("change", function () {
+            handleCheckboxChange(this);
+          });
+        });
 
-      // Function to update the submit button's state based on consent and file uploads
-      function updateSubmitButtonState() {
-        const consentCheckbox = document.getElementById("consent");
-        const filesUploaded = validateFileUploads();
-        console.log("updateSubmitButtonState called:");
-        console.log(
-          "  Consent checked:",
-          consentCheckbox.checked,
-          " - Files Uploaded:",
-          filesUploaded
-        );
-        submitButton.disabled = !(consentCheckbox.checked && filesUploaded);
-        console.log("  Submit button disabled:", submitButton.disabled);
-      }
+        // Handle radio button changes to show/hide process button and content
+        document.querySelectorAll('.option-container input[type="radio"]').forEach(radio => {
+          radio.addEventListener('change', function() {
+            const containerId = radio.closest('.option-container').id;
+            const checkId = containerId.replace('0ptions', '');
+            const uploadProcessButton = document.getElementById(`process${checkId.charAt(0).toUpperCase() + checkId.slice(1)}Upload`);
+            const orderIdProcessButton = document.getElementById(`process${checkId.charAt(0).toUpperCase() + checkId.slice(1)}OrderId`);
+            const triggerProcessButton = document.getElementById(`process${checkId.charAt(0).toUpperCase() + checkId.slice(1)}Trigger`);
 
-      // Add event listener to consent checkbox to update submit button state
-      document
-        .getElementById("consent")
-        .addEventListener("change", updateSubmitButtonState);
+            const uploadContent = document.getElementById(checkId + 'UploadContent');
+            const orderIdContent = document.getElementById(checkId + 'OrderIdContent');
+            const triggerContent = document.getElementById(checkId + 'TriggerContent');
 
-      // Initial state setup: disable submit button at start
-      updateSubmitButtonState();
+            // Hide all content divs
+            uploadContent.classList.remove('active');
+            orderIdContent.classList.remove('active');
+            triggerContent.classList.remove('active');
 
-      // Form Submission
-      document
-        .getElementById("submitChecks")
-        .addEventListener("click", function (event) {
-          event.preventDefault();
-          console.log("Submit button clicked!");
+            if (radio.value === 'upload') {
+              uploadProcessButton.style.display = document.getElementById(checkId + 'Doc').files.length > 0 ? 'inline-block' : 'none';
+              orderIdProcessButton.style.display = 'none';
+              triggerProcessButton.style.display = 'none';
+              uploadContent.classList.add('active');
+            } else if (radio.value === 'orderId') {
+              orderIdProcessButton.style.display = document.getElementById(checkId + 'OrderId').value.trim() !== '' ? 'inline-block' : 'none';
+              uploadProcessButton.style.display = 'none';
+              triggerProcessButton.style.display = 'none';
+              orderIdContent.classList.add('active');
+            } else if (radio.value === 'trigger') {
+              triggerProcessButton.style.display = 'inline-block';
+              uploadProcessButton.style.display = 'none';
+              orderIdProcessButton.style.display = 'none';
+              triggerContent.classList.add('active');
+            }
+            updateSubmitButtonState();
+          });
+        });
 
-          // Validate consent (already validated in button state, but double check here)
-          const consentCheckbox = document.getElementById("consent");
-          if (!consentCheckbox.checked) {
-            alert("Please provide your consent to proceed.");
-            return;
-          }
+        // File Input Handling - Display file name and show process button
+        document.querySelectorAll('input[type="file"]').forEach((input) => {
+          input.addEventListener("change", function (e) {
+            const fileName = this.files[0]?.name || "No file chosen";
+            this.parentNode.querySelector(".file-name").textContent = fileName;
+            const checkId = this.id.replace('Doc', '');
+            const processButton = document.getElementById(`process${checkId.charAt(0).toUpperCase() + checkId.slice(1)}Upload`);
+            processButton.style.display = 'inline-block';
+            updateSubmitButtonState();
+          });
+        });
 
-          // Validate files (already validated in button state, but double check here)
-          if (!validateFileUploads()) {
-            alert("Please upload all required supporting documents.");
-            return;
-          }
+        // Order ID Input Handling - Show process button on input
+        document.querySelectorAll('input[type="text"]').forEach((input) => {
+          input.addEventListener("input", function (e) {
+            const checkId = this.id.replace('OrderId', '');
+            const processButton = document.getElementById(`process${checkId.charAt(0).toUpperCase() + checkId.slice(1)}OrderId`);
+            processButton.style.display = this.value.trim() !== '' ? 'inline-block' : 'none';
+            updateSubmitButtonState();
+          });
+        });
 
-          // Generate Order ID
-          const orderId = generateOrderId();
-          document.getElementById("orderIdDisplay").textContent = orderId;
+        // Event listeners for the "Process" buttons (keeping the API call logic)
+        document.querySelectorAll('.process-button').forEach(button => {
+          button.addEventListener('click', function() {
+            const checkTypeFull = this.id.replace('process', '');
+            let checkType = '';
+            if (checkTypeFull.includes('PersonalInfo')) {
+              checkType = 'personalInfo';
+            } else if (checkTypeFull.includes('Address')) {
+              checkType = 'address';
+            } else if (checkTypeFull.includes('Education')) {
+              checkType = 'education';
+            } else if (checkTypeFull.includes('Employment')) {
+              checkType = 'employment';
+            } else if (checkTypeFull.includes('Criminality')) {
+              checkType = 'criminality';
+            }
+            const optionPart = checkTypeFull.replace(checkType.charAt(0).toUpperCase() + checkType.slice(1), '');
+            let option = '';
+            if (optionPart.includes('Upload')) {
+              option = 'upload';
+            } else if (optionPart.includes('OrderId')) {
+              option = 'orderId';
+            } else if (optionPart.includes('Trigger')) {
+              option = 'trigger';
+            }
+            const resultDivId = `${checkType}${option.charAt(0).toUpperCase() + option.slice(1)}Result`;
+            const resultDiv = document.getElementById(resultDivId);
+            const processButton = this; // Store the button element
 
-          // Prepare Form Data
-          // const formData = new FormData();
-          //document.querySelectorAll('input[type="file"]').forEach((input) => {
-          //  if (input.files[0]) formData.append(input.id, input.files[0]);
-          //});
+            console.log("Processing request for:", checkType, "with option:", option);
+            console.log("resultDivId:", resultDivId);
+            console.log("resultDiv:", resultDiv);
 
-          // Add other form data
-          // formData.append("orderId", orderId);
-          // formData.append("consent", consentCheckbox.checked);
-          //checkTypeCheckboxes.forEach((checkbox) => {
-          // Use the filtered array here too for form submission
-          // formData.append(checkbox.name, checkbox.checked);
-          // });
+            if (resultDiv) {
+              resultDiv.textContent = 'Processing...';
+              const loadingOverlay = document.getElementById("loadingOverlay");
+              loadingOverlay.style.display = "flex";
 
-          const formData = {
-            orderId: orderId,
-            checks: {
-              personalInfo: document.getElementById("personalInfo").checked,
-              address: document.getElementById("address").checked,
-              education: document.getElementById("education").checked,
-              employment: document.getElementById("employment").checked,
-              criminal: document.getElementById("criminality").checked,
-            },
-            consent: document.getElementById("consent").checked,
-          };
-          // Show loading overlay
-          const loadingOverlay = document.getElementById("loadingOverlay");
-          loadingOverlay.style.display = "flex";
+              let apiUrl = '';
+              let requestData = {};
 
-          // Submit data
-          fetch("/save-order", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(formData),
-          })
-            .then((response) => response.json())
-            .then((data) => {
-              loadingOverlay.style.display = "none";
-              if (data.success) {
-                document.getElementById("backgroundCheckForm").style.display =
-                  "none";
-                document.getElementById("orderConfirmation").style.display =
-                  "block";
-              } else {
-                alert("Failed to save order. Please try again.");
+              if (option === 'upload') {
+                apiUrl = `/api/process-upload?checkType=${checkType}`;
+                requestData = new FormData();
+                const fileInputId = `${checkType}Doc`;
+                const fileInput = document.getElementById(fileInputId);
+                if (fileInput && fileInput.files.length > 0) {
+                  requestData.append('file', fileInput.files[0]);
+                } else {
+                  console.error("No file selected for upload.");
+                  resultDiv.textContent = 'Error: No file selected.';
+                  loadingOverlay.style.display = "none";
+                  return;
+                }
+              } else if (option === 'orderId') {
+                apiUrl = `/api/process-orderid?checkType=${checkType}`;
+                const orderIdInputId = `${checkType}OrderId`;
+                const orderId = document.getElementById(orderIdInputId).value;
+                requestData = { orderId: orderId };
+              } else if (option === 'trigger') {
+                apiUrl = `/api/process-iota-trigger?checkType=${checkType}`;
+                requestData = {}; // Add any necessary data for trigger
               }
-            })
-            .catch((error) => {
-              loadingOverlay.style.display = "none";
-              console.error("Error:", error);
-              alert("An error occurred. Please try again.");
-            });
-        });
 
-      // Generate Order ID
-      function generateOrderId() {
-        const timestamp = Date.now().toString(36);
-        const random = Math.random().toString(36).substring(2, 8);
-        return timestamp + "-" + random.toUpperCase();
-      }
-
-      // Go Back Button - Corrected Event Listener
-      document
-        .getElementById("goBackButton")
-        .addEventListener("click", function () {
-          console.log("Go Back button clicked!");
-          window.history.back();
+              if (apiUrl) {
+                fetch(apiUrl, {
+                  method: 'POST',
+                  headers: option === 'upload' ? {} : { 'Content-Type': 'application/json' },
+                  body: option === 'upload' ? requestData : JSON.stringify(requestData),
+                })
+                .then(response => response.json())
+                .then(data => {
+                  loadingOverlay.style.display = "none";
+                  if (data.success) {
+                    resultDiv.textContent = `Success: ${data.message || 'Processed successfully.'}`;
+                    processResults[checkType] = true;
+                    processButton.style.display = 'none'; // Hide the process button on success
+                  } else {
+                    resultDiv.textContent = `Failure: ${data.error || 'Processing failed.'}`;
+                    processResults[checkType] = false;
+                    processButton.style.display = 'none'; // Hide the process button on failure
+                  }
+                  updateSubmitButtonState();
+                })
+                .catch(error => {
+                  loadingOverlay.style.display = "none";
+                  console.error(`Error processing ${checkType} (${option}):`, error);
+                  resultDiv.textContent = `Error: An error occurred.`;
+                  processResults[checkType] = false;
+                  processButton.style.display = 'none'; // Hide the process button on error
+                  updateSubmitButtonState();
+                });
+              } else {
+                loadingOverlay.style.display = "none";
+                resultDiv.textContent = `Error: API endpoint not defined for ${checkType} (${option}).`;
+                processResults[checkType] = false;
+                updateSubmitButtonState();
+              }
+            } else {
+              console.error(`Result div with ID ${resultDivId} not found.`);
+            }
+          });
         });
+      });
     </script>
 
     <footer>&copy; 2025 Affinidi Private Limited. All rights reserved.</footer>
