@@ -1,27 +1,27 @@
 {
-  "address": {
-    "addressLine1": "Varthur, Gunjur",
-    "addressLine2": "B305, Candeur Landmark, Tower Eiffel",
-    "postalCode": "560087",
-    "addressRegion": "Karnataka",
-    "addressCountry": "India"
-  },
-  "ownerDetails": {
-    "ownerName": "TestOwner",
-    "ownerContactDetails1": "+912325435634"
-  },
-  "neighbourDetails": {
-    "neighbourName": "Test Neighbour",
-    "neighbourContactDetails1": "+912325435634"
-  },
-  "stayDetails": {
-    "fromDate": "01-01-2000",
-    "toDate": "01-01-2020"
-  },
-  "verificationStatus": "Completed",
-  "verificationEvidence": {
-    "evidenceName1": "Letter",
-    "evidenceURL1": "http://localhost"
-  },
-  "verificationRemarks": "done"
+    "address": {
+        "addressCountry": "India",
+        "addressLine1": "Varthur, Gunjur",
+        "addressLine2": "B305, Candeur Landmark, Tower Eiffel",
+        "addressRegion": "Karnataka",
+        "postalCode": "560087"
+    },
+    "ownerDetails": {
+        "ownerName": "TestOwner",
+        "ownerContactDetails1": "+912325435634"
+    },
+    "verificationStatus": "Completed",
+    "verificationEvidence": {
+        "evidenceName1": "Letter",
+        "evidenceURL1": "http://localhost"
+    },
+    "stayDetails": {
+        "fromDate": "01-01-2000",
+        "toDate": "01-01-2020"
+    },
+    "verificationRemarks": "done",
+    "neighbourDetails": {
+        "neighbourContactDetails1": "+912325435634",
+        "neighbourName": "Test Neighbour"
+    }
 }

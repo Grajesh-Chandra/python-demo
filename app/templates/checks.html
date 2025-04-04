@@ -296,7 +296,7 @@
           </div>
           <div
             class="option-container"
-            id="personalInfo0ptions"
+            id="personalInfoOptions"
             style="display: none"
           >
             <div class="option-selector">
@@ -414,7 +414,7 @@
           </div>
           <div
             class="option-container"
-            id="address0ptions"
+            id="addressOptions"
             style="display: none"
           >
             <div class="option-selector">
@@ -527,7 +527,7 @@
           </div>
           <div
             class="option-container"
-            id="education0ptions"
+            id="educationOptions"
             style="display: none"
           >
             <div class="option-selector">
@@ -640,7 +640,7 @@
           </div>
           <div
             class="option-container"
-            id="employment0ptions"
+            id="employmentOptions"
             style="display: none"
           >
             <div class="option-selector">
@@ -753,7 +753,7 @@
           </div>
           <div
             class="option-container"
-            id="criminality0ptions"
+            id="criminalityOptions"
             style="display: none"
           >
             <div class="option-selector">
@@ -1039,7 +1039,7 @@
         // Initialize option visibility on page load
         checkTypeCheckboxes.forEach((checkbox) => {
           const optionsContainer = document.getElementById(
-            checkbox.id + "0ptions"
+            checkbox.id + "Options"
           );
           console.log(
             `Checkbox ID: ${checkbox.id}, Options Container:`,
@@ -1054,7 +1054,7 @@
 
         function handleCheckboxChange(checkbox) {
           const checkId = checkbox.id;
-          const optionsContainer = document.getElementById(checkId + "0ptions"); // Using '0' as per your HTML
+          const optionsContainer = document.getElementById(checkId + "Options"); // Using '0' as per your HTML
 
           if (optionsContainer) {
             if (checkbox.checked) {
@@ -1138,7 +1138,7 @@
           .forEach((radio) => {
             radio.addEventListener("change", function () {
               const containerId = radio.closest(".option-container").id;
-              const checkId = containerId.replace("0ptions", "");
+              const checkId = containerId.replace("Options", "");
               const uploadProcessButton = document.getElementById(
                 `process${
                   checkId.charAt(0).toUpperCase() + checkId.slice(1)

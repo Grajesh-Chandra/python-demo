@@ -1829,7 +1829,9 @@ def generate_pdf_report(order):
 
 
 # @app.route("/api/generate_pdf_signature_vc", methods=["POST"])
-def pdf_signature_vc(pdf_hash, attachment, order_id) -> dict:  # Type hinting for clarity
+def pdf_signature_vc(
+    pdf_hash, attachment, order_id
+) -> dict:  # Type hinting for clarity
     """Generates a signed verifiable credential (VC) for a given PDF hash.
 
     Args:
@@ -1943,7 +1945,7 @@ def update_check_type_file(check_type, credential_subject):
     try:
         with open(file_path, "w") as f:
             json.dump(credential_subject, f, indent=4)
-        print(f"Updated file at {file_path} with: {credential_subject}")
+        print(f"Updated file at {check_type}.json with: {credential_subject}")
         return True
     except Exception as e:
         print(f"Error updating file at {file_path}: {e}")
@@ -1952,7 +1954,11 @@ def update_check_type_file(check_type, credential_subject):
 
 @app.route("/api/process-upload", methods=["POST"])
 def process_upload():
-    check_type = request.args.get("checkType")  # Get checkType from query parameters
+    check_type_received = request.args.get("checkType")
+    if check_type_received == "criminality":
+        check_type = "criminal"
+    else:
+        check_type = check_type_received
     response_data = {
         "success": False,
         "error": None,
@@ -2033,7 +2039,7 @@ def process_upload():
                                     ):
                                         found_check_type_attachment = True
                                         print(
-                                            f"Expected CheckType found in hashWithAttachment: {check_type}"
+                                            f"Expected CheckType found in uploaded PDF: {check_type}"
                                         )
 
                                 if found_check_type_attachment:
@@ -2071,8 +2077,8 @@ def process_upload():
                                                 ):
                                                     credential_subject = (
                                                         check_type_credentials.get(
-                                                            "credentialSubject"
-                                                        )
+                                                            "credentialSubject",{}
+                                                        ).get(check_type, {})
                                                     )
                                                     if credential_subject:
                                                         if update_check_type_file(
@@ -2080,7 +2086,7 @@ def process_upload():
                                                             credential_subject,
                                                         ):
                                                             response_data["message"] = (
-                                                                "Secure Trust PDF verified, CheckType attachment found and verified, order file updated."
+                                                                "Secure Trust PDF verified, CheckType attachment found and verified, order is updated."
                                                             )
                                                             response_data["success"] = (
                                                                 True
@@ -2121,7 +2127,7 @@ def process_upload():
                                         status_code = 400
                                 else:
                                     response_data["error"] = (
-                                        f"Expected CheckType '{check_type}' not listed in hashWithAttachment."
+                                        f"Expected CheckType '{check_type}' not listed in uploaded PDF."
                                     )
                                     status_code = 400
 
@@ -2154,5 +2160,106 @@ def process_upload():
     else:
         response_data["error"] = "File upload failed"
         status_code = 500
+
+    return jsonify(response_data), status_code
+
+
+@app.route("/api/process-orderid", methods=["POST"])
+def process_order_id():
+    # check orderId in request body
+    order_id = request.json.get("orderId")
+    # check checkType in request args
+    check_type_received = request.args.get("checkType")
+    if check_type_received == "criminality":
+        check_type = "criminal"
+    else:
+        check_type = check_type_received
+    response_data = {
+        "success": False,
+        "error": None,
+        "message": None,
+        "orderId": order_id,
+    }
+    status_code = 400
+
+    if not order_id:
+        response_data["error"] = "Missing orderId in request body"
+        return jsonify(response_data), status_code
+
+    if not check_type:
+        response_data["error"] = "Missing CheckType in request arguments"
+        return jsonify(response_data), status_code
+
+    orders_file = os.path.join(CHECKS_DATA_DIR, "order.json")
+    order_detail = None
+
+    try:
+        if os.path.exists(orders_file) and os.path.getsize(orders_file) > 0:
+            with open(orders_file, "r") as f:
+                try:
+                    orders = json.load(f)
+                    for order in orders:
+                        if order.get("orderId") == order_id:
+                            order_detail = order
+                            break
+                except json.JSONDecodeError:
+                    logging.error(f"Error decoding JSON from order file: {orders_file}")
+                    response_data["error"] = (
+                        "Error reading order file: Invalid JSON format."
+                    )
+                    return jsonify(response_data), status_code
+        else:
+            response_data["error"] = f"Order file not found or is empty: {orders_file}"
+            return jsonify(response_data), status_code
+
+    except Exception as e:
+        logging.error(f"Error reading order file: {e}")
+        response_data["error"] = "Error reading order file."
+        response_data["message"] = str(e)
+        return jsonify(response_data), status_code
+
+    if order_detail:
+        # Get all check types from caseStatus
+        case_status = order_detail.get("caseStatus", {})
+
+        if case_status == "Completed":
+            issued_credentials = order_detail.get("IssuedCredentials", {})
+            check_type_data = issued_credentials.get(check_type, {})
+            credential_data = check_type_data.get("credential", {})
+            credentails_subject = credential_data.get("credentialSubject", {})
+            verified_checks_data = credentails_subject.get(check_type, {})
+
+            if verified_checks_data:
+                if update_check_type_file(
+                    check_type,
+                    verified_checks_data,
+                ):
+                    response_data["message"] = (
+                        f"Order details retrieved successfully. {check_type} Verified Data found, order updated."
+                    )
+                    response_data["success"] = True
+                    status_code = 200
+                else:
+                    response_data["error"] = (
+                        f"Order details retrieved successfully. {check_type} Verified Data Not found, Please Enter Different OrderId ."
+                    )
+                    response_data["success"] = False
+                    status_code = (
+                        500  # Changed status code to 500 for file update failure
+                    )
+            else:
+                response_data["error"] = (
+                    f"Order details retrieved successfully, but no Verified Data found for the specified {check_type} Checks"
+                )
+                response_data["success"] = (
+                    False  # Order retrieved successfully, but no data for checktype
+                )
+                status_code = 400
+        else:
+            response_data["error"] = "Order Status is not Completed."
+            status_code = 400
+    else:
+        response_data["error"] = "Order not found. Check OrderId entered."
+        status_code = 404
 
     return jsonify(response_data), status_code

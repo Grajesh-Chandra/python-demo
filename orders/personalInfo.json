@@ -1,1 +1,24 @@
-{"personalInfo": {"birthdate": "01-01-1990", "phoneNumber": "7666009585", "gender": "male", "verificationStatus": "Completed", "citizenship": "Indian", "verificationEvidence": {"evidenceName1": "letter", "evidenceURL1": "http://localhost"}, "birthCountry": "India", "nationalIdentification": {"idNumber1": "pan", "idType1": "askjd13212432d"}, "verificationRemarks": "Done", "email": "grajesh.c@affinidi.com", "maritalStatus": "married", "PIname": {"nickname": "Grajesh Testing", "familyName": "Chandra", "givenName": "Grajesh"}}}
+{
+    "birthdate": "01-01-1990",
+    "phoneNumber": "7666009585",
+    "gender": "male",
+    "verificationStatus": "Completed",
+    "citizenship": "Indian",
+    "verificationEvidence": {
+        "evidenceName1": "letter",
+        "evidenceURL1": "http://localhost"
+    },
+    "birthCountry": "India",
+    "nationalIdentification": {
+        "idNumber1": "pan",
+        "idType1": "askjd13212432d"
+    },
+    "verificationRemarks": "Done",
+    "email": "grajesh.c@affinidi.com",
+    "maritalStatus": "married",
+    "PIname": {
+        "nickname": "Grajesh Testing",
+        "familyName": "Chandra",
+        "givenName": "Grajesh"
+    }
+}
