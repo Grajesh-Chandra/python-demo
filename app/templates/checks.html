@@ -281,6 +281,65 @@
         color: #2e7d32;
         margin: 1rem 0;
       }
+
+      /* Color coding for checklist items */
+      .check-success {
+        color: green !important;
+      }
+      .check-failure {
+        color: red !important;
+      }
+      #snackbar {
+        visibility: hidden;
+        min-width: 250px;
+        margin-left: -125px;
+        background-color: #333;
+        color: #fff;
+        text-align: center;
+        border-radius: 2px;
+        padding: 16px;
+        position: fixed;
+        z-index: 1;
+        left: 50%;
+        top: 30px;
+      }
+
+      #snackbar.show {
+        visibility: visible;
+        -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
+        animation: fadein 0.5s, fadeout 0.5s 2.5s;
+      }
+
+      @-webkit-keyframes fadein {
+        from {top: 0; opacity: 0;}
+        to {top: 30px; opacity: 1;}
+      }
+
+      @keyframes fadein {
+        from {top: 0; opacity: 0;}
+        to {top: 30px; opacity: 1;}
+      }
+
+      @-webkit-keyframes fadeout {
+        from {opacity: 1;}
+        to {opacity: 0;}
+      }
+
+      @keyframes fadeout {
+        from {opacity: 1;}
+        to {opacity: 0;}
+      }
+
+      /* New styles for process result messages */
+      .success-message {
+        color: green;
+      }
+      .failure-message {
+        color: red;
+      }
+      .error-message {
+        color: darkred;
+      }
     </style>
   </head>
   <body>
@@ -291,7 +350,7 @@
       <form id="backgroundCheckForm">
         <div class="form-group">
           <div class="check-row">
-            <label for="personalInfo">Personal Information Checks </label>
+            <label for="personalInfo" id="personalInfoLabel" class="check-failure">Personal Information Checks </label>
             <input type="checkbox" id="personalInfo" name="personalInfo" />
           </div>
           <div
@@ -409,7 +468,7 @@
 
         <div class="form-group">
           <div class="check-row">
-            <label for="address">Address Checks</label>
+            <label for="address" id="addressLabel" class="check-failure">Address Checks</label>
             <input type="checkbox" id="address" name="address" />
           </div>
           <div
@@ -522,7 +581,7 @@
 
         <div class="form-group">
           <div class="check-row">
-            <label for="education">Education Checks</label>
+            <label for="education" id="educationLabel" class="check-failure">Education Checks</label>
             <input type="checkbox" id="education" name="education" />
           </div>
           <div
@@ -635,7 +694,7 @@
 
         <div class="form-group">
           <div class="check-row">
-            <label for="employment">Employment Checks</label>
+            <label for="employment" id="employmentLabel" class="check-failure">Employment Checks</label>
             <input type="checkbox" id="employment" name="employment" />
           </div>
           <div
@@ -748,7 +807,7 @@
 
         <div class="form-group">
           <div class="check-row">
-            <label for="criminality">Civil Litigation Checks</label>
+            <label for="criminality" id="criminalityLabel" class="check-failure">Civil Litigation Checks</label>
             <input type="checkbox" id="criminality" name="criminality" />
           </div>
           <div
@@ -902,6 +961,10 @@
       <div class="message">Processing...</div>
     </div>
 
+    <div id="snackbar"></div>
+
+    <footer>&copy; 2025 Affinidi Private Limited. All rights reserved.</footer>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
       document.addEventListener("DOMContentLoaded", function () {
         const submitButton = document.getElementById("submitChecks");
@@ -912,18 +975,52 @@
           document.querySelectorAll('input[type="checkbox"]')
         ).filter((checkbox) => checkbox.name !== "consent");
         const processResults = {}; // To track processing status for each checklist
+        const snackbar = document.getElementById("snackbar");
+
+        function showSnackbar(message) {
+          snackbar.textContent = message;
+          snackbar.classList.add("show");
+          setTimeout(function () {
+            snackbar.classList.remove("show");
+          }, 3000);
+        }
 
         function updateSubmitButtonState() {
           const consentCheckbox = document.getElementById("consent");
           const filesUploaded = validateFileUploads();
+          let allChecksProcessed = true;
+
+          checkTypeCheckboxes.forEach((checkbox) => {
+            if (checkbox.checked) {
+              const checkId = checkbox.id;
+              // If the checkbox is checked, we expect a 'true' value in processResults
+              if (!processResults.hasOwnProperty(checkId) || processResults[checkId] !== true) {
+                // If the check is selected but not successfully processed, set to false
+                allChecksProcessed = false;
+              }
+              // Additionally, if the upload option is selected, ensure a file is uploaded
+              const personalInfoOption = document.querySelector(
+                `input[name="${checkId}Option"]:checked`
+              );
+              if (personalInfoOption && personalInfoOption.value === "upload") {
+                const fileInput = document.getElementById(checkId + "Doc");
+                if (!fileInput || fileInput.files.length === 0) {
+                  allChecksProcessed = false; // Consider file upload as part of the criteria
+                }
+              }
+            }
+          });
+
           console.log("updateSubmitButtonState called:");
           console.log(
             "  Consent checked:",
             consentCheckbox.checked,
             " - Files Uploaded:",
-            filesUploaded
+            filesUploaded,
+            " - All Checks Processed:",
+            allChecksProcessed
           );
-          submitButton.disabled = !(consentCheckbox.checked && filesUploaded);
+          submitButton.disabled = !(consentCheckbox.checked && (filesUploaded || !checkTypeCheckboxes.some(cb => cb.checked && document.querySelector(`input[name="${cb.id}Option"]:checked`)?.value === 'upload')) && allChecksProcessed);
           console.log("  Submit button disabled:", submitButton.disabled);
         }
 
@@ -1055,6 +1152,11 @@
         function handleCheckboxChange(checkbox) {
           const checkId = checkbox.id;
           const optionsContainer = document.getElementById(checkId + "Options"); // Using '0' as per your HTML
+          const label = document.getElementById(checkId + "Label");
+          if (label) {
+            label.classList.add("check-failure");
+            label.classList.remove("check-success");
+          }
 
           if (optionsContainer) {
             if (checkbox.checked) {
@@ -1214,6 +1316,7 @@
             const resultDiv = document.getElementById(`${checkId}UploadResult`);
             if (resultDiv) {
               resultDiv.textContent = ""; // Clear any previous result message
+              resultDiv.className = "process-result"; // Reset classes
             }
             processResults[checkId] = false; // Reset the processing status for this check
             updateSubmitButtonState();
@@ -1240,16 +1343,22 @@
           button.addEventListener("click", function () {
             const checkTypeFull = this.id.replace("process", "");
             let checkType = "";
+            let labelId = "";
             if (checkTypeFull.includes("PersonalInfo")) {
               checkType = "personalInfo";
+              labelId = "personalInfoLabel";
             } else if (checkTypeFull.includes("Address")) {
               checkType = "address";
+              labelId = "addressLabel";
             } else if (checkTypeFull.includes("Education")) {
               checkType = "education";
+              labelId = "educationLabel";
             } else if (checkTypeFull.includes("Employment")) {
               checkType = "employment";
+              labelId = "employmentLabel";
             } else if (checkTypeFull.includes("Criminality")) {
               checkType = "criminality";
+              labelId = "criminalityLabel";
             }
             const optionPart = checkTypeFull.replace(
               checkType.charAt(0).toUpperCase() + checkType.slice(1),
@@ -1268,6 +1377,7 @@
             }Result`;
             const resultDiv = document.getElementById(resultDivId);
             const processButton = this; // Store the button element
+            const labelElement = document.getElementById(labelId);
 
             console.log(
               "Processing request for:",
@@ -1280,6 +1390,8 @@
 
             if (resultDiv) {
               resultDiv.textContent = "Processing...";
+              resultDiv.className = "process-result"; // Reset classes
+              showSnackbar("Processing...");
               const loadingOverlay = document.getElementById("loadingOverlay");
               loadingOverlay.style.display = "flex";
 
@@ -1296,6 +1408,8 @@
                 } else {
                   console.error("No file selected for upload.");
                   resultDiv.textContent = "Error: No file selected.";
+                  resultDiv.classList.add("error-message");
+                  showSnackbar("Processing Failed");
                   loadingOverlay.style.display = "none";
                   return;
                 }
@@ -1328,14 +1442,22 @@
                       resultDiv.textContent = `Success: ${
                         data.message || "Processed successfully."
                       }`;
+                      resultDiv.classList.add("success-message");
                       processResults[checkType] = true;
                       processButton.style.display = "none"; // Hide the process button on success
+                      if (labelElement) {
+                        labelElement.classList.remove("check-failure");
+                        labelElement.classList.add("check-success");
+                      }
+                      showSnackbar("Successfully Processed");
                     } else {
                       resultDiv.textContent = `Failure: ${
                         data.error || "Processing failed."
                       }`;
+                      resultDiv.classList.add("failure-message");
                       processResults[checkType] = false;
                       processButton.style.display = "none"; // Hide the process button on failure
+                      showSnackbar("Processing Failed");
                     }
                     updateSubmitButtonState();
                   })
@@ -1346,25 +1468,27 @@
                       error
                     );
                     resultDiv.textContent = `Error: An error occurred.`;
+                    resultDiv.classList.add("error-message");
                     processResults[checkType] = false;
                     processButton.style.display = "none"; // Hide the process button on error
+                    showSnackbar("Processing Failed");
                     updateSubmitButtonState();
                   });
               } else {
                 loadingOverlay.style.display = "none";
                 resultDiv.textContent = `Error: API endpoint not defined for ${checkType} (${option}).`;
+                resultDiv.classList.add("error-message");
                 processResults[checkType] = false;
+                showSnackbar("Processing Failed");
                 updateSubmitButtonState();
               }
             } else {
               console.error(`Result div with ID ${resultDivId} not found.`);
+              showSnackbar("Processing Failed");
             }
           });
         });
       });
     </script>
-
-    <footer>&copy; 2025 Affinidi Private Limited. All rights reserved.</footer>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   </body>
 </html>
