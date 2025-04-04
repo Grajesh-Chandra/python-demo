@@ -95,6 +95,12 @@
         color: red;
         margin-left: 5px;
       }
+      /* CSS for word wrapping in the Checks column */
+      #ordersTable td:nth-child(2) { /* Selects the second column (Checks) */
+        width: 300px; /* Adjust the width as needed */
+        word-wrap: break-word;
+        white-space: normal;
+      }
     </style>
   </head>
   <body>
@@ -269,7 +275,7 @@
             }
           }
           checksCell.textContent = activeChecks.join(", "); // Join the active check names with commas
-          checksCell.style.whiteSpace = "normal";
+          //checksCell.style.whiteSpace = "normal";
 
           // Consent
           const consentCell = row.insertCell();
