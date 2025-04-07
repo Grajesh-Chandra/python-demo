@@ -1166,6 +1166,7 @@
         if (goBackButton) {
           goBackButton.addEventListener("click", function () {
             clearAllCheckboxesState();
+            localStorage.clear();
             window.history.back();
           });
         }
@@ -1173,7 +1174,6 @@
         if (clearButton) {
           clearButton.addEventListener("click", function () {
             clearAllCheckboxesState();
-            location.reload();
             localStorage.clear();
             console.log("All checkboxes cleared and page reloaded.");
           });
