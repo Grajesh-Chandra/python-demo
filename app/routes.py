@@ -2394,6 +2394,11 @@ def process_trigger():
         status_code = 500
         return jsonify(response_data), status_code
     else:
+        if "vpToken" not in response:
+            response_data["error"] = "vpToken not found in IOTA response."
+            status_code = 500
+            return jsonify(response_data), status_code
+
         vpToken_received_str = response.get("vpToken", "")
         try:
             vpToken_received = json.loads(vpToken_received_str)
@@ -2406,51 +2411,46 @@ def process_trigger():
         if isinstance(vpToken_received, dict):
             vc_data = vpToken_received.get("verifiableCredential", [])
             print("vc_data", vc_data)
+            credential_subject = None
+            if vc_data and isinstance(vc_data, list):
+                for credential in vc_data:
+                    if isinstance(credential, dict):
+                        credential_subject = credential.get("credentialSubject", {})
+                        if credential_subject and check_type in credential_subject:
+                            break
+            if credential_subject:
+                check_type_data = credential_subject.get(check_type, {})
+                print(f"check_type_data for {check_type}", check_type_data)
 
-            if vc_data and isinstance(vc_data, list) and len(vc_data) > 0:
-                credential = vc_data[0]
-                if isinstance(credential, dict):
-                    credential_subject = credential.get("credentialSubject", {})
-                    print("credential_subject", credential_subject)
-
-                    check_type_data = credential_subject.get(check_type, {})
-                    print(f"check_type_data for {check_type}", check_type_data)
-
-                    if check_type_data:
-                        if update_check_type_file(check_type, credential_subject=check_type_data):
-                            response_data["message"] = (
-                                f"IOTA process completed successfully. {check_type} data updated."
-                            )
-                            response_data["success"] = True
-                            status_code = 200
-                        else:
-                            response_data["error"] = (
-                                f"IOTA process completed but failed to update {check_type} file."
-                            )
-                            response_data["success"] = False
-                            status_code = 500
+                if check_type_data:
+                    if update_check_type_file(
+                        check_type, credential_subject=check_type_data
+                    ):
+                        response_data["message"] = (
+                            f"IOTA process completed successfully. {check_type} data updated."
+                        )
+                        response_data["success"] = True
+                        status_code = 200
                     else:
                         response_data["error"] = (
-                            f"CheckType '{check_type}' data not found in IOTA response."
+                            f"IOTA process completed but failed to update {check_type} file."
                         )
-                        status_code = 400
+                        response_data["success"] = False
+                        status_code = 500
                 else:
                     response_data["error"] = (
-                        "Unexpected format for verifiableCredential."
+                        f"CheckType '{check_type}' data not found in IOTA response."
                     )
-                    status_code = 500
+                    status_code = 400
             else:
-                response_data["error"] = (
-                    "verifiableCredential not found or is empty in vpToken."
-                )
-                status_code = 400
+                response_data["error"] = "Unexpected format for verifiableCredential."
+                status_code = 500
         else:
             response_data["error"] = (
-                "IOTA API returned an unexpected response format for vpToken."
+                "verifiableCredential not found or is empty in vpToken."
             )
-            status_code = 500
-
-        return jsonify(response_data), status_code
+            status_code = 400
+    return jsonify(response_data), status_code
 
 
 def iota_complete(correlationId, transactionId, code):
