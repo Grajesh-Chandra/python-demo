@@ -31,6 +31,7 @@ import qrcode
 import datetime
 import jwt  # PyJWT library for JWT handling
 import time
+import affinidi_tdk_iota_client
 
 api_gateway_url = os.environ.get("API_GATEWAY_URL")
 token_endpoint = os.environ.get("TOKEN_ENDPOINT")
@@ -61,6 +62,8 @@ CHECKS_DATA_DIR = "orders"
 TOKEN_FILE_PATH = "orders/pst_response.jwt"
 ISSUANCE_STATUS_URL = "http://127.0.0.1:8010/api/issuance/status"  # Or configurable URL
 
+iota_config_id = os.environ.get("IOTA_CONFIG_ID")
+iota_query_id = os.environ.get("IOTA_AVVANZ_CREDENTIAL_QUERY")
 
 @app.route("/create-case")
 def case():
@@ -74,7 +77,8 @@ def completed():
 
 @app.route("/checks")
 def checks():
-    return render_template("checks.html")
+    code = request.args.get("response_code")
+    return render_template("checks.html", response_code=code)
 
 
 @app.route("/")
@@ -1931,6 +1935,9 @@ def startIssuance(payload_for_issuance_api):
 
 
 def update_check_type_file(check_type, credential_subject):
+    print(f"Updating file for check type: {check_type}")
+
+    # Define the directory where the files will be stored
     file_path = os.path.join(CHECKS_DATA_DIR, f"{check_type}.json")
     # Ensure the directory exists
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
@@ -2263,3 +2270,218 @@ def process_order_id():
         status_code = 404
 
     return jsonify(response_data), status_code
+
+@app.route("/api/iota-start", methods=["POST"])
+def process_iota_trigger():
+
+
+    response_data = {
+        "success": False,
+        "error": None,
+        "message": None,
+    }
+    status_code = 400
+
+
+    nonce = request.json.get("nonce")
+    if not nonce:
+        response_data["error"] = "Missing nonce in request body"
+        return jsonify(response_data), status_code
+
+    redirectURI = request.json.get("redirectUri")
+
+    if not redirectURI:
+        response_data["error"] = "Missing redirectURI in request body"
+        return jsonify(response_data), status_code
+
+    # call iota_start function
+    iota_response = iota_start(nonce, redirectURI)
+    if isinstance(iota_response, dict) and iota_response.get("success") == False:
+        response_data["error"] = iota_response.get("error")
+        status_code = 500
+        return jsonify(response_data), status_code
+    else:
+        # Process the response from iota_start
+        # For example, you might want to save the response or send it back to the client
+        print("IOTA response:", iota_response)
+        data = iota_response.get("data", {})
+        if data:
+            json_response = {
+                "correlationId": data.get("correlationId", ""),
+                "transactionId": data.get("transactionId", ""),
+                "vaultLink": vault_url + '/login?request=' + data.get("jwt", "" ),
+            }
+            print ("json_response", json_response)
+            return jsonify(json_response), 200
+        else:
+            return jsonify(iota_response), 500
+
+
+def iota_start(nonce, redirectURI):
+    try:
+        configuration = affinidi_tdk_iota_client.Configuration()
+
+        # Pass the projectScopedToken generated from AuthProvider package
+        configuration.api_key['ProjectTokenAuth'] = pst()
+
+        with affinidi_tdk_iota_client.ApiClient(configuration) as api_client:
+            api_instance = affinidi_tdk_iota_client.IotaApi(api_client)
+
+        request_json = {
+            "configurationId": iota_config_id,
+            "mode": "redirect",
+            "queryId": iota_query_id,
+            "correlationId": uuid.uuid4().hex,
+            "nonce": nonce,
+            "redirectUri": redirectURI,
+        }
+
+        initiate_data_sharing_request_input = affinidi_tdk_iota_client.InitiateDataSharingRequestInput.from_dict(request_json)
+        initiateDataSharingRequestResponse = api_instance.initiate_data_sharing_request(initiate_data_sharing_request_input)
+
+        response = initiateDataSharingRequestResponse.to_dict() if hasattr(initiateDataSharingRequestResponse, 'to_dict') else initiateDataSharingRequestResponse
+        print("response", response) if isinstance(response, dict) else print("response", response)
+        return response
+    except Exception as e:
+        logging.error(f"Error processing checks: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/process-trigger", methods=["POST"])
+def process_trigger():
+    requestCheckType = request.json.get("checkType")
+    if requestCheckType == "criminality":
+        check_type = "criminal"
+    else:
+        check_type = requestCheckType
+    response_data = {
+        "success": False,
+        "error": None,
+        "message": None,
+        "checkType": requestCheckType,
+    }
+    status_code = 400
+
+    print("request", request.json)
+
+    if not check_type:
+        response_data["error"] = "Missing CheckType in request arguments"
+        return jsonify(response_data), status_code
+    if not request.json.get("code"):
+        response_data["error"] = "Missing code in request body"
+        return jsonify(response_data), status_code
+    if not request.json.get("nonce"):
+        response_data["error"] = "Missing nonce in request body"
+        return jsonify(response_data), status_code
+    if not request.json.get("correlationId"):
+        response_data["error"] = "Missing correlationId in request body"
+        return jsonify(response_data), status_code
+    if not request.json.get("transactionId"):
+        response_data["error"] = "Missing transactionId in request body"
+        return jsonify(response_data), status_code
+
+    response = iota_complete(
+        request.json.get("correlationId"),
+        request.json.get("transactionId"),
+        request.json.get("code"),
+    )
+    if isinstance(response, dict) and response.get("success") == False:
+        response_data["error"] = response.get("error")
+        status_code = 500
+        return jsonify(response_data), status_code
+    elif isinstance(response, str):
+        response_data["error"] = "IOTA API returned an unexpected string response."
+        status_code = 500
+        return jsonify(response_data), status_code
+    else:
+        vpToken_received_str = response.get("vpToken", "")
+        try:
+            vpToken_received = json.loads(vpToken_received_str)
+        except json.JSONDecodeError:
+            response_data["error"] = "Failed to decode vpToken from IOTA response."
+            status_code = 500
+            return jsonify(response_data), status_code
+
+        # Check if vpToken_received is a dictionary
+        if isinstance(vpToken_received, dict):
+            vc_data = vpToken_received.get("verifiableCredential", [])
+            print("vc_data", vc_data)
+
+            if vc_data and isinstance(vc_data, list) and len(vc_data) > 0:
+                credential = vc_data[0]
+                if isinstance(credential, dict):
+                    credential_subject = credential.get("credentialSubject", {})
+                    print("credential_subject", credential_subject)
+
+                    check_type_data = credential_subject.get(check_type, {})
+                    print(f"check_type_data for {check_type}", check_type_data)
+
+                    if check_type_data:
+                        if update_check_type_file(check_type, credential_subject=check_type_data):
+                            response_data["message"] = (
+                                f"IOTA process completed successfully. {check_type} data updated."
+                            )
+                            response_data["success"] = True
+                            status_code = 200
+                        else:
+                            response_data["error"] = (
+                                f"IOTA process completed but failed to update {check_type} file."
+                            )
+                            response_data["success"] = False
+                            status_code = 500
+                    else:
+                        response_data["error"] = (
+                            f"CheckType '{check_type}' data not found in IOTA response."
+                        )
+                        status_code = 400
+                else:
+                    response_data["error"] = (
+                        "Unexpected format for verifiableCredential."
+                    )
+                    status_code = 500
+            else:
+                response_data["error"] = (
+                    "verifiableCredential not found or is empty in vpToken."
+                )
+                status_code = 400
+        else:
+            response_data["error"] = (
+                "IOTA API returned an unexpected response format for vpToken."
+            )
+            status_code = 500
+
+        return jsonify(response_data), status_code
+
+
+def iota_complete(correlationId, transactionId, code):
+    try:
+        configuration = affinidi_tdk_iota_client.Configuration()
+        # Pass the projectScopedToken generated from AuthProvider package
+        configuration.api_key['ProjectTokenAuth'] = pst()
+
+        with affinidi_tdk_iota_client.ApiClient(configuration) as api_client:
+            api_instance = affinidi_tdk_iota_client.IotaApi(api_client)
+
+        request_json = {
+            "configurationId": os.environ.get("IOTA_CONFIG_ID"),
+            "correlationId": correlationId,
+            "transactionId": transactionId,
+            "responseCode": code,
+        }
+
+        print("request_json", request_json)
+
+        # Create an instance of the input model
+        fetch_iota_vp_response_input = affinidi_tdk_iota_client.FetchIOTAVPResponseInput.from_dict(request_json)
+
+        # Call the method on the api_instance
+        iotaVPResponse = api_instance.fetch_iota_vp_response(
+            fetch_iota_vp_response_input
+        )
+
+        response = iotaVPResponse.to_dict() if hasattr(iotaVPResponse, 'to_dict') else iotaVPResponse
+
+        return response
+    except Exception as e:
+        logging.error(f"Error processing checks: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
