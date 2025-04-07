@@ -592,7 +592,9 @@
                 value="trigger"
                 id="addressTriggerOption"
               />
-              <label for="addressTriggerOption">Share your Digital Credentials</label>
+              <label for="addressTriggerOption"
+                >Share your Digital Credentials</label
+              >
             </div>
             <div class="option-content" id="addressTriggerContent">
               <button
@@ -707,7 +709,9 @@
                 value="trigger"
                 id="educationTriggerOption"
               />
-              <label for="educationTriggerOption">Share your Digital Credentials</label>
+              <label for="educationTriggerOption"
+                >Share your Digital Credentials</label
+              >
             </div>
             <div class="option-content" id="educationTriggerContent">
               <button
@@ -822,7 +826,9 @@
                 value="trigger"
                 id="employmentTriggerOption"
               />
-              <label for="employmentTriggerOption">Share your Digital Credentials</label>
+              <label for="employmentTriggerOption"
+                >Share your Digital Credentials</label
+              >
             </div>
             <div class="option-content" id="employmentTriggerContent">
               <button
@@ -938,7 +944,9 @@
                 value="trigger"
                 id="criminalityTriggerOption"
               />
-              <label for="criminalityTriggerOption">Share your Digital Credentials</label>
+              <label for="criminalityTriggerOption"
+                >Share your Digital Credentials</label
+              >
             </div>
             <div class="option-content" id="criminalityTriggerContent">
               <button
@@ -972,12 +980,10 @@
           <button type="button" class="btn btn-warning" id="goBackButton">
             Go Back
           </button>
-                    <button type="button" class="btn btn-warning" id="clear">
-           Clear
+          <button type="button" class="btn btn-warning" id="clear">
+            Clear
           </button>
         </div>
-
-
       </form>
 
       <div id="orderConfirmation" style="display: none">
@@ -1006,622 +1012,747 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
       document.addEventListener("DOMContentLoaded", function () {
-  const submitButton = document.getElementById("submitChecks");
-  const backgroundCheckForm = document.getElementById("backgroundCheckForm");
-  const checkTypeCheckboxes = Array.from(
-    document.querySelectorAll('input[type="checkbox"]')
-  ).filter((checkbox) => checkbox.name !== "consent");
-  let processResults = JSON.parse(localStorage.getItem("processResults")) || {};
-  const snackbar = document.getElementById("snackbar");
-  const goBackButton = document.getElementById("goBackButton");
-  const clearButton = document.getElementById("clear");
-
-  function showSnackbar(message) {
-    snackbar.textContent = message;
-    snackbar.classList.add("show");
-    setTimeout(function () {
-      snackbar.classList.remove("show");
-    }, 3000);
-  }
-
-  function saveProcessResults() {
-    localStorage.setItem("processResults", JSON.stringify(processResults));
-  }
-
-  function updateSubmitButtonState() {
-    const consentCheckbox = document.getElementById("consent");
-    let filesUploaded = validateFileUploads(); // Use let to allow reassignment
-    let atLeastOneSuccess = false;
-    let hasFailure = false;
-    let requiresUpload = false;
-
-    checkTypeCheckboxes.forEach((checkbox) => {
-      if (checkbox.checked) {
-        const checkId = checkbox.id;
-        const result = processResults[checkId] || { status: false, message: "" };
-        const selectedOption = document.querySelector(`input[name="${checkId}Option"]:checked`)?.value;
-
-        if (result.status === true) {
-          atLeastOneSuccess = true; // At least one check succeeded
-        } else if (result.status === false) {
-          hasFailure = true; // At least one check failed
-        }
-
-        // Check if "upload" is selected and no file is uploaded
-        if (selectedOption === "upload") {
-          requiresUpload = true;
-          const fileInput = document.getElementById(checkId + "Doc");
-          if (!fileInput || fileInput.files.length === 0) {
-            filesUploaded = false; // Reassign filesUploaded if a file is missing for "upload"
-          }
-        }
-      }
-    });
-
-    // Enable submit button if:
-    // 1. Consent is checked
-    // 2. At least one check is successful
-    // 3. No checked checks have failed
-    // 4. If "upload" is selected, files must be uploaded
-    submitButton.disabled = !(
-      consentCheckbox.checked &&
-      atLeastOneSuccess &&
-      !hasFailure
-      //&&
-      //(!requiresUpload || filesUploaded)
-    );
-
-    console.log("updateSubmitButtonState called:");
-    console.log("  Consent checked:", consentCheckbox.checked);
-    console.log("  At least one success:", atLeastOneSuccess);
-    console.log("  Has failure:", hasFailure);
-    console.log("  Requires upload:", requiresUpload);
-    console.log("  Files uploaded:", filesUploaded);
-    console.log("  Submit button disabled:", submitButton.disabled);
-  }
-
-  document.getElementById("consent").addEventListener("change", updateSubmitButtonState);
-  updateSubmitButtonState();
-
-  document.getElementById("submitChecks").addEventListener("click", function (event) {
-    event.preventDefault();
-    const consentCheckbox = document.getElementById("consent");
-    if (!consentCheckbox.checked) {
-      alert("Please provide your consent to proceed.");
-      return;
-    }
-
-    //if (!validateFileUploads()) {
-    //  alert("Please upload all required supporting documents.");
-    //  return;
-    //}
-
-    const orderId = generateOrderId();
-    document.getElementById("orderIdDisplay").textContent = orderId;
-
-    const formData = {
-      orderId: orderId,
-      checks: {
-        personalInfo: document.getElementById("personalInfo").checked,
-        address: document.getElementById("address").checked,
-        education: document.getElementById("education").checked,
-        employment: document.getElementById("employment").checked,
-        criminal: document.getElementById("criminality").checked,
-      },
-      consent: consentCheckbox.checked,
-    };
-
-    const loadingOverlay = document.getElementById("loadingOverlay");
-    loadingOverlay.style.display = "flex";
-
-    fetch("/save-order", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        loadingOverlay.style.display = "none";
-        if (data.success) {
-          document.getElementById("backgroundCheckForm").style.display = "none";
-          document.getElementById("orderConfirmation").style.display = "block";
-        } else {
-          alert("Failed to save order. Please try again.");
-        }
-      })
-      .catch((error) => {
-        loadingOverlay.style.display = "none";
-        console.error("Error:", error);
-        alert("An error occurred. Please try again.");
-      });
-  });
-
-  function generateOrderId() {
-    const timestamp = Date.now().toString(36);
-    const random = Math.random().toString(36).substring(2, 8);
-    return timestamp + "-" + random.toUpperCase();
-  }
-
-  if (goBackButton) {
-    goBackButton.addEventListener("click", function () {
-      clearAllCheckboxesState();
-      window.history.back();
-    });
-  }
-
-  if (clearButton) {
-    clearButton.addEventListener("click", function () {
-      clearAllCheckboxesState();
-      localStorage.clear();
-      location.reload();
-      showSnackbar("All selections cleared.");
-    });
-  }
-  function validateFileUploads() {
-    let allFilesUploaded = true;
-    checkTypeCheckboxes.forEach((checkbox) => {
-      if (checkbox.checked) {
-        const checkId = checkbox.id;
-        const personalInfoOption = document.querySelector(
-          `input[name="${checkId}Option"]:checked`
+        const submitButton = document.getElementById("submitChecks");
+        const backgroundCheckForm = document.getElementById(
+          "backgroundCheckForm"
         );
-        if (personalInfoOption && personalInfoOption.value === "upload") {
-          const fileInput = document.getElementById(checkId + "Doc");
-          if (!fileInput || fileInput.files.length === 0) {
-            allFilesUploaded = false;
-          }
+        const checkTypeCheckboxes = Array.from(
+          document.querySelectorAll('input[type="checkbox"]')
+        ).filter((checkbox) => checkbox.name !== "consent");
+        let processResults =
+          JSON.parse(localStorage.getItem("processResults")) || {};
+        const snackbar = document.getElementById("snackbar");
+        const goBackButton = document.getElementById("goBackButton");
+        const clearButton = document.getElementById("clear");
+
+        function showSnackbar(message) {
+          snackbar.textContent = message;
+          snackbar.classList.add("show");
+          setTimeout(function () {
+            snackbar.classList.remove("show");
+          }, 3000);
         }
-      }
-    });
-    return allFilesUploaded;
-  }
 
-  checkTypeCheckboxes.forEach((checkbox) => {
-    const optionsContainer = document.getElementById(checkbox.id + "Options");
-    if (!checkbox.checked && optionsContainer) {
-      optionsContainer.style.display = "none";
-    } else if (checkbox.checked && optionsContainer) {
-      optionsContainer.style.display = "flex";
-    }
-  });
-
-  function saveCheckboxState(checkId) {
-    const checkbox = document.getElementById(checkId);
-    const selectedRadio = document.querySelector(
-      `input[name="${checkId}Option"]:checked`
-    );
-    const state = {
-      checked: checkbox ? checkbox.checked : false,
-      radio: selectedRadio ? selectedRadio.value : null,
-      processResult: processResults[checkId] || { status: false, message: "" },
-    };
-    localStorage.setItem(`checkboxState_${checkId}`, JSON.stringify(state));
-  }
-
-  function restoreCheckboxesState() {
-    checkTypeCheckboxes.forEach((checkbox) => {
-      const checkId = checkbox.id;
-      const storedState = localStorage.getItem(`checkboxState_${checkId}`);
-      if (storedState) {
-        const state = JSON.parse(storedState);
-        checkbox.checked = state.checked;
-        processResults[checkId] = state.processResult;
-        handleCheckboxChange(checkbox);
-        if (state.radio) {
-          const radio = document.querySelector(
-            `input[name="${checkId}Option"][value="${state.radio}"]`
+        function saveProcessResults() {
+          localStorage.setItem(
+            "processResults",
+            JSON.stringify(processResults)
           );
-          if (radio) {
-            radio.checked = true;
-            const event = new Event("change");
-            radio.dispatchEvent(event);
+        }
+
+        function updateSubmitButtonState() {
+          const consentCheckbox = document.getElementById("consent");
+          let filesUploaded = validateFileUploads(); // Use let to allow reassignment
+          let atLeastOneSuccess = false;
+          let hasFailure = false;
+          let requiresUpload = false;
+
+          checkTypeCheckboxes.forEach((checkbox) => {
+            if (checkbox.checked) {
+              const checkId = checkbox.id;
+              const result = processResults[checkId] || {
+                status: false,
+                message: "",
+              };
+              const selectedOption = document.querySelector(
+                `input[name="${checkId}Option"]:checked`
+              )?.value;
+
+              if (result.status === true) {
+                atLeastOneSuccess = true; // At least one check succeeded
+              } else if (result.status === false) {
+                hasFailure = true; // At least one check failed
+              }
+
+              // Check if "upload" is selected and no file is uploaded
+              if (selectedOption === "upload") {
+                requiresUpload = true;
+                const fileInput = document.getElementById(checkId + "Doc");
+                if (!fileInput || fileInput.files.length === 0) {
+                  filesUploaded = false; // Reassign filesUploaded if a file is missing for "upload"
+                }
+              }
+            }
+          });
+
+          // Enable submit button if:
+          // 1. Consent is checked
+          // 2. At least one check is successful
+          // 3. No checked checks have failed
+          // 4. If "upload" is selected, files must be uploaded
+          submitButton.disabled = !(
+            (consentCheckbox.checked && atLeastOneSuccess && !hasFailure)
+            //&&
+            //(!requiresUpload || filesUploaded)
+          );
+
+          console.log("updateSubmitButtonState called:");
+          console.log("  Consent checked:", consentCheckbox.checked);
+          console.log("  At least one success:", atLeastOneSuccess);
+          console.log("  Has failure:", hasFailure);
+          console.log("  Requires upload:", requiresUpload);
+          console.log("  Files uploaded:", filesUploaded);
+          console.log("  Submit button disabled:", submitButton.disabled);
+        }
+
+        document
+          .getElementById("consent")
+          .addEventListener("change", updateSubmitButtonState);
+        updateSubmitButtonState();
+
+        document
+          .getElementById("submitChecks")
+          .addEventListener("click", function (event) {
+            event.preventDefault();
+            const consentCheckbox = document.getElementById("consent");
+            if (!consentCheckbox.checked) {
+              alert("Please provide your consent to proceed.");
+              return;
+            }
+
+            if (!validateFileUploads()) {
+              alert("Please upload all required supporting documents.");
+              return;
+            }
+
+            const orderId = generateOrderId();
+            document.getElementById("orderIdDisplay").textContent = orderId;
+
+            const formData = {
+              orderId: orderId,
+              checks: {
+                personalInfo: document.getElementById("personalInfo").checked,
+                address: document.getElementById("address").checked,
+                education: document.getElementById("education").checked,
+                employment: document.getElementById("employment").checked,
+                criminal: document.getElementById("criminality").checked,
+              },
+              consent: consentCheckbox.checked,
+            };
+
+            const loadingOverlay = document.getElementById("loadingOverlay");
+            loadingOverlay.style.display = "flex";
+
+            fetch("/save-order", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(formData),
+            })
+              .then((response) => response.json())
+              .then((data) => {
+                loadingOverlay.style.display = "none";
+                if (data.success) {
+                  document.getElementById("backgroundCheckForm").style.display =
+                    "none";
+                  document.getElementById("orderConfirmation").style.display =
+                    "block";
+                } else {
+                  alert("Failed to save order. Please try again.");
+                }
+              })
+              .catch((error) => {
+                loadingOverlay.style.display = "none";
+                console.error("Error:", error);
+                alert("An error occurred. Please try again.");
+              });
+          });
+
+        function generateOrderId() {
+          const timestamp = Date.now().toString(36);
+          const random = Math.random().toString(36).substring(2, 8);
+          return timestamp + "-" + random.toUpperCase();
+        }
+
+        if (goBackButton) {
+          goBackButton.addEventListener("click", function () {
+            clearAllCheckboxesState();
+            window.history.back();
+          });
+        }
+
+        if (clearButton) {
+          clearButton.addEventListener("click", function () {
+            clearAllCheckboxesState();
+            location.reload();
+            localStorage.clear();
+            console.log("All checkboxes cleared and page reloaded.");
+          });
+        }
+
+        function validateFileUploads() {
+          let allFilesUploaded = true;
+          checkTypeCheckboxes.forEach((checkbox) => {
+            if (checkbox.checked) {
+              const checkId = checkbox.id;
+              const personalInfoOption = document.querySelector(
+                `input[name="${checkId}Option"]:checked`
+              );
+              if (personalInfoOption && personalInfoOption.value === "upload") {
+                const fileInput = document.getElementById(checkId + "Doc");
+                if (!fileInput || fileInput.files.length === 0) {
+                  allFilesUploaded = false;
+                }
+              }
+            }
+          });
+          return allFilesUploaded;
+        }
+
+        checkTypeCheckboxes.forEach((checkbox) => {
+          const optionsContainer = document.getElementById(
+            checkbox.id + "Options"
+          );
+          if (!checkbox.checked && optionsContainer) {
+            optionsContainer.style.display = "none";
+          } else if (checkbox.checked && optionsContainer) {
+            optionsContainer.style.display = "flex";
           }
+        });
+
+        function saveCheckboxState(checkId) {
+          const checkbox = document.getElementById(checkId);
+          const selectedRadio = document.querySelector(
+            `input[name="${checkId}Option"]:checked`
+          );
+          const state = {
+            checked: checkbox ? checkbox.checked : false,
+            radio: selectedRadio ? selectedRadio.value : null,
+            processResult: processResults[checkId] || {
+              status: false,
+              message: "",
+            },
+          };
+          localStorage.setItem(
+            `checkboxState_${checkId}`,
+            JSON.stringify(state)
+          );
         }
-        const resultDiv = document.getElementById(
-          `${checkId}${state.radio ? state.radio.charAt(0).toUpperCase() + state.radio.slice(1) : ""}Result`
-        );
-        if (resultDiv && processResults[checkId]?.message) {
-          resultDiv.textContent = processResults[checkId].message;
-          resultDiv.className = "process-result";
-          if (processResults[checkId].status) {
-            resultDiv.classList.add("success-message");
-          } else {
-            resultDiv.classList.add("failure-message");
+
+        function restoreCheckboxesState() {
+          checkTypeCheckboxes.forEach((checkbox) => {
+            const checkId = checkbox.id;
+            const storedState = localStorage.getItem(
+              `checkboxState_${checkId}`
+            );
+            if (storedState) {
+              const state = JSON.parse(storedState);
+              checkbox.checked = state.checked;
+              processResults[checkId] = state.processResult;
+              handleCheckboxChange(checkbox);
+              if (state.radio) {
+                const radio = document.querySelector(
+                  `input[name="${checkId}Option"][value="${state.radio}"]`
+                );
+                if (radio) {
+                  radio.checked = true;
+                  const event = new Event("change");
+                  radio.dispatchEvent(event);
+                }
+              }
+              const resultDiv = document.getElementById(
+                `${checkId}${
+                  state.radio
+                    ? state.radio.charAt(0).toUpperCase() + state.radio.slice(1)
+                    : ""
+                }Result`
+              );
+              if (resultDiv && processResults[checkId]?.message) {
+                resultDiv.textContent = processResults[checkId].message;
+                resultDiv.className = "process-result";
+                if (processResults[checkId].status) {
+                  resultDiv.classList.add("success-message");
+                } else {
+                  resultDiv.classList.add("failure-message");
+                }
+              }
+            }
+          });
+          saveProcessResults();
+        }
+
+        function clearCheckboxState(checkId) {
+          localStorage.removeItem(`checkboxState_${checkId}`);
+        }
+
+        function clearAllCheckboxesState() {
+          checkTypeCheckboxes.forEach((checkbox) => {
+            localStorage.removeItem(`checkboxState_${checkbox.id}`);
+          });
+          processResults = {};
+          saveProcessResults();
+        }
+
+        function handleCheckboxChange(checkbox) {
+          const checkId = checkbox.id;
+          const optionsContainer = document.getElementById(checkId + "Options");
+          const label = document.getElementById(checkId + "Label");
+
+          if (label) {
+            if (processResults[checkId]?.status === true) {
+              label.classList.add("check-success");
+              label.classList.remove("check-failure");
+            } else {
+              label.classList.add("check-failure");
+              label.classList.remove("check-success");
+            }
           }
-        }
-      }
-    });
-    saveProcessResults();
-  }
 
-  function clearCheckboxState(checkId) {
-    localStorage.removeItem(`checkboxState_${checkId}`);
-  }
-
-  function clearAllCheckboxesState() {
-    checkTypeCheckboxes.forEach((checkbox) => {
-      localStorage.removeItem(`checkboxState_${checkbox.id}`);
-    });
-    processResults = {};
-    saveProcessResults();
-  }
-
-  function handleCheckboxChange(checkbox) {
-    const checkId = checkbox.id;
-    const optionsContainer = document.getElementById(checkId + "Options");
-    const label = document.getElementById(checkId + "Label");
-
-    if (label) {
-      if (processResults[checkId]?.status === true) {
-        label.classList.add("check-success");
-        label.classList.remove("check-failure");
-      } else {
-        label.classList.add("check-failure");
-        label.classList.remove("check-success");
-      }
-    }
-
-    if (optionsContainer) {
-      if (checkbox.checked) {
-        optionsContainer.style.display = "flex";
-        const storedState = localStorage.getItem(`checkboxState_${checkId}`);
-        if (!storedState) {
-          const firstRadio = optionsContainer.querySelector('input[type="radio"]');
-          if (firstRadio) {
-            firstRadio.checked = true;
-            const event = new Event("change");
-            firstRadio.dispatchEvent(event);
+          if (optionsContainer) {
+            if (checkbox.checked) {
+              optionsContainer.style.display = "flex";
+              const storedState = localStorage.getItem(
+                `checkboxState_${checkId}`
+              );
+              if (!storedState) {
+                const firstRadio = optionsContainer.querySelector(
+                  'input[type="radio"]'
+                );
+                if (firstRadio) {
+                  firstRadio.checked = true;
+                  const event = new Event("change");
+                  firstRadio.dispatchEvent(event);
+                }
+              }
+            } else {
+              optionsContainer.style.display = "none";
+            }
+            saveCheckboxState(checkId);
           }
+          updateSubmitButtonState();
         }
-      } else {
-        optionsContainer.style.display = "none";
-      }
-      saveCheckboxState(checkId);
-    }
-    updateSubmitButtonState();
-  }
 
-  checkTypeCheckboxes.forEach((checkbox) => {
-    checkbox.addEventListener("change", function () {
-      handleCheckboxChange(this);
-    });
-  });
+        checkTypeCheckboxes.forEach((checkbox) => {
+          checkbox.addEventListener("change", function () {
+            handleCheckboxChange(this);
+          });
+        });
 
-  document.querySelectorAll('.option-container input[type="radio"]').forEach((radio) => {
-    radio.addEventListener("change", function () {
-      const containerId = radio.closest(".option-container").id;
-      const checkId = containerId.replace("Options", "");
-      const checkbox = document.getElementById(checkId);
+        document
+          .querySelectorAll('.option-container input[type="radio"]')
+          .forEach((radio) => {
+            radio.addEventListener("change", function () {
+              const containerId = radio.closest(".option-container").id;
+              const checkId = containerId.replace("Options", "");
+              const checkbox = document.getElementById(checkId);
 
-      if (checkbox.checked) {
-        saveCheckboxState(checkId);
-      }
+              if (checkbox.checked) {
+                saveCheckboxState(checkId);
+              }
 
-      const uploadProcessButton = document.getElementById(
-        `process${checkId.charAt(0).toUpperCase() + checkId.slice(1)}Upload`
-      );
-      const orderIdProcessButton = document.getElementById(
-        `process${checkId.charAt(0).toUpperCase() + checkId.slice(1)}OrderId`
-      );
-      const triggerProcessButton = document.getElementById(
-        `process${checkId.charAt(0).toUpperCase() + checkId.slice(1)}Trigger`
-      );
+              const uploadProcessButton = document.getElementById(
+                `process${
+                  checkId.charAt(0).toUpperCase() + checkId.slice(1)
+                }Upload`
+              );
+              const orderIdProcessButton = document.getElementById(
+                `process${
+                  checkId.charAt(0).toUpperCase() + checkId.slice(1)
+                }OrderId`
+              );
+              const triggerProcessButton = document.getElementById(
+                `process${
+                  checkId.charAt(0).toUpperCase() + checkId.slice(1)
+                }Trigger`
+              );
 
-      const uploadContent = document.getElementById(checkId + "UploadContent");
-      const orderIdContent = document.getElementById(checkId + "OrderIdContent");
-      const triggerContent = document.getElementById(checkId + "TriggerContent");
+              const uploadContent = document.getElementById(
+                checkId + "UploadContent"
+              );
+              const orderIdContent = document.getElementById(
+                checkId + "OrderIdContent"
+              );
+              const triggerContent = document.getElementById(
+                checkId + "TriggerContent"
+              );
 
-      uploadContent.classList.remove("active");
-      orderIdContent.classList.remove("active");
-      triggerContent.classList.remove("active");
+              uploadContent.classList.remove("active");
+              orderIdContent.classList.remove("active");
+              triggerContent.classList.remove("active");
 
-      const resultDiv = document.getElementById(
-        `${checkId}${radio.value.charAt(0).toUpperCase() + radio.value.slice(1)}Result`
-      );
-      if (resultDiv && processResults[checkId]?.message) {
-        resultDiv.textContent = processResults[checkId].message;
-        resultDiv.className = "process-result";
-        if (processResults[checkId].status) {
-          resultDiv.classList.add("success-message");
-        } else {
-          resultDiv.classList.add("failure-message");
-        }
-      } else if (resultDiv) {
-        resultDiv.textContent = "";
-        resultDiv.className = "process-result";
-      }
+              const resultDiv = document.getElementById(
+                `${checkId}${
+                  radio.value.charAt(0).toUpperCase() + radio.value.slice(1)
+                }Result`
+              );
+              if (resultDiv && processResults[checkId]?.message) {
+                resultDiv.textContent = processResults[checkId].message;
+                resultDiv.className = "process-result";
+                if (processResults[checkId].status) {
+                  resultDiv.classList.add("success-message");
+                } else {
+                  resultDiv.classList.add("failure-message");
+                }
+              } else if (resultDiv) {
+                resultDiv.textContent = "";
+                resultDiv.className = "process-result";
+              }
 
-      if (radio.value === "upload") {
-        uploadProcessButton.style.display =
-          document.getElementById(checkId + "Doc").files.length > 0 ? "inline-block" : "none";
-        orderIdProcessButton.style.display = "none";
-        triggerProcessButton.style.display = "none";
-        uploadContent.classList.add("active");
-      } else if (radio.value === "orderId") {
-        orderIdProcessButton.style.display =
-          document.getElementById(checkId + "OrderId").value.trim() !== "" ? "inline-block" : "none";
-        uploadProcessButton.style.display = "none";
-        triggerProcessButton.style.display = "none";
-        orderIdContent.classList.add("active");
-      } else if (radio.value === "trigger") {
-        triggerProcessButton.style.display = "inline-block";
-        uploadProcessButton.style.display = "none";
-        orderIdProcessButton.style.display = "none";
-        triggerContent.classList.add("active");
-      }
-      updateSubmitButtonState();
-    });
-  });
+              if (radio.value === "upload") {
+                uploadProcessButton.style.display =
+                  document.getElementById(checkId + "Doc").files.length > 0
+                    ? "inline-block"
+                    : "none";
+                orderIdProcessButton.style.display = "none";
+                triggerProcessButton.style.display = "none";
+                uploadContent.classList.add("active");
+              } else if (radio.value === "orderId") {
+                orderIdProcessButton.style.display =
+                  document.getElementById(checkId + "OrderId").value.trim() !==
+                  ""
+                    ? "inline-block"
+                    : "none";
+                uploadProcessButton.style.display = "none";
+                triggerProcessButton.style.display = "none";
+                orderIdContent.classList.add("active");
+              } else if (radio.value === "trigger") {
+                triggerProcessButton.style.display = "inline-block";
+                uploadProcessButton.style.display = "none";
+                orderIdProcessButton.style.display = "none";
+                triggerContent.classList.add("active");
+              }
+              updateSubmitButtonState();
+            });
+          });
 
-  restoreCheckboxesState();
+        restoreCheckboxesState();
 
-  document.querySelectorAll('input[type="file"]').forEach((input) => {
-    input.addEventListener("change", function (e) {
-      const fileName = this.files[0]?.name || "No file chosen";
-      this.parentNode.querySelector(".file-name").textContent = fileName;
-      const checkId = this.id.replace("Doc", "");
-      const processButton = document.getElementById(
-        `process${checkId.charAt(0).toUpperCase() + checkId.slice(1)}Upload`
-      );
-      if (processButton) {
-        processButton.style.display = "inline-block";
-      }
-      updateSubmitButtonState();
-    });
-  });
-
-  document.querySelectorAll('input[type="text"]').forEach((input) => {
-    input.addEventListener("input", function (e) {
-      const checkId = this.id.replace("OrderId", "");
-      const processButton = document.getElementById(
-        `process${checkId.charAt(0).toUpperCase() + checkId.slice(1)}OrderId`
-      );
-      processButton.style.display = this.value.trim() !== "" ? "inline-block" : "none";
-      updateSubmitButtonState();
-    });
-  });
-
-  document.querySelectorAll(".process-button").forEach((button) => {
-    button.addEventListener("click", function () {
-      const checkTypeFull = this.id.replace("process", "");
-      let checkType = "";
-      let labelId = "";
-      if (checkTypeFull.includes("PersonalInfo")) {
-        checkType = "personalInfo";
-        labelId = "personalInfoLabel";
-      } else if (checkTypeFull.includes("Address")) {
-        checkType = "address";
-        labelId = "addressLabel";
-      } else if (checkTypeFull.includes("Education")) {
-        checkType = "education";
-        labelId = "educationLabel";
-      } else if (checkTypeFull.includes("Employment")) {
-        checkType = "employment";
-        labelId = "employmentLabel";
-      } else if (checkTypeFull.includes("Criminality")) {
-        checkType = "criminality";
-        labelId = "criminalityLabel";
-      }
-      const optionPart = checkTypeFull.replace(
-        checkType.charAt(0).toUpperCase() + checkType.slice(1),
-        ""
-      );
-      let option = "";
-      if (optionPart.includes("Upload")) {
-        option = "upload";
-      } else if (optionPart.includes("OrderId")) {
-        option = "orderId";
-      } else if (optionPart.includes("Trigger")) {
-        option = "trigger";
-      }
-      const resultDivId = `${checkType}${option.charAt(0).toUpperCase() + option.slice(1)}Result`;
-      const resultDiv = document.getElementById(resultDivId);
-      const processButton = this;
-      const labelElement = document.getElementById(labelId);
-
-      if (resultDiv) {
-        resultDiv.textContent = "Processing...";
-        resultDiv.className = "process-result";
-        const loadingOverlay = document.getElementById("loadingOverlay");
-        loadingOverlay.style.display = "flex";
-
-        let apiUrl = "";
-        let requestData = {};
-
-        if (option === "upload") {
-          apiUrl = `/api/process-upload?checkType=${checkType}`;
-          requestData = new FormData();
-          const fileInput = document.getElementById(`${checkType}Doc`);
-          if (fileInput && fileInput.files.length > 0) {
-            requestData.append("file", fileInput.files[0]);
-          } else {
-            resultDiv.textContent = "Error: No file selected.";
-            resultDiv.classList.add("error-message");
-            processResults[checkType] = { status: false, message: "Error: No file selected." };
-            showSnackbar("Processing Failed");
-            loadingOverlay.style.display = "none";
-            saveCheckboxState(checkType);
-            saveProcessResults();
+        document.querySelectorAll('input[type="file"]').forEach((input) => {
+          input.addEventListener("change", function (e) {
+            const fileName = this.files[0]?.name || "No file chosen";
+            this.parentNode.querySelector(".file-name").textContent = fileName;
+            const checkId = this.id.replace("Doc", "");
+            const processButton = document.getElementById(
+              `process${
+                checkId.charAt(0).toUpperCase() + checkId.slice(1)
+              }Upload`
+            );
+            if (processButton) {
+              processButton.style.display = "inline-block";
+            }
             updateSubmitButtonState();
-            return;
-          }
-        } else if (option === "orderId") {
-          apiUrl = `/api/process-orderid?checkType=${checkType}`;
-          const orderId = document.getElementById(`${checkType}OrderId`).value;
-          requestData = { orderId: orderId };
-        } else if (option === "trigger") {
-          const nonce = crypto.randomUUID().slice(0, 10);
-          const redirectUri = window.location.origin + window.location.pathname;
+          });
+        });
 
-          fetch("/api/iota-start", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", Accept: "application/json" },
-            body: JSON.stringify({ redirectUri, nonce }),
-          })
-            .then((response) => response.json())
-            .then((data) => {
-              loadingOverlay.style.display = "none";
-              if (!data.correlationId || !data.transactionId) {
-                resultDiv.textContent = "Failed to request credential: " + data.message;
-                resultDiv.classList.add("text-danger");
-                processResults[checkType] = {
-                  status: false,
-                  message: "Failed to request credential: " + data.message,
-                };
+        document.querySelectorAll('input[type="text"]').forEach((input) => {
+          input.addEventListener("input", function (e) {
+            const checkId = this.id.replace("OrderId", "");
+            const processButton = document.getElementById(
+              `process${
+                checkId.charAt(0).toUpperCase() + checkId.slice(1)
+              }OrderId`
+            );
+            processButton.style.display =
+              this.value.trim() !== "" ? "inline-block" : "none";
+            updateSubmitButtonState();
+          });
+        });
+
+        document.querySelectorAll(".process-button").forEach((button) => {
+          button.addEventListener("click", function () {
+            const checkTypeFull = this.id.replace("process", "");
+            let checkType = "";
+            let labelId = "";
+            if (checkTypeFull.includes("PersonalInfo")) {
+              checkType = "personalInfo";
+              labelId = "personalInfoLabel";
+            } else if (checkTypeFull.includes("Address")) {
+              checkType = "address";
+              labelId = "addressLabel";
+            } else if (checkTypeFull.includes("Education")) {
+              checkType = "education";
+              labelId = "educationLabel";
+            } else if (checkTypeFull.includes("Employment")) {
+              checkType = "employment";
+              labelId = "employmentLabel";
+            } else if (checkTypeFull.includes("Criminality")) {
+              checkType = "criminality";
+              labelId = "criminalityLabel";
+            }
+            const optionPart = checkTypeFull.replace(
+              checkType.charAt(0).toUpperCase() + checkType.slice(1),
+              ""
+            );
+            let option = "";
+            if (optionPart.includes("Upload")) {
+              option = "upload";
+            } else if (optionPart.includes("OrderId")) {
+              option = "orderId";
+            } else if (optionPart.includes("Trigger")) {
+              option = "trigger";
+            }
+            const resultDivId = `${checkType}${
+              option.charAt(0).toUpperCase() + option.slice(1)
+            }Result`;
+            const resultDiv = document.getElementById(resultDivId);
+            const processButton = this;
+            const labelElement = document.getElementById(labelId);
+
+            if (resultDiv) {
+              resultDiv.textContent = "Processing...";
+              resultDiv.className = "process-result";
+              const loadingOverlay = document.getElementById("loadingOverlay");
+              loadingOverlay.style.display = "flex";
+
+              let apiUrl = "";
+              let requestData = {};
+
+              if (option === "upload") {
+                apiUrl = `/api/process-upload?checkType=${checkType}`;
+                requestData = new FormData();
+                const fileInput = document.getElementById(`${checkType}Doc`);
+                if (fileInput && fileInput.files.length > 0) {
+                  requestData.append("file", fileInput.files[0]);
+                } else {
+                  resultDiv.textContent = "Error: No file selected.";
+                  resultDiv.classList.add("error-message");
+                  processResults[checkType] = {
+                    status: false,
+                    message: "Error: No file selected.",
+                  };
+                  showSnackbar("Processing Failed");
+                  loadingOverlay.style.display = "none";
+                  saveCheckboxState(checkType);
+                  saveProcessResults();
+                  updateSubmitButtonState();
+                  return;
+                }
+              } else if (option === "orderId") {
+                apiUrl = `/api/process-orderid?checkType=${checkType}`;
+                const orderId = document.getElementById(
+                  `${checkType}OrderId`
+                ).value;
+                requestData = { orderId: orderId };
+              } else if (option === "trigger") {
+                const nonce = crypto.randomUUID().slice(0, 10);
+                const redirectUri =
+                  window.location.origin + window.location.pathname;
+
+                fetch("/api/iota-start", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    Accept: "application/json",
+                  },
+                  body: JSON.stringify({ redirectUri, nonce }),
+                })
+                  .then((response) => response.json())
+                  .then((data) => {
+                    loadingOverlay.style.display = "none";
+                    if (!data.correlationId || !data.transactionId) {
+                      resultDiv.textContent =
+                        "Failed to request credential: " + data.message;
+                      resultDiv.classList.add("text-danger");
+                      processResults[checkType] = {
+                        status: false,
+                        message:
+                          "Failed to request credential: " + data.message,
+                      };
+                      saveCheckboxState(checkType);
+                      saveProcessResults();
+                      updateSubmitButtonState();
+                      return;
+                    }
+                    resultDiv.textContent = "Redirecting to vault...";
+                    const toStore = {
+                      nonce,
+                      correlationId: data.correlationId,
+                      transactionId: data.transactionId,
+                      checkType: checkType,
+                      redirectUri,
+                      resultDivId: resultDivId,
+                      labelId: labelId,
+                      processButtonId: this.id,
+                    };
+                    localStorage.setItem(
+                      "iotaTriggerState",
+                      JSON.stringify(toStore)
+                    );
+                    window.location.href = data.vaultLink;
+                  })
+                  .catch((error) => {
+                    loadingOverlay.style.display = "none";
+                    resultDiv.textContent = "Failed to initiate iota request.";
+                    resultDiv.classList.add("error-message");
+                    processResults[checkType] = {
+                      status: false,
+                      message: "Failed to initiate iota request.",
+                    };
+                    showSnackbar("Processing Failed");
+                    saveCheckboxState(checkType);
+                    saveProcessResults();
+                    updateSubmitButtonState();
+                    localStorage.removeItem("iotaTriggerState");
+                  });
+                return;
+              }
+
+              if (apiUrl) {
+                fetch(apiUrl, {
+                  method: "POST",
+                  headers:
+                    option === "upload"
+                      ? {}
+                      : { "Content-Type": "application/json" },
+                  body:
+                    option === "upload"
+                      ? requestData
+                      : JSON.stringify(requestData),
+                })
+                  .then((response) => response.json())
+                  .then((data) => {
+                    loadingOverlay.style.display = "none";
+                    if (data.success) {
+                      const successMessage = `Success: ${
+                        data.message || "Processed successfully."
+                      }`;
+                      resultDiv.textContent = successMessage;
+                      resultDiv.classList.add("success-message");
+                      processResults[checkType] = {
+                        status: true,
+                        message: successMessage,
+                      };
+                      processButton.style.display = "none";
+                      if (labelElement) {
+                        labelElement.classList.remove("check-failure");
+                        labelElement.classList.add("check-success");
+                      }
+                      showSnackbar("Successfully Processed");
+                    } else {
+                      const failureMessage = `Failure: ${
+                        data.error || "Processing failed."
+                      }`;
+                      resultDiv.textContent = failureMessage;
+                      resultDiv.classList.add("failure-message");
+                      processResults[checkType] = {
+                        status: false,
+                        message: failureMessage,
+                      };
+                      processButton.style.display = "none";
+                      showSnackbar("Processing Failed");
+                    }
+                    saveCheckboxState(checkType);
+                    saveProcessResults();
+                    updateSubmitButtonState();
+                  })
+                  .catch((error) => {
+                    loadingOverlay.style.display = "none";
+                    const errorMessage = "Error: An error occurred.";
+                    resultDiv.textContent = errorMessage;
+                    resultDiv.classList.add("error-message");
+                    processResults[checkType] = {
+                      status: false,
+                      message: errorMessage,
+                    };
+                    processButton.style.display = "none";
+                    showSnackbar("Processing Failed");
+                    saveCheckboxState(checkType);
+                    saveProcessResults();
+                    updateSubmitButtonState();
+                  });
+              }
+            }
+          });
+        });
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const responseCode = urlParams.get("response_code");
+        if (responseCode) {
+          const storedState = localStorage.getItem("iotaTriggerState");
+          if (storedState) {
+            const state = JSON.parse(storedState);
+            const {
+              checkType,
+              correlationId,
+              transactionId,
+              nonce,
+              redirectUri,
+              resultDivId,
+              labelId,
+              processButtonId,
+            } = state;
+            const resultDiv = document.getElementById(resultDivId);
+            const labelElement = document.getElementById(labelId);
+            const processButton = document.getElementById(processButtonId);
+            const loadingOverlay = document.getElementById("loadingOverlay");
+
+            loadingOverlay.style.display = "flex";
+
+            fetch("/api/process-trigger", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                checkType: checkType,
+                code: responseCode,
+                correlationId,
+                transactionId,
+                nonce,
+                redirectUri,
+              }),
+            })
+              .then((response) => response.json())
+              .then((data) => {
+                loadingOverlay.style.display = "none";
+                if (data.success) {
+                  window.history.replaceState(
+                    null,
+                    "",
+                    window.location.pathname
+                  );
+                  const successMessage = `Success: ${
+                    data.message || "Processed successfully."
+                  }`;
+                  resultDiv.textContent = successMessage;
+                  resultDiv.classList.add("success-message");
+                  processResults[checkType] = {
+                    status: true,
+                    message: successMessage,
+                  };
+                  processButton.style.display = "none";
+                  if (labelElement) {
+                    labelElement.classList.remove("check-failure");
+                    labelElement.classList.add("check-success");
+                  }
+                  showSnackbar("Successfully Processed");
+                } else {
+                  window.history.replaceState(
+                    null,
+                    "",
+                    window.location.pathname
+                  );
+                  const failureMessage = `Failure: ${
+                    data.error || "Processing failed."
+                  }`;
+                  resultDiv.textContent = failureMessage;
+                  resultDiv.classList.add("failure-message");
+                  processResults[checkType] = {
+                    status: false,
+                    message: failureMessage,
+                  };
+                  processButton.style.display = "none";
+                  showSnackbar("Processing Failed");
+                }
                 saveCheckboxState(checkType);
                 saveProcessResults();
                 updateSubmitButtonState();
-                return;
-              }
-              resultDiv.textContent = "Redirecting to vault...";
-              const toStore = {
-                nonce,
-                correlationId: data.correlationId,
-                transactionId: data.transactionId,
-                checkType: checkType,
-                redirectUri,
-                resultDivId: resultDivId,
-                labelId: labelId,
-                processButtonId: this.id,
-              };
-              localStorage.setItem("iotaTriggerState", JSON.stringify(toStore));
-              window.location.href = data.vaultLink;
-            })
-            .catch((error) => {
-              loadingOverlay.style.display = "none";
-              resultDiv.textContent = "Failed to initiate iota request.";
-              resultDiv.classList.add("error-message");
-              processResults[checkType] = {
-                status: false,
-                message: "Failed to initiate iota request.",
-              };
-              showSnackbar("Processing Failed");
-              saveCheckboxState(checkType);
-              saveProcessResults();
-              updateSubmitButtonState();
-              localStorage.removeItem("iotaTriggerState");
-            });
-          return;
-        }
-
-        if (apiUrl) {
-          fetch(apiUrl, {
-            method: "POST",
-            headers: option === "upload" ? {} : { "Content-Type": "application/json" },
-            body: option === "upload" ? requestData : JSON.stringify(requestData),
-          })
-            .then((response) => response.json())
-            .then((data) => {
-              loadingOverlay.style.display = "none";
-              if (data.success) {
-                const successMessage = `Success: ${data.message || "Processed successfully."}`;
-                resultDiv.textContent = successMessage;
-                resultDiv.classList.add("success-message");
-                processResults[checkType] = { status: true, message: successMessage };
-                processButton.style.display = "none";
-                if (labelElement) {
-                  labelElement.classList.remove("check-failure");
-                  labelElement.classList.add("check-success");
-                }
-                showSnackbar("Successfully Processed");
-              } else {
-                const failureMessage = `Failure: ${data.error || "Processing failed."}`;
-                resultDiv.textContent = failureMessage;
-                resultDiv.classList.add("failure-message");
-                processResults[checkType] = { status: false, message: failureMessage };
+              })
+              .catch((error) => {
+                loadingOverlay.style.display = "none";
+                const errorMessage = "Error: An error occurred.";
+                resultDiv.textContent = errorMessage;
+                resultDiv.classList.add("error-message");
+                processResults[checkType] = {
+                  status: false,
+                  message: errorMessage,
+                };
                 processButton.style.display = "none";
                 showSnackbar("Processing Failed");
-              }
-              saveCheckboxState(checkType);
-              saveProcessResults();
-              updateSubmitButtonState();
-            })
-            .catch((error) => {
-              loadingOverlay.style.display = "none";
-              const errorMessage = "Error: An error occurred.";
-              resultDiv.textContent = errorMessage;
-              resultDiv.classList.add("error-message");
-              processResults[checkType] = { status: false, message: errorMessage };
-              processButton.style.display = "none";
-              showSnackbar("Processing Failed");
-              saveCheckboxState(checkType);
-              saveProcessResults();
-              updateSubmitButtonState();
-            });
-        }
-      }
-    });
-  });
-
-  const urlParams = new URLSearchParams(window.location.search);
-  const responseCode = urlParams.get("response_code");
-  if (responseCode) {
-    const storedState = localStorage.getItem("iotaTriggerState");
-    if (storedState) {
-      const state = JSON.parse(storedState);
-      const { checkType, correlationId, transactionId, nonce, redirectUri, resultDivId, labelId, processButtonId } = state;
-      const resultDiv = document.getElementById(resultDivId);
-      const labelElement = document.getElementById(labelId);
-      const processButton = document.getElementById(processButtonId);
-      const loadingOverlay = document.getElementById("loadingOverlay");
-
-      loadingOverlay.style.display = "flex";
-
-      fetch("/api/process-trigger", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          checkType: checkType,
-          code: responseCode,
-          correlationId,
-          transactionId,
-          nonce,
-          redirectUri,
-        }),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          loadingOverlay.style.display = "none";
-          if (data.success) {
-            window.history.replaceState(null, "", window.location.pathname);
-            const successMessage = `Success: ${data.message || "Processed successfully."}`;
-            resultDiv.textContent = successMessage;
-            resultDiv.classList.add("success-message");
-            processResults[checkType] = { status: true, message: successMessage };
-            processButton.style.display = "none";
-            if (labelElement) {
-              labelElement.classList.remove("check-failure");
-              labelElement.classList.add("check-success");
-            }
-            showSnackbar("Successfully Processed");
-          } else {
-            window.history.replaceState(null, "", window.location.pathname);
-            const failureMessage = `Failure: ${data.error || "Processing failed."}`;
-            resultDiv.textContent = failureMessage;
-            resultDiv.classList.add("failure-message");
-            processResults[checkType] = { status: false, message: failureMessage };
-            processButton.style.display = "none";
-            showSnackbar("Processing Failed");
+                saveCheckboxState(checkType);
+                saveProcessResults();
+                updateSubmitButtonState();
+              });
           }
-          saveCheckboxState(checkType);
-          saveProcessResults();
-          updateSubmitButtonState();
-        })
-        .catch((error) => {
-          loadingOverlay.style.display = "none";
-          const errorMessage = "Error: An error occurred.";
-          resultDiv.textContent = errorMessage;
-          resultDiv.classList.add("error-message");
-          processResults[checkType] = { status: false, message: errorMessage };
-          processButton.style.display = "none";
-          showSnackbar("Processing Failed");
-          saveCheckboxState(checkType);
-          saveProcessResults();
-          updateSubmitButtonState();
-        });
-    }
-  }
-});
-      </script>
+        }
+      });
+    </script>
   </body>
 </html>
