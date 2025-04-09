@@ -1,0 +1,190 @@
+/* --- static/style.css --- */
+/* Styles extracted from your provided HTML */
+
+/* General Reset & Base Styling */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  background-color: #f0f2f5; /* Light grey background */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+/* Chat Container */
+.chat-container {
+  width: 100%;
+  max-width: 700px; /* Max width for larger screens */
+  height: 85vh; /* Viewport height */
+  background-color: #ffffff; /* White background for chat area */
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* Ensures child elements fit */
+}
+
+/* Chat Header */
+.chat-header {
+  background-color: #007bff; /* Professional blue */
+  color: #ffffff;
+  padding: 15px 20px;
+  border-bottom: 1px solid #dee2e6;
+  flex-shrink: 0; /* Prevent header from shrinking */
+  text-align: center; /* Center header text */
+}
+
+.chat-header h1 {
+  font-size: 1.2em;
+  font-weight: 600;
+  margin: 0; /* Remove default margin */
+}
+
+/* Message Area */
+.message-area {
+  flex-grow: 1; /* Takes up available vertical space */
+  overflow-y: auto; /* Enables scrolling for messages */
+  padding: 20px;
+  background-color: #f8f9fa; /* Slightly different background for message area */
+  display: flex;
+  flex-direction: column; /* Stack messages vertically */
+}
+
+/* Individual Messages */
+.message {
+  display: flex;
+  flex-direction: column; /* Stack user/text/time */
+  margin-bottom: 15px;
+  max-width: 75%; /* Max width of a message bubble */
+  padding: 10px 15px;
+  border-radius: 18px; /* Bubble shape */
+  position: relative; /* For timestamp positioning if needed */
+  word-wrap: break-word; /* Break long words */
+  line-height: 1.4; /* Improve readability */
+}
+
+.message-user {
+  font-size: 0.8em;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: #555;
+}
+
+.message-text {
+  font-size: 0.95em;
+}
+
+.message-time {
+  font-size: 0.7em;
+  color: #888;
+  align-self: flex-end; /* Position time to the bottom right */
+  margin-top: 5px;
+}
+
+/* User Messages (Sent by 'You') */
+.user-message {
+  background-color: #007bff; /* Blue bubble */
+  color: #ffffff;
+  align-self: flex-end; /* Align to the right */
+  border-bottom-right-radius: 5px; /* Slightly different corner */
+}
+
+.user-message .message-user {
+  /* color: #e0e0e0; Lighter color for user name */
+  display: none; /* Usually hide 'You' */
+}
+.user-message .message-time {
+  color: #d1e7ff; /* Lighter time color */
+}
+
+/* Bot/Other Messages (Received) */
+.bot-message {
+  background-color: #e9ecef; /* Light grey bubble */
+  color: #333;
+  align-self: flex-start; /* Align to the left */
+  border-bottom-left-radius: 5px; /* Slightly different corner */
+}
+
+.bot-message .message-user {
+  color: #0056b3; /* Darker blue for bot name */
+}
+
+/* Input Area */
+.chat-input-area {
+  border-top: 1px solid #dee2e6;
+  padding: 15px 20px;
+  background-color: #ffffff;
+  flex-shrink: 0; /* Prevent input area from shrinking */
+}
+
+.message-form {
+  display: flex;
+  align-items: center;
+}
+
+#message-input {
+  flex-grow: 1; /* Take available space */
+  padding: 10px 15px;
+  border: 1px solid #ced4da;
+  border-radius: 20px; /* Pill shape */
+  margin-right: 10px;
+  font-size: 0.95em;
+  outline: none; /* Remove default outline */
+  transition: border-color 0.2s ease-in-out;
+}
+
+#message-input:focus {
+  border-color: #80bdff; /* Highlight on focus */
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25); /* Subtle glow on focus */
+}
+
+#send-button {
+  padding: 10px 20px;
+  background-color: #007bff; /* Match header */
+  color: white;
+  border: none;
+  border-radius: 20px; /* Pill shape */
+  cursor: pointer;
+  font-size: 0.95em;
+  font-weight: 500;
+  transition: background-color 0.2s ease-in-out;
+  white-space: nowrap; /* Prevent button text wrapping */
+}
+
+#send-button:hover:not(:disabled) {
+  background-color: #0056b3; /* Darker blue on hover */
+}
+
+#send-button:disabled {
+    background-color: #6c757d; /* Grey out when disabled */
+    cursor: not-allowed;
+}
+
+
+/* Scrollbar styling (Optional, Webkit browsers) */
+.message-area::-webkit-scrollbar {
+  width: 8px;
+}
+
+.message-area::-webkit-scrollbar-track {
+  background: #f8f9fa;
+  border-radius: 4px;
+}
+
+.message-area::-webkit-scrollbar-thumb {
+  background-color: #ced4da;
+  border-radius: 4px;
+  border: 2px solid #f8f9fa; /* Creates padding around thumb */
+}
+
+.message-area::-webkit-scrollbar-thumb:hover {
+  background-color: #adb5bd;
+}

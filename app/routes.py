@@ -33,6 +33,7 @@ import jwt  # PyJWT library for JWT handling
 import time
 import affinidi_tdk_iota_client
 
+
 api_gateway_url = os.environ.get("API_GATEWAY_URL")
 token_endpoint = os.environ.get("TOKEN_ENDPOINT")
 project_id = os.environ.get("PROJECT_ID")
@@ -64,10 +65,18 @@ ISSUANCE_STATUS_URL = "http://127.0.0.1:8010/api/issuance/status"  # Or configur
 
 iota_config_id = os.environ.get("IOTA_CONFIG_ID")
 iota_query_id = os.environ.get("IOTA_AVVANZ_CREDENTIAL_QUERY")
+# --- Initialize chat messages list --- <<< ADD THIS LINE
+chat_messages = []
+# --- End Initialization ---
 
 @app.route("/create-case")
 def case():
     return render_template("case.html")
+
+
+@app.route("/chat")
+def chat():
+    return render_template("chat.html", messages=chat_messages)
 
 
 @app.route("/claim-completed")
@@ -2485,3 +2494,46 @@ def iota_complete(correlationId, transactionId, code):
     except Exception as e:
         logging.error(f"Error processing checks: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/send_message", methods=["POST"])
+def send_message():
+    """Handles incoming chat messages."""
+    message_text = request.form.get("message")
+    if not message_text:
+        return jsonify({"status": "error", "message": "Empty message received"}), 400
+
+    timestamp = datetime.datetime.now().strftime("%H:%M")
+    user = "You"  # Or get username if you have authentication
+
+    # Store the message (simple in-memory list)
+    new_message = {
+        "user": user,
+        "text": message_text,
+        "timestamp": timestamp,
+        "type": "user",
+    }
+    chat_messages.append(new_message)
+
+    # --- Simple Bot Response (Example) ---
+    # In a real app, this logic would be much more complex
+
+    bot_response_text = f"Received: '{message_text}'"
+    bot_message = {
+        "user": "Bot",
+        "text": bot_response_text,
+        "timestamp": timestamp,
+        "type": "bot",
+    }
+    chat_messages.append(bot_message)
+    # --- End Bot Response ---
+
+
+    # Return the user message and the bot response to be added dynamically
+    return jsonify(
+        {
+            "status": "success",
+            "user_message": new_message,
+            "bot_message": bot_message,  # Send bot response back too
+        }
+    )
