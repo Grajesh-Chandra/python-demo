@@ -63,6 +63,15 @@ CHECKS_DATA_DIR = "orders"
 TOKEN_FILE_PATH = "orders/pst_response.jwt"
 ISSUANCE_STATUS_URL = "http://127.0.0.1:8010/api/issuance/status"  # Or configurable URL
 
+# --- Configuration ---
+# Get Ollama API URL from environment variable or use default
+OLLAMA_API_URL = os.environ.get("OLLAMA_API_URL", "http://localhost:11434/api/chat")
+# Specify the Ollama model you want to use
+OLLAMA_MODEL = os.environ.get(
+    "OLLAMA_MODEL", "deepseek-r1:latest"
+)  # Or "mistral", etc.
+
+# --- End Configuration ---
 iota_config_id = os.environ.get("IOTA_CONFIG_ID")
 iota_query_id = os.environ.get("IOTA_AVVANZ_CREDENTIAL_QUERY")
 # --- Initialize chat messages list --- <<< ADD THIS LINE
@@ -2496,8 +2505,8 @@ def iota_complete(correlationId, transactionId, code):
         return jsonify({"success": False, "error": str(e)}), 500
 
 
-@app.route("/send_message", methods=["POST"])
-def send_message():
+@app.route("/send_message_test", methods=["POST"])
+def send_message_test():
     """Handles incoming chat messages."""
     message_text = request.form.get("message")
     if not message_text:
@@ -2528,7 +2537,6 @@ def send_message():
     chat_messages.append(bot_message)
     # --- End Bot Response ---
 
-
     # Return the user message and the bot response to be added dynamically
     return jsonify(
         {
@@ -2537,3 +2545,89 @@ def send_message():
             "bot_message": bot_message,  # Send bot response back too
         }
     )
+
+
+@app.route("/send_message", methods=["POST"])
+def send_message():
+    """Handles receiving user messages and getting Ollama responses."""
+    try:
+        user_message_text = request.form.get("message")
+
+        if not user_message_text:
+            return (
+                jsonify({"status": "error", "message": "Empty message received."}),
+                400,
+            )
+
+        print(f"Received message from user: {user_message_text}")  # Log user message
+
+        # --- Prepare request payload for Ollama ---
+        # Using the /api/chat endpoint which is better for conversations
+        # For simplicity, we are not managing conversation history here yet.
+        # Ollama will treat each message as the start of a new conversation.
+        payload = {
+            "model": OLLAMA_MODEL,
+            "messages": [{"role": "user", "content": user_message_text}],
+            "stream": False,  # Set to False for a single, complete response
+        }
+
+        # --- Send request to Ollama ---
+        print(f"Sending request to Ollama API: {OLLAMA_API_URL}")  # Log request
+        response = requests.post(
+            OLLAMA_API_URL, json=payload, timeout=60
+        )  # Added timeout
+        response.raise_for_status()  # Raise an exception for bad status codes (4xx or 5xx)
+
+        # --- Process Ollama response ---
+        ollama_data = response.json()
+        print(f"Received response from Ollama: {ollama_data}")  # Log response
+
+        # Extract the actual message content - structure depends on Ollama version/endpoint
+        if "message" in ollama_data and "content" in ollama_data["message"]:
+            bot_response_text = ollama_data["message"]["content"]
+        else:
+            # Fallback or handle potential variations/errors
+            bot_response_text = ollama_data.get(
+                "response", "Sorry, I couldn't get a proper response."
+            )
+            if isinstance(bot_response_text, dict):  # Handle unexpected dict response
+                bot_response_text = str(bot_response_text)
+
+        # --- Format response for the frontend ---
+        # Matches the structure expected by your chat.html JavaScript
+        frontend_response = {
+            "status": "success",
+            "user_message": {"user": "You", "text": user_message_text, "type": "user"},
+            "bot_message": {
+                "user": "Ollama Bot",
+                "text": bot_response_text.strip(),  # Trim whitespace
+                "type": "bot",
+            },
+        }
+        return jsonify(frontend_response)
+
+    except requests.exceptions.RequestException as e:
+        print(f"Error connecting to Ollama: {e}")
+        return (
+            jsonify(
+                {
+                    "status": "error",
+                    "message": f"Could not connect to Ollama service at {OLLAMA_API_URL}. Is it running?",
+                }
+            ),
+            503,
+        )  # Service Unavailable
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+        # Consider logging the full traceback for debugging
+        # import traceback
+        # print(traceback.format_exc())
+        return (
+            jsonify(
+                {
+                    "status": "error",
+                    "message": f"An internal server error occurred: {str(e)}",
+                }
+            ),
+            500,
+        )
