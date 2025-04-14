@@ -228,7 +228,7 @@ def get_orders():
         return jsonify({"error": "Internal server error"}), 500
 
 
-@app.route("/order_details/<order_id>")
+@app.route("/order_details/<order_id>", methods=["GET"])
 def order_details(order_id):
     orders_file = os.path.join(CHECKS_DATA_DIR, "order.json")
     order_detail = None

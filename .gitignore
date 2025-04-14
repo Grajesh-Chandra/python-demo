@@ -173,3 +173,4 @@ cython_debug/
 orders/pst_response.jwt
 test.html
 orders/pdf*
+.vscode/
