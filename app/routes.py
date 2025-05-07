@@ -1,5 +1,5 @@
 import affinidi_tdk_wallets_client.api_client
-from flask import Flask, Response, render_template, jsonify, request, send_file
+from flask import Flask, Response, render_template, jsonify, request, send_file, send_from_directory, abort
 from affinidi_tdk_wallets_client.models.sign_credential_input_dto_unsigned_credential_params import (
     SignCredentialInputDtoUnsignedCredentialParams,
 )
@@ -77,6 +77,21 @@ iota_query_id = os.environ.get("IOTA_AVVANZ_CREDENTIAL_QUERY")
 # --- Initialize chat messages list --- <<< ADD THIS LINE
 chat_messages = []
 # --- End Initialization ---
+
+WELL_KNOWN_DIR = os.path.join(app.root_path, ".well-known")
+
+@app.route("/.well-known/did.json")
+def serve_did_json():
+    try:
+        return send_from_directory(
+            WELL_KNOWN_DIR,
+            "did.json",
+            mimetype="application/did+json",  # Recommended MIME type for DID documents
+            # 'application/json' is also acceptable
+        )
+    except FileNotFoundError:
+        abort(404, description="DID.json not found")
+
 
 @app.route("/create-case")
 def case():
