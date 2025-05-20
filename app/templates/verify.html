@@ -5,10 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SecureTrust® Validation</title>
     <link
-      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
-      rel="stylesheet"
-    />
-    <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
       rel="stylesheet"
     />
@@ -97,7 +93,6 @@
         z-index: -1;
       }
 
-      /* Results Table Styling */
       .result-table {
         width: 100%;
         margin-top: 2rem;
@@ -282,7 +277,6 @@
         font-size: 0.9rem;
       }
 
-      /* Popup Styles */
       .validation-popup {
         position: fixed;
         top: 50%;
@@ -292,7 +286,7 @@
         padding: 2rem;
         border-radius: 12px;
         box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
-        z-index: 1001; /* Ensure it's above loading overlay */
+        z-index: 1001;
         width: 80%;
         max-width: 800px;
       }
@@ -310,7 +304,7 @@
 
       .popup-content {
         margin-bottom: 1.5rem;
-        max-height: 70vh; /* Scrollable content if needed */
+        max-height: 70vh;
         overflow-y: auto;
       }
 
@@ -330,19 +324,19 @@
       }
 
       .popup-success {
-        border: 4px solid #4caf50; /* Green border for success */
+        border: 4px solid #4caf50;
       }
 
       .popup-success .popup-header h2 {
-        color: #4caf50; /* Green header text for success */
+        color: #4caf50;
       }
 
       .popup-error {
-        border: 4px solid #f44336; /* Red border for error */
+        border: 4px solid #f44336;
       }
 
       .popup-error .popup-header h2 {
-        color: #f44336; /* Red header text for error */
+        color: #f44336;
       }
 
       .overlay {
@@ -351,164 +345,15 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background: rgba(0, 0, 0, 0.5); /* Semi-transparent black overlay */
-        z-index: 1000; /* Below popup but above other content */
-        display: none; /* Hidden by default */
-      }
-
-      .overlay.show {
-        display: block; /* Show overlay when popup is active */
-      }
-
-      /* Initially hide the validation content */
-      #validationContent {
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
         display: none;
       }
 
-      /* Style for the dummy payment section */
-      #dummyPaymentHeader {
-        text-align: center;
-        margin-bottom: 1.5rem;
-      }
-
-      #dummyPaymentHeader h1 {
-        color: #1a237e;
-        font-weight: 600;
-        font-size: 1.8rem;
-        margin-bottom: 0.5rem;
-      }
-
-      #dummyPaymentContent {
-        margin-top: 1rem;
-        text-align: center;
-      }
-
-      .dummy-payment-option {
-        background-color: #f8f9fb;
-        border: 1px solid #ced4da;
-        border-radius: 6px;
-        padding: 1rem;
-        margin-bottom: 1rem;
-        width: 80%;
-        max-width: 400px;
-        margin-left: auto;
-        margin-right: auto;
-        text-align: left;
-      }
-
-      .dummy-payment-option h4 {
-        color: #3f51b5;
-        margin-top: 0;
-        margin-bottom: 0.5rem;
-        font-size: 1.1rem;
-      }
-
-      .dummy-payment-option button {
-        background-color: #007bff;
-        color: white;
-        border: none;
-        padding: 0.5rem 1rem;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 0.9rem;
-        margin-top: 0.5rem;
-      }
-
-      .dummy-payment-option button:hover {
-        background-color: #0056b3;
-      }
-
-      .dummy-pay-button {
-        background-color: rgb(37, 93, 39); /* Green */
-        border: none;
-        color: white;
-        padding: 0.75rem 2rem;
-        text-align: center;
-        text-decoration: none;
-        display: block; /* Change to block to allow margin auto */
-        font-size: 16px;
-        margin-top: 1.5rem;
-        cursor: pointer;
-        border-radius: 6px;
-        margin-left: auto; /* Add left margin auto */
-        margin-right: auto; /* Add right margin auto */
-        width: fit-content; /* Adjust width to content */
-      }
-
-      .dummy-pay-button:hover {
-        background-color: #45a049;
-      }
-
-      .dummy-spinner {
-        border: 4px solid #f3f3f3;
-        border-top: 4px solid #3f51b5;
-        border-radius: 50%;
-        width: 40px;
-        height: 40px;
-        animation: spin 1s linear infinite;
-        margin: 1rem auto;
-        display: none; /* Hide the spinner by default */
-      }
-
-      @keyframes spin {
-        0% {
-          transform: rotate(0deg);
-        }
-        100% {
-          transform: rotate(360deg);
-        }
-      }
-
-      /* Styles for the card payment form */
-      #cardPaymentForm {
-        margin-top: 1rem;
-        padding: 1rem;
-        border: 1px solid #ddd;
-        border-radius: 6px;
-        background-color: #fff;
-        display: none; /* Initially hidden */
-      }
-
-      #cardPaymentForm label {
+      .overlay.show {
         display: block;
-        margin-bottom: 0.5rem;
-        font-weight: bold;
-        color: #555;
       }
 
-      #cardPaymentForm input[type="text"],
-      #cardPaymentForm input[type="number"] {
-        width: calc(100% - 12px);
-        padding: 0.5rem;
-        margin-bottom: 1rem;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        box-sizing: border-box;
-      }
-
-      #cardPaymentForm .form-row {
-        display: flex;
-        gap: 1rem;
-      }
-
-      #cardPaymentForm .form-row > div {
-        flex: 1;
-      }
-
-      #cardPaymentForm button {
-        background-color: #007bff;
-        color: white;
-        border: none;
-        padding: 0.75rem 1.5rem;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 1rem;
-        margin-top: 1rem;
-      }
-
-      #cardPaymentForm button:hover {
-        background-color: #0056b3;
-      }
       .validation-toggle-buttons {
         text-align: center;
         margin-bottom: 1.5rem;
@@ -531,59 +376,6 @@
   <body>
     {% include 'header.html' %}
     <div class="validation-container">
-      <div id="dummyPayment">
-        <div id="dummyPaymentHeader">
-          <h1>Secure Payment</h1>
-          <p style="color: #666; margin-top: 0.5rem">
-            Choose a payment method to proceed with verification.
-          </p>
-        </div>
-        <div id="dummyPaymentContent">
-          <div class="dummy-payment-option" id="cardPaymentOption">
-            <h4>Pay with Card</h4>
-            <p>Enter your credit or debit card details.</p>
-            <button id="continueCardPayment" class="btn btn-primary btn-sm">
-              Continue to Card Payment
-            </button>
-            <div id="cardPaymentForm">
-              <label for="cardNumber">Card Number</label>
-              <input
-                type="text"
-                id="cardNumber"
-                placeholder="XXXX-XXXX-XXXX-XXXX"
-              />
-
-              <div class="form-row">
-                <div>
-                  <label for="expiryDate">Expiry Date</label>
-                  <input type="text" id="expiryDate" placeholder="MM/YY" />
-                </div>
-                <div>
-                  <label for="cvv">CVV</label>
-                  <input type="number" id="cvv" placeholder="123" />
-                </div>
-              </div>
-
-              <label for="cardHolderName">Name on Card</label>
-              <input type="text" id="cardHolderName" placeholder="John Doe" />
-
-              <button id="payWithCardButton" type="button">Pay Now</button>
-            </div>
-          </div>
-          <div class="dummy-payment-option">
-            <h4>Other Payment Options</h4>
-            <p>Explore other ways to pay.</p>
-            <button class="btn btn-outline-secondary btn-sm">
-              View More Options
-            </button>
-          </div>
-          <button id="payButton" class="dummy-pay-button" style="display: none">
-            Payment Successful - Proceed to Verification
-          </button>
-          <div class="dummy-spinner"></div>
-        </div>
-      </div>
-
       <div id="validationContent">
         <div class="validation-toggle-buttons">
           <button id="toggleSecureTrust" class="toggle-validation-btn active">
@@ -637,19 +429,14 @@
             </div>
           </div>
         </form>
-        <!-- Placeholder for X-Border PDF validation -->
-        <div
-          class="validation-header"
-          id="xBorderHeader"
-          style="display: none;"
-        >
+        <!-- X-Border Validation Header and Form -->
+        <div class="validation-header" id="xBorderHeader" style="display: none;">
           <h1>Validate X-Border PDF</h1>
           <p style="color: #666; margin-top: 0.5rem">
             Verify your document's authenticity
           </p>
         </div>
-        <!-- X-Border Upload Form -->
-        <form id="xBorderUploadForm">
+        <form id="xBorderUploadForm" style="display: none;">
           <div class="upload-section" id="xBorderDropZone">
             <input
               type="file"
@@ -681,7 +468,6 @@
             </button>
             <div class="drag-drop-text">
               or drag & drop your X-Border PDF here
-              <!-- This text should also be dynamic -->
             </div>
           </div>
         </form>
@@ -697,9 +483,6 @@
     <div class="overlay" id="validationPopupOverlay"></div>
 
     <script>
-      const dummyPaymentDiv = document.getElementById("dummyPayment");
-      const validationContentDiv = document.getElementById("validationContent");
-      const payButton = document.getElementById("payButton");
       // SecureTrust elements
       const secureTrustDropZone = document.getElementById("dropZone");
       const secureTrustFileInput = document.getElementById("report_pdf");
@@ -708,36 +491,17 @@
       // X-Border elements
       const xBorderHeader = document.getElementById('xBorderHeader');
       const xBorderForm = document.getElementById('xBorderUploadForm');
+      const xBorderDropZone = document.getElementById("xBorderDropZone");
+      const xBorderFileInput = document.getElementById("xBorderReportPdf");
       // Toggle Buttons
       const toggleSecureTrustButton = document.getElementById('toggleSecureTrust');
       const toggleXBorderButton = document.getElementById('toggleXBorder');
-      // X-Border elements (new)
+      // Other elements
       const loadingOverlay = document.getElementById("loadingOverlay");
       const responseArea = document.getElementById("responseArea");
-      const continueCardPaymentButton = document.getElementById(
-        "continueCardPayment"
-      );
-      const cardPaymentForm = document.getElementById("cardPaymentForm");
-      const payWithCardButton = document.getElementById("payWithCardButton");
 
-      // Initially show the dummy payment and hide the validation content
-      dummyPaymentDiv.style.display = "block";
-      validationContentDiv.style.display = "none";
-      payButton.style.display = "none"; // Initially hide the final "Payment Successful" button
-
-      // Event listener for "Continue to Card Payment"
-      continueCardPaymentButton.addEventListener("click", () => {
-        continueCardPaymentButton.style.display = "none";
-        cardPaymentForm.style.display = "block";
-      });
-
-      // Event listener for "Pay Now" on the card form
-      payWithCardButton.addEventListener("click", () => {
-        // Simulate payment processing (you can add a spinner here if you want)
-        // For this dummy logic, we'll just proceed to the next step
-        cardPaymentForm.style.display = "none";
-        payButton.style.display = "block"; // Show the final "Payment Successful" button
-      });
+      // Initialize with SecureTrust view
+      showValidationType('secureTrust');
 
       function showValidationType(typeToShow) {
         if (typeToShow === 'secureTrust') {
@@ -757,22 +521,13 @@
         }
       }
 
-      // Event listener for the final "Payment Successful" button
-      payButton.addEventListener("click", () => {
-        dummyPaymentDiv.style.display = "none";
-        validationContentDiv.style.display = "block";
-        showValidationType('secureTrust'); // Default to SecureTrust view
-      });
-
+      // Toggle button event listeners
       toggleSecureTrustButton.addEventListener('click', () => {
         showValidationType('secureTrust');
       });
       toggleXBorderButton.addEventListener('click', () => {
         showValidationType('xBorder');
       });
-
-      // Drag and drop handlers (rest of your existing script)
-      // You will need to adapt these handlers for both drop zones
 
       // SecureTrust Drag and Drop
       secureTrustDropZone.addEventListener("dragover", (e) => {
@@ -788,17 +543,15 @@
         e.preventDefault();
         secureTrustDropZone.classList.remove("dragover");
         const files = e.dataTransfer.files;
-        if (files.length > 0) handleFile(files[0], "secureTrust"); // Pass type
+        if (files.length > 0) handleFile(files[0], "secureTrust");
       });
 
       secureTrustFileInput.addEventListener("change", (e) => {
         if (e.target.files.length > 0)
-          handleFile(e.target.files[0], "secureTrust"); // Pass type
+          handleFile(e.target.files[0], "secureTrust");
       });
 
-      // You will need similar event listeners for the X-Border drop zone and file input
-      const xBorderDropZone = document.getElementById("xBorderDropZone");
-      const xBorderFileInput = document.getElementById("xBorderReportPdf");
+      // X-Border Drag and Drop
       xBorderDropZone.addEventListener("dragover", (e) => {
         e.preventDefault();
         xBorderDropZone.classList.add("dragover");
@@ -819,7 +572,7 @@
         if (e.target.files.length > 0) handleFile(e.target.files[0], "xBorder");
       });
 
-      async function handleFile(file, docType) { // Added docType parameter (or 'type')
+      async function handleFile(file, docType) {
         if (file.type !== "application/pdf") {
           alert("Please upload a PDF file.");
           return;
@@ -833,8 +586,6 @@
         formData.append("report_pdf", file);
 
         try {
-          // You will need logic here to determine the correct API endpoint
-          // based on the document type (e.g., 'secureTrust' or 'xBorder')
           let apiUrl;
           if (docType === "secureTrust") {
             apiUrl = "/api/verify_pdf";
@@ -852,7 +603,7 @@
             body: formData,
           });
           const data = await response.json();
-          displayResults(data, docType); // Pass docType to displayResults
+          displayResults(data, docType);
         } catch (error) {
           console.error("Error:", error);
           responseArea.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
@@ -861,54 +612,47 @@
           clearProgressInterval();
         }
       }
-      function displayResults(response_data, docType) { // Added docType parameter
-        // Determine overall validation status
+
+      function displayResults(response_data, docType) {
         let overallStatus = "Valid";
-        // Check overall results
         if (docType === 'secureTrust') {
-            if (response_data.overall_results) {
-                for (const item of response_data.overall_results) {
-                    if (item.result === "Invalid") {
-                        overallStatus = "Invalid";
-                        break;
-                    }
-                }
+          if (response_data.overall_results) {
+            for (const item of response_data.overall_results) {
+              if (item.result === "Invalid") {
+                overallStatus = "Invalid";
+                break;
+              }
             }
-            // If overall status is still valid, check attachment results for SecureTrust
-            if (overallStatus === "Valid" && response_data.attachment_results) {
-                for (const item of response_data.attachment_results) {
-                    if (!item.vc_valid) { // vc_valid false indicates invalid attachment VC
-                        overallStatus = "Invalid";
-                        break;
-                    }
-                }
+          }
+          if (overallStatus === "Valid" && response_data.attachment_results) {
+            for (const item of response_data.attachment_results) {
+              if (!item.vc_valid) {
+                overallStatus = "Invalid";
+                break;
+              }
             }
+          }
         } else if (docType === 'xBorder') {
-            if (response_data.overall_results && response_data.overall_results.length > 1) {
-                // For X-Border, the second item in overall_results usually holds the overall verification status
-                overallStatus = response_data.overall_results[1].result;
-            } else if (response_data.overall_results && response_data.overall_results.length > 0 && response_data.overall_results[0].result === "Invalid") {
-                // Fallback if only one item and it's invalid (e.g., file upload failed)
-                overallStatus = "Invalid";
-            } else {
-                // Default to Invalid if structure is unexpected
-                overallStatus = "Invalid";
-                console.warn("Could not determine overall status for X-Border from response_data.overall_results:", response_data.overall_results);
-            }
+          if (response_data.overall_results && response_data.overall_results.length > 1) {
+            overallStatus = response_data.overall_results[1].result;
+          } else if (response_data.overall_results && response_data.overall_results.length > 0 && response_data.overall_results[0].result === "Invalid") {
+            overallStatus = "Invalid";
+          } else {
+            overallStatus = "Invalid";
+            console.warn("Could not determine overall status for X-Border from response_data.overall_results:", response_data.overall_results);
+          }
         }
 
-
-        // Create popup elements
         const popupOverlay = document.getElementById("validationPopupOverlay");
-        popupOverlay.innerHTML = ""; // Clear previous popup content if any
+        popupOverlay.innerHTML = "";
         popupOverlay.classList.add("show");
 
         const popupContainer = document.createElement("div");
         popupContainer.className = "validation-popup";
         if (overallStatus === "Valid") {
-          popupContainer.classList.add("popup-success"); // Add success class
+          popupContainer.classList.add("popup-success");
         } else {
-          popupContainer.classList.add("popup-error"); // Add error class
+          popupContainer.classList.add("popup-error");
         }
 
         const popupHeader = document.createElement("div");
@@ -923,64 +667,61 @@
         const popupContent = document.createElement("div");
         popupContent.className = "popup-content";
 
-        // Overall Results Table (Common for both)
         if (response_data.overall_results) {
-            const overallResultsContainer = document.createElement("div");
-            overallResultsContainer.innerHTML = "<h3>Overall Results</h3>";
-            const overallTableContainer = document.createElement("div"); // Table container
-            overallTableContainer.className = "result-table-container";
-            const overallTable = document.createElement("table");
-            overallTable.className = "result-table";
-            const overallThead = document.createElement("thead");
-            overallThead.innerHTML = `
-                        <tr>
-                            <th>Property</th>
-                            <th>Value</th>
-                            <th>Status</th>
-                        </tr>
-                    `;
-            const overallTbody = document.createElement("tbody");
-            response_data.overall_results.forEach((item) => {
-                const row = document.createElement("tr");
-                row.innerHTML = `
-                            <td>${item.key}</td>
-                            <td class="value-cell">${item.value}</td>
-                            <td><span class="${
-                                item.result === "Valid"
-                                ? "valid-badge"
-                                : "invalid-badge"
-                            }">${item.result}</span></td>
-                        `;
-                overallTbody.appendChild(row);
-            });
-            overallTable.append(overallThead, overallTbody);
-            overallTableContainer.appendChild(overallTable);
-            overallResultsContainer.appendChild(overallTableContainer);
-            popupContent.appendChild(overallResultsContainer);
+          const overallResultsContainer = document.createElement("div");
+          overallResultsContainer.innerHTML = "<h3>Overall Results</h3>";
+          const overallTableContainer = document.createElement("div");
+          overallTableContainer.className = "result-table-container";
+          const overallTable = document.createElement("table");
+          overallTable.className = "result-table";
+          const overallThead = document.createElement("thead");
+          overallThead.innerHTML = `
+            <tr>
+              <th>Property</th>
+              <th>Value</th>
+              <th>Status</th>
+            </tr>
+          `;
+          const overallTbody = document.createElement("tbody");
+          response_data.overall_results.forEach((item) => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+              <td>${item.key}</td>
+              <td class="value-cell">${item.value}</td>
+              <td><span class="${
+                item.result === "Valid"
+                  ? "valid-badge"
+                  : "invalid-badge"
+              }">${item.result}</span></td>
+            `;
+            overallTbody.appendChild(row);
+          });
+          overallTable.append(overallThead, overallTbody);
+          overallTableContainer.appendChild(overallTable);
+          overallResultsContainer.appendChild(overallTableContainer);
+          popupContent.appendChild(overallResultsContainer);
         }
 
-
-        // Attachment Results Table (Only for SecureTrust)
         if (docType === 'secureTrust' && response_data.attachment_results) {
-            const attachmentResultsContainer = document.createElement("div");
-            attachmentResultsContainer.innerHTML =
+          const attachmentResultsContainer = document.createElement("div");
+          attachmentResultsContainer.innerHTML =
             '<h3 style="margin-top: 20px;">Attachment Results</h3>';
-            const attachmentTableContainer = document.createElement("div");
-            attachmentTableContainer.className = "result-table-container";
-            const attachmentTable = document.createElement("table");
-            attachmentTable.className = "result-table";
-            const attachmentThead = document.createElement("thead");
-            attachmentThead.innerHTML = `
-                        <tr>
-                            <th>Filename</th>
-                            <th>Attachment Valid</th>
-                            <th>VC Valid</th>
-                            <th>Message</th>
-                            <th>Details</th>
-                        </tr>
-                    `;
-            const attachmentTbody = document.createElement("tbody");
-            response_data.attachment_results.forEach((item) => {
+          const attachmentTableContainer = document.createElement("div");
+          attachmentTableContainer.className = "result-table-container";
+          const attachmentTable = document.createElement("table");
+          attachmentTable.className = "result-table";
+          const attachmentThead = document.createElement("thead");
+          attachmentThead.innerHTML = `
+            <tr>
+              <th>Filename</th>
+              <th>Attachment Valid</th>
+              <th>VC Valid</th>
+              <th>Message</th>
+              <th>Details</th>
+            </tr>
+          `;
+          const attachmentTbody = document.createElement("tbody");
+          response_data.attachment_results.forEach((item) => {
             const row = document.createElement("tr");
             const valueCell = document.createElement("td");
             valueCell.className = "value-cell";
@@ -994,129 +735,130 @@
             jsonContent.textContent = JSON.stringify(item.vc_value, null, 2);
 
             toggleBtn.onclick = () => {
-                jsonContent.style.display =
+              jsonContent.style.display =
                 jsonContent.style.display === "none" ? "block" : "none";
-                toggleBtn.textContent =
+              toggleBtn.textContent =
                 jsonContent.style.display === "none"
-                    ? "Show Details"
-                    : "Hide Details";
+                  ? "Show Details"
+                  : "Hide Details";
             };
-            valueCell.innerHTML = "";
             valueCell.append(toggleBtn, jsonContent);
 
             row.innerHTML = `
-                            <td>${item.filename}</td>
-                            <td><span class="${
-                                item.attachment_valid ? "valid-badge" : "invalid-badge"
-                            }">${
+              <td>${item.filename}</td>
+              <td><span class="${
+                item.attachment_valid ? "valid-badge" : "invalid-badge"
+              }">${
                 item.attachment_valid ? "Valid" : "Invalid"
-            }</span></td>
-                            <td><span class="${
-                                item.vc_valid ? "valid-badge" : "invalid-badge"
-                            }">${item.vc_valid ? "Valid" : "Invalid"}</span></td>
-                            <td class="value-cell">${item.attachment_message}</td>
-                            `;
+              }</span></td>
+              <td><span class="${
+                item.vc_valid ? "valid-badge" : "invalid-badge"
+              }">${item.vc_valid ? "Valid" : "Invalid"}</span></td>
+              <td class="value-cell">${item.attachment_message}</td>
+            `;
             row.appendChild(valueCell);
             attachmentTbody.appendChild(row);
-            });
-            attachmentTable.append(attachmentThead, attachmentTbody);
-            attachmentTableContainer.appendChild(attachmentTable);
-            attachmentResultsContainer.appendChild(attachmentTableContainer);
-            popupContent.appendChild(attachmentResultsContainer);
+          });
+          attachmentTable.append(attachmentThead, attachmentTbody);
+          attachmentTableContainer.appendChild(attachmentTable);
+          attachmentResultsContainer.appendChild(attachmentTableContainer);
+          popupContent.appendChild(attachmentResultsContainer);
         }
 
-        // Signature Results Table (Only for X-Border)
         if (docType === 'xBorder' && response_data.signature_results) {
-            const signatureResultsContainer = document.createElement("div");
-            signatureResultsContainer.innerHTML =
+          const signatureResultsContainer = document.createElement("div");
+          signatureResultsContainer.innerHTML =
             '<h3 style="margin-top: 20px;">Signature Results</h3>';
-            const signatureTableContainer = document.createElement("div");
-            signatureTableContainer.className = "result-table-container";
-            const signatureTable = document.createElement("table");
-            signatureTable.className = "result-table";
-            const signatureThead = document.createElement("thead");
-            signatureThead.innerHTML = `
-                        <tr>
-                            <th>#</th>
-                            <th>Doc Integrity</th>
-                            <th>Sig Valid</th>
-                            <th>Cert Trusted</th>
-                            <th>Status</th>
-                            <th>Message</th>
-                            <th>Cert Info</th>
-                        </tr>
-                    `;
-            const signatureTbody = document.createElement("tbody");
-            response_data.signature_results.forEach((item) => {
-                const row = document.createElement("tr");
-                const certInfoCell = document.createElement("td");
-                certInfoCell.className = "value-cell";
+          const signatureTableContainer = document.createElement("div");
+          signatureTableContainer.className = "result-table-container";
+          const signatureTable = document.createElement("table");
+          signatureTable.className = "result-table";
+          const signatureThead = document.createElement("thead");
+          signatureThead.innerHTML = `
+            <tr>
+              <th>#</th>
+              <th>Doc Integrity</th>
+              <th>Sig Valid</th>
+              <th>Cert Trusted</th>
+              <th>Status</th>
+              <th>Message</th>
+              <th>Cert Info</th>
+            </tr>
+          `;
+          const signatureTbody = document.createElement("tbody");
+          response_data.signature_results.forEach((item) => {
+            const row = document.createElement("tr");
+            const certInfoCell = document.createElement("td");
+            certInfoCell.className = "value-cell";
 
-                if (item.certificate_info && Object.keys(item.certificate_info).length > 0) {
-                    const toggleBtn = document.createElement("button");
-                    toggleBtn.className = "toggle-button";
-                    toggleBtn.textContent = "Show Details";
+            if (item.certificate_info && Object.keys(item.certificate_info).length > 0) {
+              const toggleBtn = document.createElement("button");
+              toggleBtn.className = "toggle-button";
+              toggleBtn.textContent = "Show Details";
 
-                    const jsonContent = document.createElement("pre");
-                    jsonContent.className = "json-content";
-                    jsonContent.textContent = JSON.stringify(item.certificate_info, null, 2);
+              const jsonContent = document.createElement("pre");
+              jsonContent.className = "json-content";
+              jsonContent.textContent = JSON.stringify(item.certificate_info, null, 2);
 
-                    toggleBtn.onclick = () => {
-                        jsonContent.style.display =
-                        jsonContent.style.display === "none" ? "block" : "none";
-                        toggleBtn.textContent =
-                        jsonContent.style.display === "none"
-                            ? "Show Details"
-                            : "Hide Details";
-                    };
-                    certInfoCell.append(toggleBtn, jsonContent);
-                } else {
-                    certInfoCell.textContent = "N/A";
-                }
+              toggleBtn.onclick = () => {
+                jsonContent.style.display =
+                  jsonContent.style.display === "none" ? "block" : "none";
+                toggleBtn.textContent =
+                  jsonContent.style.display === "none"
+                    ? "Show Details"
+                    : "Hide Details";
+              };
+              certInfoCell.append(toggleBtn, jsonContent);
+            } else {
+              certInfoCell.textContent = "N/A";
+            }
 
-                row.innerHTML = `
-                            <td>${item.signature_index}</td>
-                            <td><span class="${item.document_integrity === "Valid" ? "valid-badge" : "invalid-badge"}">${item.document_integrity}</span></td>
-                            <td><span class="${item.signature_valid === "Valid" ? "valid-badge" : "invalid-badge"}">${item.signature_valid}</span></td>
-                            <td><span class="${item.certificate_trusted === "Valid" ? "valid-badge" : "invalid-badge"}">${item.certificate_trusted}</span></td>
-                            <td><span class="${item.status === "Valid" ? "valid-badge" : "invalid-badge"}">${item.status}</span></td>
-                            <td class="value-cell">${item.message || "N/A"}</td>
-                            `;
-                row.appendChild(certInfoCell);
-                signatureTbody.appendChild(row);
-            });
-            signatureTable.append(signatureThead, signatureTbody);
-            signatureTableContainer.appendChild(signatureTable);
-            signatureResultsContainer.appendChild(signatureTableContainer);
-            popupContent.appendChild(signatureResultsContainer);
-          }
+            row.innerHTML = `
+              <td>${item.signature_index}</td>
+              <td><span class="${item.document_integrity === "Valid" ? "valid-badge" : "invalid-badge"}">${item.document_integrity}</span></td>
+              <td><span class="${item.signature_valid === "Valid" ? "valid-badge" : "invalid-badge"}">${item.signature_valid}</span></td>
+              <td><span class="${item.certificate_trusted === "Valid" ? "valid-badge" : "invalid-badge"}">${item.certificate_trusted}</span></td>
+              <td><span class="${item.status === "Valid" ? "valid-badge" : "invalid-badge"}">${item.status}</span></td>
+              <td class="value-cell">${item.message || "N/A"}</td>
+            `;
+            row.appendChild(certInfoCell);
+            signatureTbody.appendChild(row);
+          });
+          signatureTable.append(signatureThead, signatureTbody);
+          signatureTableContainer.appendChild(signatureTable);
+          signatureResultsContainer.appendChild(signatureTableContainer);
+          popupContent.appendChild(signatureResultsContainer);
+        }
 
         const closeButton = document.createElement("button");
         closeButton.className = "popup-close-btn";
-        closeButton.innerHTML = "&times;"; // Times symbol for close
+        closeButton.innerHTML = "×";
         closeButton.onclick = closePopup;
 
         popupContainer.appendChild(closeButton);
         popupContainer.appendChild(popupHeader);
         popupContainer.appendChild(popupContent);
 
-        popupOverlay.appendChild(popupContainer); // Append container to overlay
-        // No longer need to update responseArea content
-        // responseArea.innerHTML = "";
-        // responseArea.appendChild(container);
+        popupOverlay.appendChild(popupContainer);
       }
 
       function closePopup() {
         const popupOverlay = document.getElementById("validationPopupOverlay");
         popupOverlay.classList.remove("show");
-        window.location.reload(); // Added line to reload the page
+        window.location.reload();
       }
-      // Update progress handling
+
       let messageIndex = 0;
       let progress = 0;
       let progressInterval;
 
       function startProgressInterval() {
+        const messages = [
+          "Validating PDF Content...",
+          "Checking Document Integrity...",
+          "Verifying Signatures...",
+          "Finalizing Validation..."
+        ];
         progressInterval = setInterval(() => {
           if (messageIndex < messages.length) {
             document.getElementById("loadingMessage").textContent =
@@ -1135,7 +877,7 @@
         progress = 0;
       }
     </script>
-    <footer>&copy; 2025 Affinidi Private Limited. All rights reserved.</footer>
+    <footer>© 2025 Affinidi Private Limited. All rights reserved.</footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   </body>

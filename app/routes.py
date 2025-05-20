@@ -2766,6 +2766,7 @@ def verify_xborder_pdf():
                 logging.debug(f"Signature {i}: cert_bytes is NOT bytes. Cannot parse certificate.")
                 cert_info = {"error": f"Certificate data not available or not in expected format (received {type(cert_bytes)})."}
 
+
             signature_results.append(
                 {
                     "signature_index": i,
@@ -2776,13 +2777,26 @@ def verify_xborder_pdf():
                     "message": final_message, # Use the refined final_message
                     "certificate_info": cert_info,
                 }
+
             )
 
+        if not signature_results:
+            overall_status = "Invalid"
+            signature_results.append({
+                "signature_index": "N/A",
+                "document_integrity": "N/A",
+                "signature_valid": "N/A",
+                "certificate_trusted": "N/A",
+                "status": "Invalid",
+                "message": "No digital signatures found in the PDF.",
+                "certificate_info": {},
+        })
+        # Overall results
         overall_results = [
             {
                 "key": "PDF File Upload",
                 "value": pdf_file.filename,
-                "result": "Valid" if overall_status == "Valid" else "Invalid",
+                "result": "Valid",
             },
             {
                 "key": "Overall Signature Verification",
