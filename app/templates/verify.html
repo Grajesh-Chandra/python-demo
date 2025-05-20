@@ -354,22 +354,85 @@
         display: block;
       }
 
-      .validation-toggle-buttons {
+      /* Slider Toggle Styles */
+      .validation-toggle {
         text-align: center;
         margin-bottom: 1.5rem;
       }
-      .toggle-validation-btn {
-        background-color: #f0f0f0;
-        border: 1px solid #ccc;
-        padding: 0.5rem 1rem;
-        margin: 0 0.5rem;
-        border-radius: 4px;
-        cursor: pointer;
+
+      .toggle-switch {
+        display: inline-flex;
+        align-items: center;
+        gap: 1rem;
       }
-      .toggle-validation-btn.active {
+
+      .toggle-label {
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: #666;
+        cursor: pointer;
+        transition: color 0.3s ease;
+      }
+
+      .toggle-label.active {
+        color: #3f51b5;
+      }
+
+      .toggle-slider {
+        position: relative;
+        width: 50px;
+        height: 24px;
+      }
+
+      .toggle-slider input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+
+      .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: background-color 0.3s ease;
+        border-radius: 24px;
+      }
+
+      .slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: transform 0.3s ease;
+        border-radius: 50%;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+      }
+
+      input:checked + .slider {
         background-color: #3f51b5;
-        color: white;
-        border-color: #3f51b5;
+      }
+
+      input:checked + .slider:before {
+        transform: translateX(26px);
+      }
+
+      .slider:hover {
+        background-color: #b0b0b0;
+      }
+
+      input:checked + .slider:hover {
+        background-color: #303f9f;
+      }
+
+      input:focus + .slider {
+        box-shadow: 0 0 3px #3f51b5;
       }
     </style>
   </head>
@@ -377,13 +440,15 @@
     {% include 'header.html' %}
     <div class="validation-container">
       <div id="validationContent">
-        <div class="validation-toggle-buttons">
-          <button id="toggleSecureTrust" class="toggle-validation-btn active">
-            SecureTrust® PDF
-          </button>
-          <button id="toggleXBorder" class="toggle-validation-btn">
-            X-Border PDF
-          </button>
+        <div class="validation-toggle">
+          <div class="toggle-switch">
+            <span class="toggle-label securetrust-label active" onclick="document.getElementById('validationToggle').checked = false; showValidationType('secureTrust')">SecureTrust</span>
+            <label class="toggle-slider">
+              <input type="checkbox" id="validationToggle">
+              <span class="slider"></span>
+            </label>
+            <span class="toggle-label xborder-label" onclick="document.getElementById('validationToggle').checked = true; showValidationType('xBorder')">X-Border</span>
+          </div>
         </div>
 
         <div class="validation-header" id="secureTrustHeader">
@@ -493,15 +558,17 @@
       const xBorderForm = document.getElementById('xBorderUploadForm');
       const xBorderDropZone = document.getElementById("xBorderDropZone");
       const xBorderFileInput = document.getElementById("xBorderReportPdf");
-      // Toggle Buttons
-      const toggleSecureTrustButton = document.getElementById('toggleSecureTrust');
-      const toggleXBorderButton = document.getElementById('toggleXBorder');
+      // Toggle elements
+      const validationToggle = document.getElementById('validationToggle');
+      const secureTrustLabel = document.querySelector('.securetrust-label');
+      const xBorderLabel = document.querySelector('.xborder-label');
       // Other elements
       const loadingOverlay = document.getElementById("loadingOverlay");
       const responseArea = document.getElementById("responseArea");
 
-      // Initialize with SecureTrust view
-      showValidationType('secureTrust');
+      // Initialize with saved state or default to SecureTrust
+      const savedValidationType = localStorage.getItem('validationType') || 'secureTrust';
+      showValidationType(savedValidationType);
 
       function showValidationType(typeToShow) {
         if (typeToShow === 'secureTrust') {
@@ -509,24 +576,25 @@
           secureTrustForm.style.display = 'block';
           xBorderHeader.style.display = 'none';
           xBorderForm.style.display = 'none';
-          toggleSecureTrustButton.classList.add('active');
-          toggleXBorderButton.classList.remove('active');
+          validationToggle.checked = false;
+          secureTrustLabel.classList.add('active');
+          xBorderLabel.classList.remove('active');
         } else if (typeToShow === 'xBorder') {
           secureTrustHeader.style.display = 'none';
           secureTrustForm.style.display = 'none';
           xBorderHeader.style.display = 'block';
           xBorderForm.style.display = 'block';
-          toggleSecureTrustButton.classList.remove('active');
-          toggleXBorderButton.classList.add('active');
+          validationToggle.checked = true;
+          secureTrustLabel.classList.remove('active');
+          xBorderLabel.classList.add('active');
         }
+        // Save the selected type to localStorage
+        localStorage.setItem('validationType', typeToShow);
       }
 
-      // Toggle button event listeners
-      toggleSecureTrustButton.addEventListener('click', () => {
-        showValidationType('secureTrust');
-      });
-      toggleXBorderButton.addEventListener('click', () => {
-        showValidationType('xBorder');
+      // Toggle event listener
+      validationToggle.addEventListener('change', () => {
+        showValidationType(validationToggle.checked ? 'xBorder' : 'secureTrust');
       });
 
       // SecureTrust Drag and Drop
