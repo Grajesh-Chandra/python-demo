@@ -419,7 +419,7 @@
       }
 
       .dummy-pay-button {
-        background-color:rgb(37, 93, 39); /* Green */
+        background-color: rgb(37, 93, 39); /* Green */
         border: none;
         color: white;
         padding: 0.75rem 2rem;
@@ -451,8 +451,12 @@
       }
 
       @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
       }
 
       /* Styles for the card payment form */
@@ -505,6 +509,23 @@
       #cardPaymentForm button:hover {
         background-color: #0056b3;
       }
+      .validation-toggle-buttons {
+        text-align: center;
+        margin-bottom: 1.5rem;
+      }
+      .toggle-validation-btn {
+        background-color: #f0f0f0;
+        border: 1px solid #ccc;
+        padding: 0.5rem 1rem;
+        margin: 0 0.5rem;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      .toggle-validation-btn.active {
+        background-color: #3f51b5;
+        color: white;
+        border-color: #3f51b5;
+      }
     </style>
   </head>
   <body>
@@ -521,10 +542,16 @@
           <div class="dummy-payment-option" id="cardPaymentOption">
             <h4>Pay with Card</h4>
             <p>Enter your credit or debit card details.</p>
-            <button id="continueCardPayment" class="btn btn-primary btn-sm">Continue to Card Payment</button>
+            <button id="continueCardPayment" class="btn btn-primary btn-sm">
+              Continue to Card Payment
+            </button>
             <div id="cardPaymentForm">
               <label for="cardNumber">Card Number</label>
-              <input type="text" id="cardNumber" placeholder="XXXX-XXXX-XXXX-XXXX" />
+              <input
+                type="text"
+                id="cardNumber"
+                placeholder="XXXX-XXXX-XXXX-XXXX"
+              />
 
               <div class="form-row">
                 <div>
@@ -546,21 +573,35 @@
           <div class="dummy-payment-option">
             <h4>Other Payment Options</h4>
             <p>Explore other ways to pay.</p>
-            <button class="btn btn-outline-secondary btn-sm">View More Options</button>
+            <button class="btn btn-outline-secondary btn-sm">
+              View More Options
+            </button>
           </div>
-          <button id="payButton" class="dummy-pay-button" style="display: none;">Payment Successful - Proceed to Verification</button>
+          <button id="payButton" class="dummy-pay-button" style="display: none">
+            Payment Successful - Proceed to Verification
+          </button>
           <div class="dummy-spinner"></div>
         </div>
       </div>
 
       <div id="validationContent">
-        <div class="validation-header">
+        <div class="validation-toggle-buttons">
+          <button id="toggleSecureTrust" class="toggle-validation-btn active">
+            SecureTrust® PDF
+          </button>
+          <button id="toggleXBorder" class="toggle-validation-btn">
+            X-Border PDF
+          </button>
+        </div>
+
+        <div class="validation-header" id="secureTrustHeader">
           <h1>Validate SecureTrust® PDF</h1>
           <p style="color: #666; margin-top: 0.5rem">
             Verify your document's authenticity
           </p>
         </div>
 
+        <!-- SecureTrust Upload Form -->
         <form id="uploadForm">
           <div class="upload-section" id="dropZone">
             <input
@@ -596,7 +637,54 @@
             </div>
           </div>
         </form>
-
+        <!-- Placeholder for X-Border PDF validation -->
+        <div
+          class="validation-header"
+          id="xBorderHeader"
+          style="display: none;"
+        >
+          <h1>Validate X-Border PDF</h1>
+          <p style="color: #666; margin-top: 0.5rem">
+            Verify your document's authenticity
+          </p>
+        </div>
+        <!-- X-Border Upload Form -->
+        <form id="xBorderUploadForm">
+          <div class="upload-section" id="xBorderDropZone">
+            <input
+              type="file"
+              id="xBorderReportPdf"
+              class="file-input"
+              accept="application/pdf"
+            />
+            <button
+              type="button"
+              class="upload-button"
+              onclick="document.getElementById('xBorderReportPdf').click()"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
+              Upload from your computer
+            </button>
+            <div class="drag-drop-text">
+              or drag & drop your X-Border PDF here
+              <!-- This text should also be dynamic -->
+            </div>
+          </div>
+        </form>
         <div id="responseArea"></div>
       </div>
     </div>
@@ -609,64 +697,129 @@
     <div class="overlay" id="validationPopupOverlay"></div>
 
     <script>
-      const dummyPaymentDiv = document.getElementById('dummyPayment');
-      const validationContentDiv = document.getElementById('validationContent');
-      const payButton = document.getElementById('payButton');
-      const dropZone = document.getElementById("dropZone");
-      const fileInput = document.getElementById("report_pdf");
+      const dummyPaymentDiv = document.getElementById("dummyPayment");
+      const validationContentDiv = document.getElementById("validationContent");
+      const payButton = document.getElementById("payButton");
+      // SecureTrust elements
+      const secureTrustDropZone = document.getElementById("dropZone");
+      const secureTrustFileInput = document.getElementById("report_pdf");
+      const secureTrustHeader = document.getElementById('secureTrustHeader');
+      const secureTrustForm = document.getElementById('uploadForm');
+      // X-Border elements
+      const xBorderHeader = document.getElementById('xBorderHeader');
+      const xBorderForm = document.getElementById('xBorderUploadForm');
+      // Toggle Buttons
+      const toggleSecureTrustButton = document.getElementById('toggleSecureTrust');
+      const toggleXBorderButton = document.getElementById('toggleXBorder');
+      // X-Border elements (new)
       const loadingOverlay = document.getElementById("loadingOverlay");
       const responseArea = document.getElementById("responseArea");
-      const continueCardPaymentButton = document.getElementById('continueCardPayment');
-      const cardPaymentForm = document.getElementById('cardPaymentForm');
-      const payWithCardButton = document.getElementById('payWithCardButton');
+      const continueCardPaymentButton = document.getElementById(
+        "continueCardPayment"
+      );
+      const cardPaymentForm = document.getElementById("cardPaymentForm");
+      const payWithCardButton = document.getElementById("payWithCardButton");
 
       // Initially show the dummy payment and hide the validation content
-      dummyPaymentDiv.style.display = 'block';
-      validationContentDiv.style.display = 'none';
-      payButton.style.display = 'none'; // Initially hide the final "Payment Successful" button
+      dummyPaymentDiv.style.display = "block";
+      validationContentDiv.style.display = "none";
+      payButton.style.display = "none"; // Initially hide the final "Payment Successful" button
 
       // Event listener for "Continue to Card Payment"
-      continueCardPaymentButton.addEventListener('click', () => {
-        continueCardPaymentButton.style.display = 'none';
-        cardPaymentForm.style.display = 'block';
+      continueCardPaymentButton.addEventListener("click", () => {
+        continueCardPaymentButton.style.display = "none";
+        cardPaymentForm.style.display = "block";
       });
 
       // Event listener for "Pay Now" on the card form
-      payWithCardButton.addEventListener('click', () => {
+      payWithCardButton.addEventListener("click", () => {
         // Simulate payment processing (you can add a spinner here if you want)
         // For this dummy logic, we'll just proceed to the next step
-        cardPaymentForm.style.display = 'none';
-        payButton.style.display = 'block'; // Show the final "Payment Successful" button
+        cardPaymentForm.style.display = "none";
+        payButton.style.display = "block"; // Show the final "Payment Successful" button
       });
 
+      function showValidationType(typeToShow) {
+        if (typeToShow === 'secureTrust') {
+          secureTrustHeader.style.display = 'block';
+          secureTrustForm.style.display = 'block';
+          xBorderHeader.style.display = 'none';
+          xBorderForm.style.display = 'none';
+          toggleSecureTrustButton.classList.add('active');
+          toggleXBorderButton.classList.remove('active');
+        } else if (typeToShow === 'xBorder') {
+          secureTrustHeader.style.display = 'none';
+          secureTrustForm.style.display = 'none';
+          xBorderHeader.style.display = 'block';
+          xBorderForm.style.display = 'block';
+          toggleSecureTrustButton.classList.remove('active');
+          toggleXBorderButton.classList.add('active');
+        }
+      }
+
       // Event listener for the final "Payment Successful" button
-      payButton.addEventListener('click', () => {
-        dummyPaymentDiv.style.display = 'none';
-        validationContentDiv.style.display = 'block';
+      payButton.addEventListener("click", () => {
+        dummyPaymentDiv.style.display = "none";
+        validationContentDiv.style.display = "block";
+        showValidationType('secureTrust'); // Default to SecureTrust view
+      });
+
+      toggleSecureTrustButton.addEventListener('click', () => {
+        showValidationType('secureTrust');
+      });
+      toggleXBorderButton.addEventListener('click', () => {
+        showValidationType('xBorder');
       });
 
       // Drag and drop handlers (rest of your existing script)
-      dropZone.addEventListener("dragover", (e) => {
+      // You will need to adapt these handlers for both drop zones
+
+      // SecureTrust Drag and Drop
+      secureTrustDropZone.addEventListener("dragover", (e) => {
         e.preventDefault();
-        dropZone.classList.add("dragover");
+        secureTrustDropZone.classList.add("dragover");
       });
 
-      dropZone.addEventListener("dragleave", () => {
-        dropZone.classList.remove("dragover");
+      secureTrustDropZone.addEventListener("dragleave", () => {
+        secureTrustDropZone.classList.remove("dragover");
       });
 
-      dropZone.addEventListener("drop", (e) => {
+      secureTrustDropZone.addEventListener("drop", (e) => {
         e.preventDefault();
-        dropZone.classList.remove("dragover");
+        secureTrustDropZone.classList.remove("dragover");
         const files = e.dataTransfer.files;
-        if (files.length > 0) handleFile(files[0]);
+        if (files.length > 0) handleFile(files[0], "secureTrust"); // Pass type
       });
 
-      fileInput.addEventListener("change", (e) => {
-        if (e.target.files.length > 0) handleFile(e.target.files[0]);
+      secureTrustFileInput.addEventListener("change", (e) => {
+        if (e.target.files.length > 0)
+          handleFile(e.target.files[0], "secureTrust"); // Pass type
       });
 
-      async function handleFile(file) {
+      // You will need similar event listeners for the X-Border drop zone and file input
+      const xBorderDropZone = document.getElementById("xBorderDropZone");
+      const xBorderFileInput = document.getElementById("xBorderReportPdf");
+      xBorderDropZone.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        xBorderDropZone.classList.add("dragover");
+      });
+
+      xBorderDropZone.addEventListener("dragleave", () => {
+        xBorderDropZone.classList.remove("dragover");
+      });
+
+      xBorderDropZone.addEventListener("drop", (e) => {
+        e.preventDefault();
+        xBorderDropZone.classList.remove("dragover");
+        const files = e.dataTransfer.files;
+        if (files.length > 0) handleFile(files[0], "xBorder");
+      });
+
+      xBorderFileInput.addEventListener("change", (e) => {
+        if (e.target.files.length > 0) handleFile(e.target.files[0], "xBorder");
+      });
+
+      async function handleFile(file, docType) { // Added docType parameter (or 'type')
         if (file.type !== "application/pdf") {
           alert("Please upload a PDF file.");
           return;
@@ -680,13 +833,26 @@
         formData.append("report_pdf", file);
 
         try {
-          const response = await fetch("/api/verify_pdf", {
+          // You will need logic here to determine the correct API endpoint
+          // based on the document type (e.g., 'secureTrust' or 'xBorder')
+          let apiUrl;
+          if (docType === "secureTrust") {
+            apiUrl = "/api/verify_pdf";
+          } else if (docType === "xBorder") {
+            apiUrl = "/api/verify_xborder_pdf";
+          } else {
+            console.error("Unknown document type in handleFile:", docType);
+            alert("An unexpected error occurred: Unknown document type.");
+            loadingOverlay.style.display = "none";
+            clearProgressInterval();
+            return;
+          }
+          const response = await fetch(apiUrl, {
             method: "POST",
             body: formData,
           });
-
           const data = await response.json();
-          displayResults(data);
+          displayResults(data, docType); // Pass docType to displayResults
         } catch (error) {
           console.error("Error:", error);
           responseArea.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
@@ -695,27 +861,42 @@
           clearProgressInterval();
         }
       }
-
-      function displayResults(response_data) {
+      function displayResults(response_data, docType) { // Added docType parameter
         // Determine overall validation status
         let overallStatus = "Valid";
         // Check overall results
-        for (const item of response_data.overall_results) {
-          if (item.result === "Invalid") {
-            overallStatus = "Invalid";
-            break;
-          }
-        }
-        // If overall status is still valid, check attachment results
-        if (overallStatus === "Valid") {
-          for (const item of response_data.attachment_results) {
-            if (!item.vc_valid) {
-              // vc_valid false indicates invalid attachment VC
-              overallStatus = "Invalid";
-              break;
+        if (docType === 'secureTrust') {
+            if (response_data.overall_results) {
+                for (const item of response_data.overall_results) {
+                    if (item.result === "Invalid") {
+                        overallStatus = "Invalid";
+                        break;
+                    }
+                }
             }
-          }
+            // If overall status is still valid, check attachment results for SecureTrust
+            if (overallStatus === "Valid" && response_data.attachment_results) {
+                for (const item of response_data.attachment_results) {
+                    if (!item.vc_valid) { // vc_valid false indicates invalid attachment VC
+                        overallStatus = "Invalid";
+                        break;
+                    }
+                }
+            }
+        } else if (docType === 'xBorder') {
+            if (response_data.overall_results && response_data.overall_results.length > 1) {
+                // For X-Border, the second item in overall_results usually holds the overall verification status
+                overallStatus = response_data.overall_results[1].result;
+            } else if (response_data.overall_results && response_data.overall_results.length > 0 && response_data.overall_results[0].result === "Invalid") {
+                // Fallback if only one item and it's invalid (e.g., file upload failed)
+                overallStatus = "Invalid";
+            } else {
+                // Default to Invalid if structure is unexpected
+                overallStatus = "Invalid";
+                console.warn("Could not determine overall status for X-Border from response_data.overall_results:", response_data.overall_results);
+            }
         }
+
 
         // Create popup elements
         const popupOverlay = document.getElementById("validationPopupOverlay");
@@ -742,102 +923,173 @@
         const popupContent = document.createElement("div");
         popupContent.className = "popup-content";
 
-        // Overall Results Table
-        const overallResultsContainer = document.createElement("div");
-        overallResultsContainer.innerHTML = "<h3>Overall Results</h3>";
-        const overallTableContainer = document.createElement("div"); // Table container
-        overallTableContainer.className = "result-table-container";
-        const overallTable = document.createElement("table");
-        overallTable.className = "result-table";
-        const overallThead = document.createElement("thead");
-        overallThead.innerHTML = `
-                  <tr>
-                      <th>Property</th>
-                      <th>Value</th>
-                      <th>Status</th>
-                  </tr>
-              `;
-        const overallTbody = document.createElement("tbody");
-        response_data.overall_results.forEach((item) => {
-          const row = document.createElement("tr");
-          row.innerHTML = `
-                      <td>${item.key}</td>
-                      <td class="value-cell">${item.value}</td>
-                      <td><span class="${
-                        item.result === "Valid"
-                          ? "valid-badge"
-                          : "invalid-badge"
-                      }">${item.result}</span></td>
-                  `;
-          overallTbody.appendChild(row);
-        });
-        overallTable.append(overallThead, overallTbody);
-        overallTableContainer.appendChild(overallTable);
-        overallResultsContainer.appendChild(overallTableContainer);
-        popupContent.appendChild(overallResultsContainer);
+        // Overall Results Table (Common for both)
+        if (response_data.overall_results) {
+            const overallResultsContainer = document.createElement("div");
+            overallResultsContainer.innerHTML = "<h3>Overall Results</h3>";
+            const overallTableContainer = document.createElement("div"); // Table container
+            overallTableContainer.className = "result-table-container";
+            const overallTable = document.createElement("table");
+            overallTable.className = "result-table";
+            const overallThead = document.createElement("thead");
+            overallThead.innerHTML = `
+                        <tr>
+                            <th>Property</th>
+                            <th>Value</th>
+                            <th>Status</th>
+                        </tr>
+                    `;
+            const overallTbody = document.createElement("tbody");
+            response_data.overall_results.forEach((item) => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                            <td>${item.key}</td>
+                            <td class="value-cell">${item.value}</td>
+                            <td><span class="${
+                                item.result === "Valid"
+                                ? "valid-badge"
+                                : "invalid-badge"
+                            }">${item.result}</span></td>
+                        `;
+                overallTbody.appendChild(row);
+            });
+            overallTable.append(overallThead, overallTbody);
+            overallTableContainer.appendChild(overallTable);
+            overallResultsContainer.appendChild(overallTableContainer);
+            popupContent.appendChild(overallResultsContainer);
+        }
 
-        // Attachment Results Table
-        const attachmentResultsContainer = document.createElement("div");
-        attachmentResultsContainer.innerHTML =
-          '<h3 style="margin-top: 20px;">Attachment Results</h3>';
-        const attachmentTableContainer = document.createElement("div");
-        attachmentTableContainer.className = "result-table-container";
-        const attachmentTable = document.createElement("table");
-        attachmentTable.className = "result-table";
-        const attachmentThead = document.createElement("thead");
-        attachmentThead.innerHTML = `
-                  <tr>
-                      <th>Filename</th>
-                      <th>Attachment Valid</th>
-                      <th>VC Valid</th>
-                      <th>Message</th>
-                      <th>Details</th>
-                  </tr>
-              `;
-        const attachmentTbody = document.createElement("tbody");
-        response_data.attachment_results.forEach((item) => {
-          const row = document.createElement("tr");
-          const valueCell = document.createElement("td");
-          valueCell.className = "value-cell";
 
-          const toggleBtn = document.createElement("button");
-          toggleBtn.className = "toggle-button";
-          toggleBtn.textContent = "Show Details";
+        // Attachment Results Table (Only for SecureTrust)
+        if (docType === 'secureTrust' && response_data.attachment_results) {
+            const attachmentResultsContainer = document.createElement("div");
+            attachmentResultsContainer.innerHTML =
+            '<h3 style="margin-top: 20px;">Attachment Results</h3>';
+            const attachmentTableContainer = document.createElement("div");
+            attachmentTableContainer.className = "result-table-container";
+            const attachmentTable = document.createElement("table");
+            attachmentTable.className = "result-table";
+            const attachmentThead = document.createElement("thead");
+            attachmentThead.innerHTML = `
+                        <tr>
+                            <th>Filename</th>
+                            <th>Attachment Valid</th>
+                            <th>VC Valid</th>
+                            <th>Message</th>
+                            <th>Details</th>
+                        </tr>
+                    `;
+            const attachmentTbody = document.createElement("tbody");
+            response_data.attachment_results.forEach((item) => {
+            const row = document.createElement("tr");
+            const valueCell = document.createElement("td");
+            valueCell.className = "value-cell";
 
-          const jsonContent = document.createElement("pre");
-          jsonContent.className = "json-content";
-          jsonContent.textContent = JSON.stringify(item.vc_value, null, 2);
+            const toggleBtn = document.createElement("button");
+            toggleBtn.className = "toggle-button";
+            toggleBtn.textContent = "Show Details";
 
-          toggleBtn.onclick = () => {
-            jsonContent.style.display =
-              jsonContent.style.display === "none" ? "block" : "none";
-            toggleBtn.textContent =
-              jsonContent.style.display === "none"
-                ? "Show Details"
-                : "Hide Details";
-          };
-          valueCell.innerHTML = "";
-          valueCell.append(toggleBtn, jsonContent);
+            const jsonContent = document.createElement("pre");
+            jsonContent.className = "json-content";
+            jsonContent.textContent = JSON.stringify(item.vc_value, null, 2);
 
-          row.innerHTML = `
-                      <td>${item.filename}</td>
-                      <td><span class="${
-                        item.attachment_valid ? "valid-badge" : "invalid-badge"
-                      }">${
-            item.attachment_valid ? "Valid" : "Invalid"
-          }</span></td>
-                      <td><span class="${
-                        item.vc_valid ? "valid-badge" : "invalid-badge"
-                      }">${item.vc_valid ? "Valid" : "Invalid"}</span></td>
-                      <td class="value-cell">${item.attachment_message}</td>
-                      `;
-          row.appendChild(valueCell);
-          attachmentTbody.appendChild(row);
-        });
-        attachmentTable.append(attachmentThead, attachmentTbody);
-        attachmentTableContainer.appendChild(attachmentTable);
-        attachmentResultsContainer.appendChild(attachmentTableContainer);
-        popupContent.appendChild(attachmentResultsContainer);
+            toggleBtn.onclick = () => {
+                jsonContent.style.display =
+                jsonContent.style.display === "none" ? "block" : "none";
+                toggleBtn.textContent =
+                jsonContent.style.display === "none"
+                    ? "Show Details"
+                    : "Hide Details";
+            };
+            valueCell.innerHTML = "";
+            valueCell.append(toggleBtn, jsonContent);
+
+            row.innerHTML = `
+                            <td>${item.filename}</td>
+                            <td><span class="${
+                                item.attachment_valid ? "valid-badge" : "invalid-badge"
+                            }">${
+                item.attachment_valid ? "Valid" : "Invalid"
+            }</span></td>
+                            <td><span class="${
+                                item.vc_valid ? "valid-badge" : "invalid-badge"
+                            }">${item.vc_valid ? "Valid" : "Invalid"}</span></td>
+                            <td class="value-cell">${item.attachment_message}</td>
+                            `;
+            row.appendChild(valueCell);
+            attachmentTbody.appendChild(row);
+            });
+            attachmentTable.append(attachmentThead, attachmentTbody);
+            attachmentTableContainer.appendChild(attachmentTable);
+            attachmentResultsContainer.appendChild(attachmentTableContainer);
+            popupContent.appendChild(attachmentResultsContainer);
+        }
+
+        // Signature Results Table (Only for X-Border)
+        if (docType === 'xBorder' && response_data.signature_results) {
+            const signatureResultsContainer = document.createElement("div");
+            signatureResultsContainer.innerHTML =
+            '<h3 style="margin-top: 20px;">Signature Results</h3>';
+            const signatureTableContainer = document.createElement("div");
+            signatureTableContainer.className = "result-table-container";
+            const signatureTable = document.createElement("table");
+            signatureTable.className = "result-table";
+            const signatureThead = document.createElement("thead");
+            signatureThead.innerHTML = `
+                        <tr>
+                            <th>#</th>
+                            <th>Doc Integrity</th>
+                            <th>Sig Valid</th>
+                            <th>Cert Trusted</th>
+                            <th>Status</th>
+                            <th>Message</th>
+                            <th>Cert Info</th>
+                        </tr>
+                    `;
+            const signatureTbody = document.createElement("tbody");
+            response_data.signature_results.forEach((item) => {
+                const row = document.createElement("tr");
+                const certInfoCell = document.createElement("td");
+                certInfoCell.className = "value-cell";
+
+                if (item.certificate_info && Object.keys(item.certificate_info).length > 0) {
+                    const toggleBtn = document.createElement("button");
+                    toggleBtn.className = "toggle-button";
+                    toggleBtn.textContent = "Show Details";
+
+                    const jsonContent = document.createElement("pre");
+                    jsonContent.className = "json-content";
+                    jsonContent.textContent = JSON.stringify(item.certificate_info, null, 2);
+
+                    toggleBtn.onclick = () => {
+                        jsonContent.style.display =
+                        jsonContent.style.display === "none" ? "block" : "none";
+                        toggleBtn.textContent =
+                        jsonContent.style.display === "none"
+                            ? "Show Details"
+                            : "Hide Details";
+                    };
+                    certInfoCell.append(toggleBtn, jsonContent);
+                } else {
+                    certInfoCell.textContent = "N/A";
+                }
+
+                row.innerHTML = `
+                            <td>${item.signature_index}</td>
+                            <td><span class="${item.document_integrity === "Valid" ? "valid-badge" : "invalid-badge"}">${item.document_integrity}</span></td>
+                            <td><span class="${item.signature_valid === "Valid" ? "valid-badge" : "invalid-badge"}">${item.signature_valid}</span></td>
+                            <td><span class="${item.certificate_trusted === "Valid" ? "valid-badge" : "invalid-badge"}">${item.certificate_trusted}</span></td>
+                            <td><span class="${item.status === "Valid" ? "valid-badge" : "invalid-badge"}">${item.status}</span></td>
+                            <td class="value-cell">${item.message || "N/A"}</td>
+                            `;
+                row.appendChild(certInfoCell);
+                signatureTbody.appendChild(row);
+            });
+            signatureTable.append(signatureThead, signatureTbody);
+            signatureTableContainer.appendChild(signatureTable);
+            signatureResultsContainer.appendChild(signatureTableContainer);
+            popupContent.appendChild(signatureResultsContainer);
+          }
 
         const closeButton = document.createElement("button");
         closeButton.className = "popup-close-btn";

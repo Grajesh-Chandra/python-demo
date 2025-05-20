@@ -34,6 +34,13 @@ import time
 import affinidi_tdk_iota_client
 
 
+import sys
+import argparse
+from pathlib import Path
+from cryptography.hazmat.backends import default_backend
+from cryptography import x509
+from endesive.pdf import verify as pdf_verify
+
 api_gateway_url = os.environ.get("API_GATEWAY_URL")
 token_endpoint = os.environ.get("TOKEN_ENDPOINT")
 project_id = os.environ.get("PROJECT_ID")
@@ -62,6 +69,8 @@ DATA_FILE = "orders/order.json"
 CHECKS_DATA_DIR = "orders"
 TOKEN_FILE_PATH = "orders/pst_response.jwt"
 ISSUANCE_STATUS_URL = "http://127.0.0.1:8010/api/issuance/status"  # Or configurable URL
+
+TRUSTED_CERTIFICATES_DIR = "trusted"
 
 # --- Configuration ---
 # Get Ollama API URL from environment variable or use default
@@ -2155,6 +2164,7 @@ def process_upload():
                                                     f"Secure Trust PDF verified, CheckType attachment found but missing 'credentials'."
                                                 )
                                                 status_code = 400
+
                                         except json.JSONDecodeError:
                                             response_data["error"] = (
                                                 f"Error decoding JSON from {check_type} attachment."
@@ -2646,3 +2656,199 @@ def send_message():
             ),
             500,
         )
+
+
+@app.route("/api/verify_xborder_pdf", methods=["POST"])
+def verify_xborder_pdf():
+    try:
+        if "report_pdf" not in request.files:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "No PDF file uploaded",
+                        "overall_results": [],
+                        "signature_results": [],
+                    }
+                ),
+                400,
+            )
+
+        pdf_file = request.files["report_pdf"]
+        if pdf_file.filename == "":
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "No selected file",
+                        "overall_results": [],
+                        "signature_results": [],
+                    }
+                ),
+                400,
+            )
+
+        # Save PDF to a temporary buffer
+        pdf_buffer = BytesIO(pdf_file.read())
+        pdf_buffer.seek(0)
+
+        # Write buffer to a temporary file for endesive
+        import tempfile
+
+        with tempfile.NamedTemporaryFile(delete=True, suffix=".pdf") as tmp_pdf:
+            tmp_pdf.write(pdf_buffer.read())
+            tmp_pdf.flush()
+
+            # Load trusted certificates
+            trusted_certs = load_trusted_certs(TRUSTED_CERTIFICATES_DIR)
+
+            # Verify signatures
+            results = verify_pdf_signature(tmp_pdf.name, trusted_certs)
+
+        # Structure the results for frontend
+        signature_results = []
+        overall_status = "Valid"
+        for i, result in enumerate(results, 1):
+            # Explicitly unpack the result tuple from endesive
+            # (hash_ok, signature_ok, cert_bytes, cert_trusted, message_from_endesive)
+            hash_ok, signature_ok, cert_bytes, cert_trusted = False, False, None, False
+            msg_from_endesive = "Verification details not available" # Default message
+
+            if len(result) >= 1: hash_ok = result[0]
+            if len(result) >= 2: signature_ok = result[1]
+            if len(result) >= 3: cert_bytes = result[2]
+            if len(result) >= 4: cert_trusted = result[3]
+            if len(result) >= 5: msg_from_endesive = result[4] # Message from endesive
+
+            # Determine status for each signature
+            sig_status = "Valid" if signature_ok and cert_trusted else "Invalid"
+            if sig_status == "Invalid":
+                overall_status = "Invalid"
+
+            # Construct the final message to be displayed
+            final_message = msg_from_endesive
+            if sig_status == "Invalid":
+                # If endesive message is generic but there's an error, provide a better default
+                if not msg_from_endesive or msg_from_endesive.strip().upper() == "OK" or msg_from_endesive == "unknown":
+                    if not signature_ok:
+                        final_message = "Signature validation failed."
+                    elif not cert_trusted: # This is likely the case for expired certs
+                        final_message = "Certificate is untrusted or path validation failed (e.g., expired, revoked, or untrusted issuer)."
+            elif sig_status == "Valid" and (not msg_from_endesive or msg_from_endesive.strip().upper() == "OK" or msg_from_endesive == "unknown"):
+                final_message = "Signature and certificate are valid."
+
+            # Parse certificate info if available
+            cert_info = {}
+            logging.debug(f"Signature {i}: Checking cert_bytes type: {type(cert_bytes)}")
+            if isinstance(cert_bytes, bytes):
+                logging.debug(f"Signature {i}: cert_bytes is bytes, attempting to parse...")
+                try:
+                    # Try DER first
+                    cert = x509.load_der_x509_certificate(cert_bytes, default_backend())
+                except Exception as e_der:
+                    try:
+                        # Try PEM if DER fails
+                        cert = x509.load_pem_x509_certificate(cert_bytes, default_backend())
+                    except Exception as e_pem:
+                        cert_info = {
+                            "error": f"Error parsing certificate: DER: {str(e_der)} | PEM: {str(e_pem)}"
+                        }
+                        logging.error(f"Signature {i}: Error parsing certificate bytes: DER: {e_der} | PEM: {e_pem}")
+                        cert = None
+                if cert:
+                    cert_info = {
+                        "subject": cert.subject.rfc4514_string(),
+                        "issuer": cert.issuer.rfc4514_string(),
+                        "not_valid_before": str(cert.not_valid_before),
+                        "not_valid_after": str(cert.not_valid_after),
+                    }
+            else:
+                logging.debug(f"Signature {i}: cert_bytes is NOT bytes. Cannot parse certificate.")
+                cert_info = {"error": f"Certificate data not available or not in expected format (received {type(cert_bytes)})."}
+
+            signature_results.append(
+                {
+                    "signature_index": i,
+                    "document_integrity": "Valid" if hash_ok else "Invalid",
+                    "signature_valid": "Valid" if signature_ok else "Invalid",
+                    "certificate_trusted": "Valid" if cert_trusted else "Untrusted",
+                    "status": sig_status,
+                    "message": final_message, # Use the refined final_message
+                    "certificate_info": cert_info,
+                }
+            )
+
+        overall_results = [
+            {
+                "key": "PDF File Upload",
+                "value": pdf_file.filename,
+                "result": "Valid" if overall_status == "Valid" else "Invalid",
+            },
+            {
+                "key": "Overall Signature Verification",
+                "value": (
+                    "All signatures valid and trusted"
+                    if overall_status == "Valid"
+                    else "One or more signatures are invalid or untrusted"
+                ),
+                "result": overall_status,
+            },
+        ]
+
+        return (
+            jsonify(
+                {
+                    "success": True,
+                    "overall_results": overall_results,
+                    "signature_results": signature_results,
+                }
+            ),
+            200,
+        )
+
+    except Exception as e:
+        import traceback
+
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": str(e),
+                    "traceback": traceback.format_exc(),
+                    "overall_results": [],
+                    "signature_results": [],
+                }
+            ),
+            500,
+        )
+
+def load_trusted_certs(cert_dir):
+    """Load all PEM-format certificates as bytes"""
+    trusted_certs = []
+    cert_dir = Path(cert_dir)
+    if not cert_dir.exists():
+        raise FileNotFoundError(f"Certificate directory {cert_dir} not found")
+
+    for cert_file in cert_dir.glob("*.pem"):
+        try:
+            with open(cert_file, "rb") as f:
+                trusted_certs.append(f.read())
+        except Exception as e:
+            print(f"Error loading certificate {cert_file}: {str(e)}")
+
+    if not trusted_certs:
+        raise ValueError("No valid certificates found in the trusted directory")
+
+    return trusted_certs
+
+
+def verify_pdf_signature(pdf_path, trusted_certs):
+    """Verify all signatures in a PDF document"""
+    pdf_path = Path(pdf_path)
+    if not pdf_path.exists():
+        raise FileNotFoundError(f"PDF file {pdf_path} not found")
+
+    with open(pdf_path, "rb") as f:
+        pdf_data = f.read()
+
+    return pdf_verify(pdf_data, trusted_certs)
